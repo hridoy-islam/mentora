@@ -190,102 +190,106 @@ const handleOtpSubmit = async (e: React.FormEvent) => {
   const displayError = localError || reduxError;
 
   return (
-    <div className="flex  w-full">
-      {/* Left Column - Image (from ForgotPasswordPage) */}
-      <div className="relative hidden items-center justify-center overflow-hidden bg-gray-50 p-12 lg:flex lg:w-1/2">
-        <img
-          src="/auth.png"
-          alt="OTP Illustration"
-          className="z-10 w-full max-w-2xl rounded-lg"
-          
-        />
-        <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-purple-100 opacity-50"></div>
-      </div>
+  <div className="flex w-full">
+    {/* Left Column - Fixed Image */}
+    <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12 bg-gray-50 relative overflow-hidden">
+      <img
+        src="/auth.png"
+        alt="OTP Illustration"
+        className="fixed top-1/2 left-1/4 z-10 w-full max-w-3xl rounded-lg transform -translate-y-1/2 -translate-x-1/2"
+      />
+      <div className="fixed -top-16 -left-16 w-48 h-48 rounded-full bg-purple-100 opacity-50"></div>
+    </div>
 
-      {/* Right Column - Form (from ForgotPasswordPage layout) */}
-      <div className="flex w-full items-center justify-center p-8 md:p-12 lg:w-1/2">
-        <div className="w-full max-w-md">
-          {/* Header Text */}
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">
-            Check your email!
-          </h1>
-          <p className="mb-8 text-gray-600">
-            We've sent a 4-digit code to{' '}
-            <strong className="text-gray-800">{email || 'your email'}</strong>.
-            Please enter it below.
-          </p>
+    {/* Right Column - Form */}
+    <div className="flex w-full lg:w-1/2 items-center justify-center p-8 md:p-12">
+      <div className="w-full max-w-md">
+        {/* Header Text */}
+        <h1 className="mb-2 text-3xl font-bold text-gray-900">
+          Check your email!
+        </h1>
+        <p className="mb-8 text-gray-600">
+          We've sent a 4-digit code to{' '}
+          <strong className="text-gray-800">{email || 'your email'}</strong>.
+          Please enter it below.
+        </p>
 
-          {/* --- Inlined OTP Form --- */}
-          <form
-            id="otp-form"
-            className="flex justify-between gap-3 sm:gap-4" // Added responsive gap
-            onSubmit={handleOtpSubmit}
-            onPaste={handlePaste} // Added paste to form
+        {/* --- Inlined OTP Form --- */}
+        <form
+          id="otp-form"
+          className="flex justify-between gap-3 sm:gap-4"
+          onSubmit={handleOtpSubmit}
+          onPaste={handlePaste}
+        >
+          {otp.map((digit, index) => (
+            <input
+              key={index}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]{1}"
+              maxLength={1}
+              value={digit}
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              onFocus={handleFocus}
+              ref={(el) => (inputRefs.current[index] = el)}
+              className="flex h-14 w-14 items-center justify-center rounded-lg border border-gray-300 bg-white text-center text-2xl font-medium shadow-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-50 sm:h-16 sm:w-16"
+              disabled={loading}
+            />
+          ))}
+        </form>
+
+        {/* Verify Button */}
+        <Button
+          disabled={otp.some((digit) => digit === '') || loading}
+          onClick={handleOtpSubmit}
+          className="mt-6 h-12 w-full bg-supperagent text-base font-semibold hover:bg-supperagent/90 disabled:opacity-70"
+        >
+          {loading ? 'Verifying...' : 'Verify OTP'}
+        </Button>
+
+        {/* Error Display */}
+        {displayError && (
+          <Badge
+            variant="outline"
+            className="mt-4 w-full justify-center border-red-500 py-2 text-red-500"
           >
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                type="text"
-                inputMode="numeric" // For mobile numeric keyboard
-                pattern="[0-9]{1}"
-                maxLength={1}
-                value={digit}
-                onChange={handleInput}
-                onKeyDown={handleKeyDown}
-                onFocus={handleFocus}
-                ref={(el) => (inputRefs.current[index] = el)}
-                className="flex h-14 w-14 items-center justify-center rounded-lg border border-gray-300 bg-white text-center text-2xl font-medium shadow-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-50 sm:h-16 sm:w-16"
-                disabled={loading}
-              />
-            ))}
-          </form>
+            {displayError}
+          </Badge>
+        )}
 
-          {/* Verify Button */}
-          <Button
-            disabled={otp.some((digit) => digit === '') || loading}
-            onClick={handleOtpSubmit}
-            className="mt-6 h-12 w-full bg-supperagent text-base font-semibold  hover:bg-supperagent/90 disabled:opacity-70"
+        {/* Resend OTP */}
+        <div className="mt-6 flex items-center justify-center space-x-1 text-sm">
+          <span className="text-gray-600">Didn't receive the code?</span>
+          <button
+            type="button"
+            className={`font-medium ${
+              isCooldownActive
+                ? 'cursor-not-allowed text-gray-400'
+                : 'text-purple-600 hover:underline'
+            }`}
+            onClick={handleResendOtp}
+            disabled={isCooldownActive}
           >
-            {loading ? 'Verifying...' : 'Verify OTP'}
-          </Button>
-
-          {/* Error Display */}
-          {displayError && (
-            <Badge
-              variant="outline"
-              className="mt-4 w-full justify-center border-red-500 py-2 text-red-500"
-            >
-              {displayError}
-            </Badge>
-          )}
-
-          {/* Resend OTP */}
-          <div className="mt-6 flex items-center justify-center space-x-1 text-sm">
-            <span className="text-gray-600">Didn't receive the code?</span>
-            <button
-              type="button"
-              className={`font-medium ${isCooldownActive ? 'cursor-not-allowed text-gray-400' : 'text-purple-600 hover:underline'}`}
-              onClick={handleResendOtp}
-              disabled={isCooldownActive}
-            >
-              {isCooldownActive
-                ? `Resend in ${resendCooldown}s`
-                : 'Resend code'}
-            </button>
-          </div>
-
-          {/* Back to Sign In Link */}
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Remembered your password?{' '}
-            <Link
-              to="/login" // Link back to the main login page
-              className="font-medium text-purple-600 hover:underline"
-            >
-              Sign in
-            </Link>
-          </p>
+            {isCooldownActive
+              ? `Resend in ${resendCooldown}s`
+              : 'Resend code'}
+          </button>
         </div>
+
+        {/* Back to Sign In Link */}
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Remembered your password?{' '}
+          <Link
+            to="/login"
+            className="font-medium text-purple-600 hover:underline"
+          >
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
-  );
+  </div>
+);
+
 }

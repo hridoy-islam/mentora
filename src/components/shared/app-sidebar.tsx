@@ -5,36 +5,15 @@ import {
   IconBook,
   IconCalendarTime,
   IconClipboardList,
-  IconFileCertificate,
-  IconFileText,
-  IconId,
   IconLayoutGrid,
-  IconReport,
   IconSettings,
   IconSchool,
-  IconBuildingBank,
   IconUser,
-  IconBellRinging,
-  IconBook2,
-  IconCoin,
-  IconDeviceDesktop,
-  IconFileStack,
-  IconFolder,
-  IconHome,
-  IconIdBadge2,
-  IconListCheck,
-  IconMessage,
-  IconReceipt2,
-  IconTruck,
-  IconUserPlus,
-  IconUsersGroup,
-  IconWriting,
   IconHelp,
-  IconSearch
-} from '@tabler/icons-react';
+  IconSearch,
+} from '@tabler/icons-react'; // Kept your original imports
 
 import { NavMain } from './nav-main';
-import { NavSecondary } from './nav-secondary';
 import { NavUser } from './nav-user';
 import {
   Sidebar,
@@ -43,233 +22,250 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import {
-  BookOpen,
-  Building,
-  CalendarFold,
-  ClipboardPlus,
-  ContactRound,
-  UserRoundSearch
+  
+  LayoutDashboard,
+  Users, 
+  Box, 
+  Settings,
+  UserRoundSearch,
+  GraduationCap,
+  Award,
+  HelpCircle,
+  ClipboardCheck,
+  Star,
+  CreditCard,
+  Headset,
+  Bell,
+  Heart,
+  Briefcase, 
+  BarChart3, 
+  Building, 
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import axiosInstance from '@/lib/axios';
+import { useSelector } from 'react-redux';
 
-// Define the navigation structure
-const data = {
-  user: {
-    name: 'shadcn',
-    email: 'm@example.com',
-    avatar: '/avatars/shadcn.jpg'
+// --- 1. Define Navigation Items for Each Role ---
+
+const adminNav = [
+  {
+    title: 'Dashboard',
+    url: '/dashboard',
+    icon: LayoutDashboard,
   },
+  {
+    title: 'User Management',
+    icon: Users,
+    items: [
+      { title: 'Organization', url: '/dashboard/admin/organizations' },
+      { title: 'Instructor', url: '/dashboard/admin/instructors' },
+      { title: 'Student', url: '/dashboard/admin/students' },
+    ],
+  },
+  {
+    title: 'Course Manage',
+    icon: Box,
+    items: [
+      { title: 'Subject', url: '/dashboard/admin/subjects' },
+      { title: 'Tag', url: '/dashboard/admin/tags' },
+      { title: 'Level', url: '/dashboard/admin/levels' },
+      { title: 'Course', url: '/dashboard/admin/courses' },
+    ],
+  },
+  {
+    title: 'Setting',
+    icon: Settings,
+    items: [
+      { title: 'Profile', url: '/dashboard/settings/profile' },
+      { title: 'Email', url: '/dashboard/settings/email' },
+    ],
+  },
+];
 
-  navMain: [
-    // === Dashboard ===
-    {
-      title: 'Dashboard',
-      url: '/dashboard',
-      icon: IconDashboard
-    },
-    {
-      title: 'Campus',
-      url: 'campus',
-      icon: Building
-    },
-    {
-      title: 'Intake',
-      url: 'intake',
-      icon: CalendarFold
-    },
-    {
-      title: 'Course',
-      url: 'course',
-      icon: BookOpen
-    },
-    // {
-    //   title: "University",
-    //   url: "university",
-    //   icon: Building ,
-    // },
-    {
-      title: 'Staff',
-      url: 'staff',
-      icon: ContactRound
-    },
-    {
-      title: 'Agent',
-      url: 'agent',
-      icon: UserRoundSearch
-    },
+// Based on your screenshot
+const studentNav = [
+  {
+    title: 'Dashboard',
+    url: '/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'Course Manage',
+    icon: Box,
+    items: [
+      { title: 'My Enrolled', url: '/dashboard/student/enrolled' },
+      { title: 'Course Purchase', url: '/dashboard/student/purchase-history' },
+      { title: 'Bundle Purchase', url: '/dashboard/student/bundle-history' },
+    ],
+  },
+  {
+    title: 'Certificate',
+    url: '/dashboard/student/certificates',
+    icon: Award,
+  },
+  {
+    title: 'Quizzes',
+    url: '/dashboard/student/quizzes',
+    icon: HelpCircle,
+  },
+  {
+    title: 'Assignment',
+    url: '/dashboard/student/assignments',
+    icon: ClipboardCheck,
+  },
+  {
+    title: 'Review',
+    url: '/dashboard/student/reviews',
+    icon: Star,
+  },
+  {
+    title: 'Offline Payment',
+    url: '/dashboard/student/offline-payment',
+    icon: CreditCard,
+  },
+  {
+    title: 'Support Manage',
+    url: '/dashboard/support',
+    icon: Headset,
+  },
+  {
+    title: 'Notifications',
+    url: '/dashboard/notifications',
+    icon: Bell,
+  },
+  {
+    title: 'Wishlist',
+    url: '/dashboard/student/wishlist',
+    icon: Heart,
+  },
+];
 
-    {
-      title: 'Student',
-      url: 'student',
-      icon: UserRoundSearch
-    },
+const instructorNav = [
+  {
+    title: 'Dashboard',
+    url: '/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'My Courses',
+    icon: Box,
+    items: [
+      { title: 'All Courses', url: '/dashboard/instructor/courses' },
+      { title: 'Create Course', url: '/dashboard/instructor/create-course' },
+    ],
+  },
+  {
+    title: 'Student Management',
+    icon: Users,
+    items: [
+      { title: 'Enrolled Students', url: '/dashboard/instructor/students' },
+      { title: 'Reviews', url: '/dashboard/instructor/reviews' },
+      { title: 'Q&A', url: '/dashboard/instructor/q-and-a' },
+    ],
+  },
+  {
+    title: 'Payouts',
+    url: '/dashboard/instructor/payouts',
+    icon: CreditCard,
+  },
+  {
+    title: 'Support',
+    url: '/dashboard/support',
+    icon: Headset,
+  },
+  {
+    title: 'Settings',
+    url: '/dashboard/settings/profile',
+    icon: Settings,
+  },
+];
 
-    {
-      title: 'Admission',
-      icon: IconUserPlus,
-      items: [
-        { title: 'Applications', url: 'applicantions' },
-        { title: 'New Registrations', url: '#' },
-        { title: 'Student List', url: '#' },
-        {
-          title: 'Transfers',
-          items: [
-            { title: 'Transfer Out', url: '#' },
-            { title: 'Transfer In', url: '#' }
-          ]
-        },
-        { title: 'Status Types', url: '#' },
-        { title: 'ID Cards', url: '#' },
-        {
-          title: 'Settings',
-          items: [{ title: 'ID Card Settings', url: '#' }]
-        }
-      ]
-    },
+const companyNav = [
+  {
+    title: 'Dashboard',
+    url: '/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'Manage Instructors',
+    url: '/dashboard/company/instructors',
+    icon: Users,
+  },
+  {
+    title: 'Manage Students',
+    url: '/dashboard/company/students',
+    icon: UserRoundSearch,
+  },
+  {
+    title: 'Courses',
+    url: '/dashboard/company/courses',
+    icon: Box,
+  },
+  {
+    title: 'Reports',
+    url: '/dashboard/company/reports',
+    icon: BarChart3,
+  },
+  {
+    title: 'Company Profile',
+    url: '/dashboard/company/profile',
+    icon: Building,
+  },
+  {
+    title: 'Settings',
+    url: '/dashboard/settings/profile',
+    icon: Settings,
+  },
+];
 
-    // === Students ===
-    {
-      title: 'Students',
-      icon: IconUsers,
-      items: [
-        {
-          title: 'Attendances',
-          items: [
-            {
-              title: 'Subject Attendances',
-              url: '#'
-            },
-            {
-              title: 'Attendance Report',
-              url: '#'
-            }
-          ]
-        },
-        { title: 'Manage Leave', url: '#' },
-        { title: 'Student Notes', url: '#' },
-        {
-          title: 'Enrollments',
-          items: [
-            { title: 'Single Enroll', url: '#' },
-            { title: 'Group Enroll', url: '#' },
-            { title: 'Course Add Drop', url: '#' },
-            { title: 'Course Graduation', url: '#' }
-          ]
-        },
-        { title: 'Alumni List', url: '#' }
-      ]
-    },
-
-    // === Academic ===
-    {
-      title: 'Academic',
-      icon: IconSchool,
-      items: [
-        { title: 'Faculties', url: '#' },
-        { title: 'Programs', url: '#' },
-        { title: 'Batches', url: '#' },
-        { title: 'Sessions', url: '#' },
-        { title: 'Semesters', url: '#' },
-        { title: 'Sections', url: '#' },
-        { title: 'Class Rooms', url: '#' },
-        { title: 'Courses', url: '#' },
-        { title: 'Enroll Course', url: '#' }
-      ]
-    },
-
-    // === Routine ===
-    {
-      title: 'Routine',
-      icon: IconCalendarTime,
-      items: [
-        { title: 'Manage Classes', url: '#' },
-        { title: 'Class Schedules', url: '#' },
-        { title: 'Manage Exams', url: '#' },
-        { title: 'Teacher Routines', url: '#' },
-        {
-          title: 'Settings',
-          items: [
-            { title: 'Class Schedule', url: '#' },
-            { title: 'Exam Schedule', url: '#' }
-          ]
-        }
-      ]
-    },
-
-    // === Examinations ===
-    {
-      title: 'Examinations',
-      icon: IconClipboardList,
-      items: [
-        { title: 'Exam Attendance', url: '#' },
-        { title: 'Exam Mark Ledger', url: '#' },
-        { title: 'Exam Result', url: '#' },
-        { title: 'Course Mark Ledger', url: '#' },
-        { title: 'Course Result', url: '#' },
-        { title: 'Grading Systems', url: '#' },
-        { title: 'Exam Types', url: '#' },
-        { title: 'Admit Cards', url: '#' },
-        {
-          title: 'Settings',
-          items: [
-            { title: 'Admit Settings', url: '#' },
-            {
-              title: 'Mark Distribution',
-              url: '#'
-            }
-          ]
-        }
-      ]
-    },
-
-    // === Study Material ===
-    {
-      title: 'Study Material',
-      icon: IconBook,
-      items: [
-        { title: 'Assignment', url: '#' },
-        { title: 'Content List', url: '#' },
-        { title: 'Content Types', url: '#' }
-      ]
-    },
-
-    // { title: "Fees Collection", url: "#", icon: IconCoin },
-    // { title: "Human Resources", url: "#", icon: IconUsersGroup },
-    // { title: "Staff Attendances", url: "#", icon: IconListCheck },
-    // { title: "Leave Manager", url: "#", icon: IconWriting },
-    // { title: "Accounts", url: "#", icon: IconBuildingBank },
-    // { title: "Communicates", url: "#", icon: IconMessage },
-    // { title: "Library", url: "#", icon: IconBook2 },
-    // { title: "Inventory", url: "#", icon: IconFolder },
-    // { title: "Hostel", url: "#", icon: IconHome },
-    // { title: "Transports", url: "#", icon: IconTruck },
-    // { title: "Front Desk", url: "#", icon: IconDeviceDesktop },
-    // { title: "Transcripts", url: "#", icon: IconFileCertificate },
-    // { title: "Reports", url: "#", icon: IconReport },
-    {
-      title: 'Settings',
-      icon: IconSettings,
-      items: [
-        { title: 'Email', url: 'emails' },
-        { title: 'Draft', url: 'drafts' },
-      ]
-    },
-    { title: 'My Profile', url: '#', icon: IconUser }
-  ],
-  navSecondary: [
-    { title: 'Help', url: '#', icon: IconHelp },
-    { title: 'Search', url: '#', icon: IconSearch }
-  ]
+// --- 2. Helper function to get nav items ---
+const getNavItemsByRole = (role: string) => {
+  switch (role) {
+    case 'admin':
+      return adminNav;
+    case 'student':
+      return studentNav;
+    case 'instructor':
+      return instructorNav;
+    case 'company':
+      return companyNav;
+    default:
+      return []; // Return empty for unknown roles or guests
+  }
 };
 
+// --- 3. Main Sidebar Component ---
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useSelector((state: any) => state.auth);
+  const [userData, setUserData] = useState(null);
+
+  // Fetch user details (for footer)
+  useEffect(() => {
+    const fetchData = async () => {
+      if (user?._id) {
+        try {
+          const response = await axiosInstance.get(`/users/${user._id}`);
+          setUserData(response?.data?.data);
+        } catch (error) {
+          console.error('Failed to fetch user data', error);
+        }
+      }
+    };
+    fetchData();
+  }, [user]);
+
+  // --- 4. Use useMemo to dynamically select nav items based on role ---
+  const navItems = React.useMemo(() => getNavItemsByRole(user?.role), [user?.role]);
+
   return (
     <Sidebar
       collapsible="offcanvas"
       {...props}
-      className="w-60 min-w-64 max-w-[64] border-none "
+      // Corrected class names for clarity
+      className="w-64 min-w-64 border-none"
     >
       <SidebarHeader className="flex h-14 items-center justify-center border-b border-gray-300">
         <SidebarMenu>
@@ -279,10 +275,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-2"
             >
               <a href="#" className="flex items-center gap-2">
-                <IconLayoutGrid className="!size-5 shrink-0 text-theme" />
-                <span className="text-base font-semibold ">
-                  University Management
-                </span>
+                <GraduationCap className="!size-5 shrink-0 text-supperagent" />
+                <span className="text-base font-semibold ">Mentora</span>
               </a>
             </div>
           </SidebarMenuItem>
@@ -290,12 +284,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent className="mt-2">
-        <NavMain items={data.navMain} />
-        {/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
+        {/* --- 5. Pass the dynamic navItems to NavMain --- */}
+        <NavMain items={navItems} />
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
     </Sidebar>
   );

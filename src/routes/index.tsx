@@ -10,6 +10,9 @@ import NewPassword from '@/pages/auth/new-password';
 import AdminLayout from '@/components/layout/admin-layout';
 import PublicLayout from '@/components/layout/public-layout';
 import HomePage from '@/pages/homePage';
+import  CoursePage  from '@/pages/coursePage';
+import CourseDetailPage from '@/pages/coursePage/courseDetails';
+import { ContactPage } from '@/pages/auth/contactPage';
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 const DashboardPage = lazy(() => import('@/pages/dashboard'));
 
@@ -52,6 +55,21 @@ export default function AppRouter() {
       children: [
         {
           element: <HomePage />,
+          index: true
+        },
+        {
+          path: '/contact',
+          element: <ContactPage />,
+          index: true
+        },
+        {
+          path: '/courses',
+          element: <CoursePage />,
+          index: true
+        },
+         {
+          path: '/courses/:id',
+          element: <CourseDetailPage />,
           index: true
         },
         {

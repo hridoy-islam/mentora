@@ -51,7 +51,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
           >
             <CollapsibleTrigger asChild>
               <SidebarMenuButton
-                className={`flex items-center justify-between gap-2 hover:bg-theme hover:text-white ${level > 0 ? 'pl-2' : ''}`}
+                className={`flex items-center justify-between gap-2 hover:bg-supperagent hover:text-white ${level > 0 ? 'pl-2' : ''}`}
               >
                 <div className="flex items-center gap-2">
                   {item.icon && <item.icon size={16} />}
@@ -78,7 +78,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                         ) : (
                           <SidebarMenuSubButton
                             asChild
-                            className={`hover:bg-theme hover:text-white ${level > 0 ? 'pl-2' : ''}`}
+                            className={`hover:bg-supperagent hover:text-white ${level > 0 ? 'pl-2' : ''}`}
                           >
                             <Link
                               to={subItem.url || '#'}
@@ -99,7 +99,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
         ) : (
           <SidebarMenuButton
             asChild
-            className={`hover:bg-theme hover:text-white ${level > 0 ? 'pl-2' : ''} ${isActive ? 'bg-theme text-white' : ''}`}
+            className={`hover:bg-supperagent hover:text-white ${level > 0 ? 'pl-2' : ''} ${isActive ? 'bg-supperagent text-white' : ''}`}
           >
             <Link to={item.url || '#'} className="flex items-center gap-2">
               {item.icon && <item.icon size={16} />}

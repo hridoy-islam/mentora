@@ -1,5 +1,6 @@
 import { Mail, Phone } from "lucide-react";
 import { TopNav } from "../shared/top-nav";
+import { Footer } from "../shared/Footer";
 
 export default function PublicLayout({
   children
@@ -8,7 +9,7 @@ export default function PublicLayout({
 }) {
 
  return (
-    <div className="flex h-screen flex-col overflow-hidden bg-white">
+    <div className="flex min-h-screen flex-col overflow-hidden bg-white">
       
       {/* Top contact bar */}
       <div className="bg-supperagent h-12 p-4 text-white">
@@ -35,10 +36,10 @@ export default function PublicLayout({
       
       <TopNav />
       
-      <main className="flex-grow overflow-y-auto"> {/* Added classes for scrolling */}
+      <main className="overflow-auto "> {/* Added classes for scrolling */}
         {children}
       </main>
-      
+      <Footer/>
     </div>
   );
 }

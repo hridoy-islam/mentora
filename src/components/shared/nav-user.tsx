@@ -18,24 +18,16 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 
-export function NavUser({
-  user
-}: {
-  user: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
-}) {
-  const { isMobile } = useSidebar();
+export function NavUser({ user }) {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+
+  console.log(user);
 
   const handleLogout = async () => {
     await dispatch(logout());
     navigate('/');
   };
-  // const { user } = useSelector((state: any) => state.auth);
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -45,15 +37,15 @@ export function NavUser({
             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
             <Avatar className="h-8 w-8 rounded-lg grayscale">
-              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarImage src={user?.image} alt={user?.name} />
               <AvatarFallback className="rounded-lg text-white">
-                CN
+                {user?.name.charAt(0)}{' '}
               </AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">Demo User</span>
+              <span className="truncate font-medium">{user?.name}</span>
               <span className="truncate text-xs text-muted-foreground">
-                {user.email}
+                {user?.email}
               </span>
             </div>
             <div className="ml-auto flex items-center gap-2 p-1">

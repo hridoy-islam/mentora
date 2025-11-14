@@ -1,18 +1,14 @@
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AgentDashboard } from './rolewise-dashboard/agent-dashboard';
-import { InvestorDashboard } from './rolewise-dashboard/investor-dashboard';
+
+import { useState } from 'react';
 import { AdminDashboard } from './rolewise-dashboard/admin-dashboard';
-// import { StaffDashboard } from './rolewise-dashboard/staff-dashboard';
-// import { VerifierDashboard } from './rolewise-dashboard/verifier-dashboard';
-// import { SignatoryDashboard } from './rolewise-dashboard/signatory-dashboard';
-// import { TeacherDashboard } from './rolewise-dashboard/teacher-dashboard';
-// import { CollegeAdminDashboard } from './rolewise-dashboard/college-admin-dashboard';
-// import { CampusAdminDashboard } from './rolewise-dashboard/campus-admin-dashboard';
+
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import VerifyPage from '../auth/verify';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { StudentDashboard } from './rolewise-dashboard/student-dashboard';
+import { CompanyDashboard } from './rolewise-dashboard/company-dashboard';
+import { InstructorDashboard } from './rolewise-dashboard/instructor-dashboard';
 
 export default function DashboardPage() {
   const { user } = useSelector((state: any) => state.auth);
@@ -65,18 +61,14 @@ export default function DashboardPage() {
       
       case 'admin':
         return <AdminDashboard />;
-      // case 'staff':
-      //   return <StaffDashboard user={user} />;
-      // case 'verifier':
-      //   return <VerifierDashboard user={user} />;
-      // case 'signatory':
-      //   return <SignatoryDashboard user={user} />;
-      // case 'teacher':
-      //   return <TeacherDashboard user={user} />;
-      // case 'college admin':
-      //   return <CollegeAdminDashboard user={user} />;
-      // case 'campus admin':
-      //   return <CampusAdminDashboard user={user} />;
+        case 'student':
+        return <StudentDashboard />;
+        case 'company':
+        return <CompanyDashboard />;
+      
+        case 'instructor':
+        return <InstructorDashboard />;
+      
       default:
         return (
           <div className="flex flex-1 items-center justify-center">

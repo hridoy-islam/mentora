@@ -552,7 +552,6 @@ export default function HomePage() {
       <HowItWorksSection />
       <TestimonialsSection />
       <CTASection />
-      <Footer />
     </div>
   );
 }
