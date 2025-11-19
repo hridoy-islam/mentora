@@ -137,3 +137,36 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(251.31 82.94% 58.63%);
 }
+
+@keyframes scaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  80% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseGlow {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.45s ease-out forwards;
+}
+
+.animate-pulseGlow {
+  animation: pulseGlow 1.2s ease-out infinite;
+}

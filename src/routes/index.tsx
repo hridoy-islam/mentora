@@ -18,6 +18,15 @@ import StudentLayout from '@/components/layout/student-layout';
 import { StudentDashboard } from '@/pages/dashboard/rolewise-dashboard/student-dashboard';
 import { CourseDetails } from '@/pages/enrollCourse/courseDetail';
 import { MyCourses } from '@/pages/myCourse';
+import CoursesPage from '@/pages/adminCourse';
+import AdminCoursesPage from '@/pages/adminCourse';
+import CreateCoursePage from '@/pages/adminCourse/createCourse';
+import CourseModulesPage from '@/pages/courseModule';
+import LessonsPage from '@/pages/courseLesson';
+import CreateLessonPage from '@/pages/courseLesson/createLesson';
+import EditLessonPage from '@/pages/courseLesson/editLesson';
+import CategoryPage from '@/pages/categoryPage';
+import EditCoursePage from '@/pages/adminCourse/editCourse';
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 const DashboardPage = lazy(() => import('@/pages/dashboard'));
 
@@ -41,10 +50,38 @@ export default function AppRouter() {
           element: <DashboardPage />,
           index: true
         },
+         {
+          path: 'categories',
+          element: <CategoryPage />
+        },
         {
-          path: 'profile',
-          element: <ProfilePage />
-        }
+          path: 'courses',
+          element: <AdminCoursesPage />
+        },
+        {
+          path: 'courses/create',
+          element: <CreateCoursePage />
+        },
+         {
+          path: 'courses/edit/:id',
+          element: <EditCoursePage />
+        },
+         {
+          path: 'course-modules',
+          element: <CourseModulesPage />
+        },
+        {
+          path: 'lessons',
+          element: <LessonsPage />
+        },
+         {
+          path: 'lessons/create',
+          element: <CreateLessonPage />
+        },
+         {
+          path: 'lessons/edit/:id',
+          element: <EditLessonPage />
+        },
       ]
     }
   ];
@@ -122,6 +159,11 @@ export default function AppRouter() {
         {
           path: '/login',
           element: <SignInPage />,
+          index: true
+        },
+        {
+          path: 'cart',
+          element: <CartPage />,
           index: true
         },
         {

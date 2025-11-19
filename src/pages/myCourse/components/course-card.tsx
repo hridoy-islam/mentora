@@ -1,6 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { EnrolledCourse } from '@/lib/courses';
 import { BookOpen, Clock, Play, Star, Users, CalendarDays } from 'lucide-react';
@@ -25,7 +24,7 @@ export function CourseCard({ course, onClick }: CourseCardProps) {
   };
 
   return (
-    <Card className="h-full hover:shadow-lg transition-all duration-300 border border-border overflow-hidden group">
+    <Card className="h-full hover:shadow-lg transition-all duration-300 border border-gray-300 overflow-hidden group">
       
       {/* Image Section */}
       <div className="relative h-48 bg-supperagent overflow-hidden">
@@ -73,12 +72,18 @@ export function CourseCard({ course, onClick }: CourseCardProps) {
             <span className="text-sm font-medium text-black">Progress</span>
             <span className="text-sm font-semibold text-primary">{progressPercentage}%</span>
           </div>
-          <Progress value={progressPercentage} className="h-2" />
+
+          {/* Custom Progress Bar */}
+          <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-supperagent transition-all duration-500"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
         </div>
 
         {/* Course Stats */}
         <div className="grid grid-cols-3 gap-2 mb-4">
-          
           <div className="flex flex-col items-center gap-1 p-2 bg-supperagent rounded-lg">
             <BookOpen className="h-4 w-4 text-white" />
             <span className="text-xs font-medium text-white">{course.lessons}</span>
@@ -99,7 +104,7 @@ export function CourseCard({ course, onClick }: CourseCardProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between text-xs pt-3 border-t border-border text-black">
+        <div className="flex items-center justify-between text-xs pt-3 border-t border-gray-300 text-black">
           <span className="text-black">Last accessed: {formatLastAccessed(course.lastAccessed)}</span>
           <CalendarDays className="h-3.5 w-3.5" />
         </div>

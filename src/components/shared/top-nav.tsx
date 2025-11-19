@@ -10,7 +10,7 @@ import {
   Minus,
   Trash
 } from 'lucide-react';
-import { NavLink as RouterNavLink } from 'react-router-dom';
+import { NavLink as RouterNavLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   decreaseQuantity,
@@ -35,10 +35,9 @@ function NavLink({ to, children }) {
       <RouterNavLink
         to={to}
         className={({ isActive }) =>
-          `pb-1 ${
-            isActive
-              ? 'border-b-2 border-supperagent font-medium text-supperagent'
-              : 'text-gray-600 hover:text-supperagent'
+          `pb-1 ${isActive
+            ? 'border-b-2 border-supperagent font-medium text-supperagent'
+            : 'text-gray-600 hover:text-supperagent'
           }`
         }
       >
@@ -54,7 +53,7 @@ export function TopNav() {
   const { cartItems, totalQuantity } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
   const { user } = useSelector((state: any) => state.auth);
-
+  const navigate = useNavigate();
   const cartButtonRef = useRef(null);
   const cartDropdownRef = useRef(null);
 
@@ -90,15 +89,14 @@ export function TopNav() {
     };
   }, [isCartOpen]);
 
+  const handleCart = () => {
 
- const handleGoToCart = () => {
+    navigate('/cart')
     setIsCartOpen(false);
-    if (user) {
-      window.location.href = "/student/cart"; 
-    } else {
-      window.location.href = "/login";
-    }
-  };
+
+  }
+
+
   return (
     <div className="z-[9999] flex items-center justify-between bg-white p-4 shadow-sm">
       <div className="container mx-auto flex items-center justify-between px-4">
@@ -211,8 +209,8 @@ export function TopNav() {
                       </div>
 
                       <div
-                        
-                        onClick={() => handleGoToCart()}
+
+                        onClick={() => handleCart()}
                         className="block w-full rounded-md bg-supperagent px-4 py-2 text-center text-sm font-medium text-white hover:bg-supperagent/90"
                       >
                         Go to Cart

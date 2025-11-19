@@ -15,13 +15,14 @@ import { courses } from '@/lib/demoData';
 import { useDispatch } from 'react-redux'; // <-- Import Redux hook
 import { addToCart } from '@/redux/features/cartSlice';
 import CourseContentAccordion from '../components/CourseContentAccordion';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function CourseDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch(); // <-- Setup dispatch
   const course = courses.find((c) => c.id === parseInt(id));
-
+const {toast} = useToast()
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   // All accordion logic (openSections, sectionRefs, toggleSection) is now removed
@@ -47,6 +48,10 @@ export default function CourseDetailPage() {
       quantity: 1 // Add one item
     };
     dispatch(addToCart(itemToAdd));
+    toast({
+    title: "Added to Cart",
+    description: `"${course.title}" has been added to your cart.`,
+  });
   };
 
   return (

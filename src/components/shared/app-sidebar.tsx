@@ -71,8 +71,8 @@ const adminNav = [
     items: [
       { title: 'Subject', url: '/dashboard/admin/subjects' },
       { title: 'Tag', url: '/dashboard/admin/tags' },
-      { title: 'Level', url: '/dashboard/admin/levels' },
-      { title: 'Course', url: '/dashboard/admin/courses' },
+      { title: 'Category', url: '/dashboard/categories' },
+      { title: 'Course', url: '/dashboard/courses' },
     ],
   },
   {

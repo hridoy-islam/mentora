@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { enrolledCourses } from '@/lib/courses';
 import { Clock, BookOpen, Play, ChevronRight, TrendingUp, Award, Target } from 'lucide-react';
 import { useSelector } from 'react-redux';
@@ -36,7 +35,7 @@ export function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto  py-8">
+      <div className="container mx-auto py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome back, {user?.name}!
@@ -46,6 +45,7 @@ export function StudentDashboard() {
           </p>
         </div>
 
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="border-l-4 border-l-blue-500 shadow-sm">
             <CardContent className="pt-6">
@@ -90,6 +90,7 @@ export function StudentDashboard() {
           </Card>
         </div>
 
+        {/* Continue Learning Card */}
         <Card className="mb-8 shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -127,7 +128,13 @@ export function StudentDashboard() {
                         <span className="text-gray-600">Progress</span>
                         <span className="font-semibold text-gray-900">{course.progress}% Complete</span>
                       </div>
-                      <Progress value={course.progress} className="h-2" />
+                      {/* Custom Progress Bar */}
+                      <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-supperagent transition-all duration-500"
+                          style={{ width: `${course.progress}%` }}
+                        />
+                      </div>
                       <p className="text-xs text-gray-500 mt-2">
                         {course.completedLessons} of {course.lessons} lessons completed
                       </p>
@@ -142,6 +149,7 @@ export function StudentDashboard() {
           </CardContent>
         </Card>
 
+        {/* My Courses Grid */}
         <div>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">My Courses</h2>
@@ -187,7 +195,13 @@ export function StudentDashboard() {
                       <span className="text-gray-600">Progress</span>
                       <span className="font-semibold text-blue-600">{course.progress}%</span>
                     </div>
-                    <Progress value={course.progress} className="h-1.5" />
+                    {/* Custom Progress Bar */}
+                    <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-supperagent transition-all duration-500"
+                        style={{ width: `${course.progress}%` }}
+                      />
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
