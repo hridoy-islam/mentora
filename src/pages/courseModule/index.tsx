@@ -7,7 +7,8 @@ import {
   X,
   Save,
   Trash2,
-  Search
+  Search,
+  Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -211,6 +212,30 @@ export default function CourseModulesPage() {
           </Button>
           <Button
             size="default"
+            variant="outline"
+            onClick={() =>
+              window.open(`/dashboard/courses/${cid}/website-preview`, '_blank')
+            }
+            disabled={!cid}
+          >
+            <Eye className="mr-2 h-4 w-4" />
+            Website View
+          </Button>
+
+          <Button
+            size="default"
+            variant="outline"
+            onClick={() =>
+              window.open(`/dashboard/courses/${cid}/student-preview`, '_blank')
+            }
+            disabled={!cid}
+          >
+            <Eye className="mr-2 h-4 w-4" />
+            Student View
+          </Button>
+
+          <Button
+            size="default"
             onClick={openCreateDialog}
             className="bg-supperagent hover:bg-supperagent/90"
             disabled={!cid}
@@ -279,11 +304,12 @@ export default function CourseModulesPage() {
                             <TooltipTrigger asChild>
                               <Button
                                 variant="default"
-                                size="icon"
+                                size="sm"
                                 className="h-8 w-8 "
                                 onClick={() => openEditDialog(module)}
                               >
-                                <Pen className="h-4 w-4" />
+                                <Pen className="mr h-4 w-4" />
+                                Edit
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>

@@ -39,7 +39,7 @@ export function DataTablePagination({
             )}
           </SelectTrigger>
           <SelectContent side="top">
-            {[10, 20, 50, 100].map((size) => (
+            {[100, 200, 500, 1000].map((size) => (
               <SelectItem key={size} value={size.toString()}>
                 {size}
               </SelectItem>

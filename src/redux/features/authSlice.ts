@@ -109,7 +109,7 @@ export const loginUser = createAsyncThunk<UserResponse, UserCredentials>(
     const response = await request.data;
 
     localStorage.setItem(
-      'investment',
+      'mentora',
       JSON.stringify(response.data.accessToken)
     );
     return response;
@@ -131,7 +131,7 @@ export const authWithFbORGoogle = createAsyncThunk<
     }
   );
   const response = await request.data;
-  localStorage.setItem('investment', JSON.stringify(response.data.accessToken));
+  localStorage.setItem('mentora', JSON.stringify(response.data.accessToken));
   return response;
 });
 // forgot password
@@ -241,7 +241,7 @@ export const resendOtp = createAsyncThunk(
 );
 
 export const logout = createAsyncThunk<void>('user/logout', async () => {
-  localStorage.removeItem('investment');
+  localStorage.removeItem('mentora');
 });
 
 const authSlice = createSlice({

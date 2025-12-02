@@ -1,18 +1,25 @@
 import { Mail, Phone } from "lucide-react";
 import { Footer } from "../shared/Footer";
-import { StudentNav } from "../shared/student-nav";
+import { TopNav } from "../shared/top-nav";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
-export default function StudentLayout({
+export default function PreviewLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
+  const user = useSelector((state: any) => state.auth.user); // Get user from Redux state
 
+  const navigate = useNavigate()
+
+   
  return (
     <div className="flex min-h-screen flex-col overflow-hidden bg-white">
       
       {/* Top contact bar */}
-      {/* <div className="bg-supperagent h-12 p-4 text-white">
+      {/* <div className="bg-supperagent h-12 text-white">
         <div className="container mx-auto flex h-full items-center justify-start  gap-8">
           
           <div className="flex items-center space-x-2 text-sm">
@@ -32,11 +39,12 @@ export default function StudentLayout({
         </div>
       </div> */}
       
-      <StudentNav />
+      {/* <TopNav /> */}
       
-      <main className="overflow-hidden "> 
+      <main className="overflow-auto "> {/* Added classes for scrolling */}
         {children}
       </main>
+      {/* <Footer/> */}
     </div>
   );
 }

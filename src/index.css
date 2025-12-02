@@ -170,3 +170,41 @@
 .animate-pulseGlow {
   animation: pulseGlow 1.2s ease-out infinite;
 }
+
+
+.prose ol {
+  list-style-type: decimal;
+  padding-left: 1.5em; /* Ensure indentation */
+}
+
+.prose ol > li > ol {
+  list-style-type: lower-alpha; /* Changes 2nd level to a, b, c... */
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose ol > li > ol > li > ol {
+  list-style-type: lower-roman; /* Changes 3rd level to i, ii, iii... */
+}
+
+.prose ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+}
+
+.prose ul > li > ul {
+  list-style-type: circle;
+}
+
+.ql-editor ol, .ql-editor ul {
+    padding-left: 0 !important; /* Quill handles its own padding */
+}
+
+.ql-editor li {
+    padding-left: 2 !important; /* Prevent double padding */
+}
+
+.ql-editor li::before {
+    /* Ensure Quill's generated numbers (a., i.) are visible */
+    display: inline-block !important; 
+}

@@ -288,7 +288,7 @@ export default function CreateCoursePage() {
 
             {/* Image Upload */}
             <div>
-              <Label>Course Image</Label>
+              <Label>Course Banner Image</Label>
               <div
                 className="flex cursor-pointer flex-col items-center justify-center rounded-lg  border  border-gray-300 p-4 hover:border-supperagent md:max-w-[400px]"
                 onClick={() => fileInputRef.current?.click()}
@@ -322,7 +322,7 @@ export default function CreateCoursePage() {
 
             {/* Description */}
             <div>
-              <Label>Description</Label>
+              <Label>About This Course</Label>
               <ReactQuill
                 value={formData.description}
                 onChange={(value) =>
@@ -338,7 +338,7 @@ export default function CreateCoursePage() {
             {/* Learning Outcomes */}
             <div>
               <Label className="mb-3 block text-lg font-medium">
-                Learning Outcomes
+              What you'll learn
               </Label>
               <p className="mb-3 text-sm text-gray-500">
                 What will students be able to do after completing this course?
@@ -382,7 +382,7 @@ export default function CreateCoursePage() {
             {/* Requirements */}
             <div>
               <Label className="mb-3 block text-lg font-medium">
-                Prerequisites
+                Requirements
               </Label>
               <p className="mb-3 text-sm text-gray-500">
                 What knowledge or skills should students have before starting
@@ -418,7 +418,7 @@ export default function CreateCoursePage() {
                 className="mt-3"
                 onClick={addRequirement}
               >
-                + Add Prerequisite
+                + Add Requirement
               </Button>
             </div>
 

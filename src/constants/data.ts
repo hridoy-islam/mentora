@@ -65,10 +65,10 @@ export const navItems: NavItem[] = [
     roles: ['admin', 'director', 'company']
   },
   {
-    title: 'Users / Stuff',
+    title: 'Users / Staff',
     href: '/dashboard/users',
     icon: 'user',
-    label: 'Users / Stuff',
+    label: 'Users / Staff',
     roles: ['admin', 'director', 'company', 'creator']
   }
 ];

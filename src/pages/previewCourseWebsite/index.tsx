@@ -1,3 +1,4 @@
+// PreviewCourseDetails.tsx
 import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
@@ -5,70 +6,26 @@ import {
   Clock,
   Download,
   Award,
-  BarChart3,
   Share2,
   Heart,
   Zap
 } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom'; // 👈 removed useNavigate
 import axiosInstance from '@/lib/axios';
-import { useDispatch } from 'react-redux';
-import { addToCart } from '@/redux/features/cartSlice';
-import CourseContentAccordion from '../components/CourseContentAccordion';
+// 👇 Removed useDispatch and cart-related logic
 import { useToast } from '@/components/ui/use-toast';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
+import CourseContentAccordion from './components/CourseContentAccordion';
 
-// Lesson Interface
-interface Lesson {
-  _id: string;
-  title: string;
-  duration?: string;
-  type: 'video' | 'doc' | 'quiz';
-}
 
-// Module Interface
-interface CourseModule {
-  _id: string;
-  title: string;
-}
 
-// Instructor Interface
-interface Instructor {
-  _id: string;
-  name: string;
-  title?: string;
-  bio?: string;
-  rating?: number;
-  students?: number;
-}
-
-// Course Interface
-interface Course {
-  _id: string;
-  title: string;
-  description: string;
-  image?: string;
-  price: number;
-  originalPrice: number;
-  rating: number;
-  reviews: number;
-  students: number;
-  duration: number;
-  resources: number;
-  learningPoints: string[];
-  requirements: string[];
-  aboutDescription: string;
-  instructorId: Instructor; // Populated instructor
-}
-
-export default function CourseDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
+export default function PreviewCourseDetails() {
+  const { cid } = useParams<{ cid: string }>();
+  // 🚫 No navigation or dispatch
   const { toast } = useToast();
-  const [moreCourses, setMoreCourses] = useState<Course[]>([]);
+  const [moreCourses, setMoreCourses] = useState([]);
   const [moreLoading, setMoreLoading] = useState(true);
-  const [course, setCourse] = useState<Course | null>(null);
+  const [course, setCourse] = useState(null);
   const [sections, setSections] = useState<
     {
       title: string;
@@ -80,56 +37,46 @@ export default function CourseDetailPage() {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+    const navigate = useNavigate()
+  // 🔄 Fetch data (same logic, but no cart/navigation side effects)
   useEffect(() => {
     const fetchData = async () => {
-      if (!id) return;
-
+      if (!cid) return;
       try {
         setLoading(true);
         setError(null);
-
-        // Fetch course (Ensure backend does populate!)
-        const courseRes = await axiosInstance.get(`/courses/${id}`);
-        const courseData: Course = courseRes.data.data;
+        const courseRes = await axiosInstance.get(`/courses/${cid}`);
+        const courseData: any = courseRes.data.data;
         setCourse(courseData);
 
-        // Fetch modules
         const modulesRes = await axiosInstance.get('/course-modules', {
-          params: { courseId: id }
+          params: { courseId: cid }
         });
-        const modules: CourseModule[] = modulesRes.data.data.result;
+        const modules: any[] = modulesRes.data.data.result;
 
-        // Fetch lessons for each module
         const modulesWithLessons = await Promise.all(
           modules.map(async (mod) => {
             const lessonsRes = await axiosInstance.get('/course-lesson', {
               params: { moduleId: mod._id }
             });
-            const lessons: Lesson[] = lessonsRes.data.data.result;
+            const lessons: any[] = lessonsRes.data.data.result;
             return { module: mod, lessons };
           })
         );
 
-        // Create accordion sections
         const transformedSections = modulesWithLessons.map(
           ({ module, lessons }) => {
             const totalMinutes = lessons.reduce((sum, lesson) => {
               if (!lesson.duration) return sum;
               const parts = lesson.duration.split(':').map(Number);
-              if (parts.length === 2) return sum + parts[0]; // mm:ss
-              if (parts.length === 3) return sum + parts[0] * 60 + parts[1]; // hh:mm:ss
-              return (
-                sum +
-                (isNaN(Number(lesson.duration)) ? 0 : Number(lesson.duration))
-              );
+              if (parts.length === 2) return sum + parts[0];
+              if (parts.length === 3) return sum + parts[0] * 60 + parts[1];
+              return sum + (isNaN(Number(lesson.duration)) ? 0 : Number(lesson.duration));
             }, 0);
-
             return {
               title: module.title,
               lessons: lessons.length,
-              hours:
-                totalMinutes / 60 >= 1 ? (totalMinutes / 60).toFixed(1) : '<1',
+              hours: totalMinutes / 60 >= 1 ? (totalMinutes / 60).toFixed(1) : '<1',
               lessonsList: lessons.map((lesson) => ({
                 id: lesson._id,
                 title: lesson.title,
@@ -138,7 +85,6 @@ export default function CourseDetailPage() {
             };
           }
         );
-
         setSections(transformedSections);
       } catch (err) {
         console.error('Failed to load course:', err);
@@ -152,51 +98,52 @@ export default function CourseDetailPage() {
         setLoading(false);
       }
     };
-
     fetchData();
-  }, [id]);
+  }, [cid]);
+
   useEffect(() => {
     const fetchMoreCourses = async () => {
       if (!course?.instructorId?._id) return;
-
       try {
         setMoreLoading(true);
         const res = await axiosInstance.get('/courses', {
           params: { instructorId: course.instructorId._id, limit: 5 }
         });
         setMoreCourses(
-          res.data.data.result.filter((c: Course) => c._id !== course._id)
-        ); // exclude current course
+          res.data.data.result.filter((c: any) => c._id !== course._id)
+        );
       } catch (err) {
         console.error('Failed to fetch more courses:', err);
       } finally {
         setMoreLoading(false);
       }
     };
-
     fetchMoreCourses();
   }, [course?.instructorId?._id]);
-  const handleBackToCourses = () => navigate('/courses');
+
+  // 🚫 No-op functions — everything disabled
+  const handleBackToCourses = () => {
+    navigate(-1)
+  };
 
   const handleAddToCart = () => {
-    if (!course) return;
-    dispatch(
-      addToCart({
-        id: course._id,
-        title: course.title,
-        price: course.price,
-        image: course.image,
-        quantity: 1
-      })
-    );
+    // Do nothing
     toast({
-      title: 'Added to Cart',
-      description: `"${course.title}" has been added to your cart.`
+      title: 'Preview Mode',
+      description: 'Adding to cart is not available in preview.',
+      variant: 'default'
     });
   };
 
+  const handleSuggestedCourseClick = () => {
+    // Disabled
+    toast({
+      title: 'Preview Mode',
+      description: 'Course navigation is disabled.',
+    });
+  };
 
-  
+  // 🎨 Render logic (same UI, but non-interactive)
 
   if (loading)
     return (
@@ -204,6 +151,7 @@ export default function CourseDetailPage() {
         <BlinkingDots size="large" color="bg-supperagent" />
       </div>
     );
+
   if (error || !course)
     return (
       <div className="flex min-h-screen items-center justify-center text-gray-600">
@@ -212,38 +160,35 @@ export default function CourseDetailPage() {
     );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       {/* Hero */}
       <div className="bg-gradient-to-r from-slate-900 to-slate-800 py-8 text-white">
         <div className="container mx-auto px-4">
           <button
             onClick={handleBackToCourses}
-            className="mb-6 flex items-center gap-2 font-medium text-slate-300 hover:text-white"
+            
+            className="mb-6 flex items-center gap-2 font-medium text-white "
           >
             <ArrowLeft size={20} />
-            <span>Back to Courses</span>
+            <span>Back</span>
           </button>
           <h1 className="text-4xl font-bold lg:text-5xl">{course.title}</h1>
-          {/* <p className="mt-4 text-lg text-slate-300">{course.description}</p> */}
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* LEFT SECTION */}
+          {/* LEFT SECTION — same, but ensure no hidden links */}
           <div className="space-y-12 lg:col-span-2">
-            {/* Image */}
             <div className="overflow-hidden rounded-xl shadow-lg">
               <img
-                src={
-                  course.image || '/javascript-programming-web-development.png'
-                }
+                src={course.image || '/javascript-programming-web-development.png'}
                 alt={course.title}
                 className="h-80 w-full object-cover"
               />
             </div>
 
-            {/* Rating & Instructor */}
+            {/* Rating & Instructor — static */}
             <div className="border-b border-gray-200 pb-8">
               <div className="mb-6 flex items-center gap-4">
                 {[...Array(5)].map((_, i) => (
@@ -251,51 +196,35 @@ export default function CourseDetailPage() {
                     key={i}
                     size={20}
                     className={
-                      i < Math.floor(course.rating)
+                      i < Math.floor(4)
                         ? 'fill-yellow-400 text-yellow-400'
                         : 'text-gray-300'
                     }
                   />
                 ))}
-                <span className="font-bold text-gray-900">
-                  {course.rating} Rating
-                </span>
-                <span className="text-gray-600">
-                  ({course.reviews} reviews)
-                </span>
-                <span className="text-gray-600">
-                  • {course.students.toLocaleString()} students
-                </span>
+                <span className="font-bold text-gray-900">4.2 Rating</span>
+                <span className="text-gray-600">(112 reviews)</span>
+                <span className="text-gray-600">1002 students</span>
               </div>
 
-              {/* Instructor */}
               <div className="flex items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-xl font-bold text-white">
-                  {course.instructorId?.name
-                    ?.split(' ')
-                    ?.map((n) => n[0])
-                    .join('')}
+                  {course.instructorId?.name?.split(' ')?.map((n) => n[0]).join('')}
                 </div>
                 <div>
                   <div className="text-lg font-bold text-gray-900">
                     {course.instructorId?.name}
                   </div>
                   <div className="mt-2 flex gap-4 text-sm text-gray-600">
-                    <span>⭐ {course.instructorId?.rating ?? 0} Rating</span>
-                    <span>
-                      👥 {course.instructorId?.students?.toLocaleString() ?? 0}{' '}
-                      Students
-                    </span>
+                    <span>⭐ 4.2 Rating</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Learning Points */}
+            {/* Learning Points, Requirements, About — all static */}
             <div>
-              <h2 className="mb-6 text-3xl font-bold text-gray-900">
-                What you'll learn
-              </h2>
+              <h2 className="mb-6 text-3xl font-bold text-gray-900">What you'll learn</h2>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {course.learningPoints.map((point, i) => (
                   <div key={i} className="flex gap-3">
@@ -308,11 +237,8 @@ export default function CourseDetailPage() {
               </div>
             </div>
 
-            {/* Requirements */}
             <div>
-              <h2 className="mb-6 text-3xl font-bold text-gray-900">
-                Requirements
-              </h2>
+              <h2 className="mb-6 text-3xl font-bold text-gray-900">Requirements</h2>
               <ul className="space-y-3">
                 {course.requirements.map((req, i) => (
                   <li key={i} className="flex gap-3 text-gray-700">
@@ -323,76 +249,59 @@ export default function CourseDetailPage() {
               </ul>
             </div>
 
-            {/* About Course */}
             <div>
-              <h2 className="mb-6 text-3xl font-bold text-gray-900">
-                About This Course
-              </h2>
+              <h2 className="mb-6 text-3xl font-bold text-gray-900">About This Course</h2>
               <div
                 className="prose max-w-none text-gray-700"
                 dangerouslySetInnerHTML={{ __html: course.description }}
               />
             </div>
 
+            {/* Accordion — still interactive for expand/collapse (OK for preview) */}
             <CourseContentAccordion sections={sections} />
 
-            {/* Instructor Details */}
+            {/* Instructor Details — static */}
             <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-8">
-              <h2 className="mb-4 text-2xl font-bold text-gray-900">
-                About the Instructor
-              </h2>
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">About the Instructor</h2>
               <div className="flex items-start gap-4">
                 <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-gradient-to-br from-blue-400 to-purple-500 text-xl font-bold text-white">
-                  {course.instructorId?.name
-                    ?.split(' ')
-                    ?.map((n) => n[0])
-                    .join('')}
+                  {course.instructorId?.name?.split(' ')?.map((n) => n[0]).join('')}
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {course.instructorId?.name}
-                  </h3>
-                  <p className="mb-2 text-gray-700">
-                    {course.instructorId?.title}
-                  </p>
-                  <p className="leading-relaxed text-gray-700">
-                    {course.instructorId?.bio}
-                  </p>
+                  <h3 className="text-lg font-bold text-gray-900">{course.instructorId?.name}</h3>
+                  <p className="mb-2 text-gray-700">{course.instructorId?.title}</p>
+                  <p className="leading-relaxed text-gray-700">{course.instructorId?.bio}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* RIGHT SIDEBAR */}
+          {/* RIGHT SIDEBAR — disable all buttons */}
           <div className="sticky top-8 lg:col-span-1">
             <div className="space-y-5 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              {/* Price */}
               <div className="border-b pb-4">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-gray-900">
-                    ${course.price}
-                  </span>
-                  <span className="text-gray-500 line-through">
-                    ${course.originalPrice}
-                  </span>
+                  <span className="text-3xl font-bold text-gray-900">${course.price}</span>
+                  <span className="text-gray-500 line-through">${course.originalPrice}</span>
                 </div>
                 <span className="inline-block rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-supperagent">
                   Save ${(course.originalPrice - course.price).toFixed(2)}
                 </span>
               </div>
 
-              {/* Buttons */}
+              {/* ❌ Disabled buttons */}
               <button
-                onClick={handleAddToCart}
-                className="w-full rounded-md bg-supperagent py-3 font-medium text-white transition hover:bg-supperagent"
+                onClick={()=>{}}
+                className="w-full rounded-md bg-supperagent py-3 font-medium text-white "
               >
                 Add to Cart
               </button>
-              <button className="w-full rounded-md border py-3 font-medium">
+              <button
+                className="w-full rounded-md border py-3 font-medium text-gray-500 "
+              >
                 Buy Now
               </button>
 
-              {/* Course Info */}
               <div className="space-y-4 border-t pt-5 text-sm">
                 <div className="flex items-center gap-3">
                   <Clock size={14} />
@@ -408,50 +317,46 @@ export default function CourseDetailPage() {
                 </div>
               </div>
 
-              {/* Share + Wishlist */}
               <div className="flex gap-2 border-t pt-4">
-                <button className="flex flex-1 items-center justify-center gap-2 rounded-md border py-2">
+                <button
+                  disabled
+                  className="flex flex-1 items-center justify-center gap-2 rounded-md border py-2 text-gray-500 cursor-not-allowed opacity-60"
+                >
                   <Share2 size={16} />
                   Share
                 </button>
                 <button
                   onClick={() => setIsWishlisted(!isWishlisted)}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-md border py-2"
+                  disabled
+                  className="flex flex-1 items-center justify-center gap-2 rounded-md border py-2 text-gray-500 cursor-not-allowed opacity-60"
                 >
                   <Heart
                     size={16}
-                    fill={isWishlisted ? 'currentColor' : 'none'}
-                    className={isWishlisted ? 'text-red-500' : ''}
+                    fill="none"
+                    className=""
                   />
                   Wishlist
                 </button>
               </div>
             </div>
 
-            {/* Suggested Courses */}
+            {/* Suggested Courses — disable navigation */}
             <div className="mt-8">
-              <h3 className="text-lg font-semibold">
-                More by {course.instructorId?.name}
-              </h3>
-
+              <h3 className="text-lg font-semibold">More by {course.instructorId?.name}</h3>
               {moreLoading ? (
-                <p className="text-sm italic text-gray-500">
-                  Loading more courses...
-                </p>
+                <p className="text-sm italic text-gray-500">Loading more courses...</p>
               ) : moreCourses.length === 0 ? (
-                <p className="text-sm italic text-gray-500">
-                  No other courses available.
-                </p>
+                <p className="text-sm italic text-gray-500">No other courses available.</p>
               ) : (
                 <div className="mt-4 space-y-2">
                   {moreCourses.map((c) => (
                     <div
                       key={c._id}
-                      className="cursor-pointer rounded-md border p-3 hover:bg-gray-50"
-                      onClick={() => navigate(`/courses/${c._id}`)}
+                      // 🚫 No onClick, no pointer cursor
+                      className="rounded-md border p-3 bg-gray-50 text-gray-500"
                     >
-                      <h4 className="font-medium text-gray-900">{c.title}</h4>
-                      <p className="text-sm text-gray-500">${c.price}</p>
+                      <h4 className="font-medium">{c.title}</h4>
+                      <p className="text-sm">${c.price}</p>
                     </div>
                   ))}
                 </div>

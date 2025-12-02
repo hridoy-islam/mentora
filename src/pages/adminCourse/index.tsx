@@ -161,7 +161,6 @@ export default function AdminCoursesPage() {
                   <TableHead>Category</TableHead>
                   <TableHead>Instructor</TableHead>
                   <TableHead>Price</TableHead>
-                  <TableHead>Students</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -173,7 +172,6 @@ export default function AdminCoursesPage() {
                     <TableCell>{course.categoryId?.name}</TableCell>
                     <TableCell>{course.instructorId?.name}</TableCell>
                     <TableCell>${course.price}</TableCell>
-                    <TableCell>{course.students || 0}</TableCell>
                     <TableCell className="text-center">
                       <Switch
                         checked={course.status === 'active'}

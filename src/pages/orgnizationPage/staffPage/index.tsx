@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pen, Settings, MoveLeft, Eye } from 'lucide-react';
+import { Plus, Pen, Settings, MoveLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -12,42 +12,47 @@ import {
 } from '@/components/ui/table';
 import axiosInstance from '@/lib/axios';
 import { useToast } from '@/components/ui/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { DataTablePagination } from '@/components/shared/data-table-pagination';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
-export default function OrganizationPage() {
-  const [organizations, setOrganizations] = useState<any[]>([]);
+export default function OrganizationStaffPage() {
+  const [students, setStudents] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingOrganization, setEditingOrganization] = useState<any>(null);
+  const [editingStudent, setEditingStudent] = useState<any>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(100);
   const [searchTerm, setSearchTerm] = useState('');
-  const { toast } = useToast();
-  const navigate = useNavigate();
-
-  const fetchData = async (page: number, limit: number, search: string = '') => {
+  const { toast } = useToast(); // Initialize toast hook
+    const navigate = useNavigate()
+    const {id} = useParams()
+  const fetchData = async (
+    page: number,
+    limit: number,
+    search: string = ''
+  ) => {
     try {
       setInitialLoading(true);
-      const response = await axiosInstance.get('/users', {
+      const response = await axiosInstance.get(`/users?organizationId=${id}`, {
         params: {
-          role: 'company', // 👈 FETCH COMPANIES
+          role: 'student',
           page,
           limit,
-          ...(search ? { searchTerm: search } : {})
+          ...(search ? { searchTerm: search } : {}) // Send searchTerm if it exists
         }
       });
-      setOrganizations(response.data.data.result);
+      setStudents(response.data.data.result); // Set the correct state variable
       setTotalPages(response.data.data.meta.totalPage);
     } catch (error: any) {
-      console.error('Error fetching organizations:', error);
+      console.error('Error fetching students:', error);
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to fetch organizations.',
+        description:
+          error?.response?.data?.message || 'Failed to fetch students.',
         variant: 'destructive'
       });
     } finally {
@@ -58,29 +63,55 @@ export default function OrganizationPage() {
   const handleStatusChange = async (id: string, status: boolean) => {
     try {
       const updatedStatus = status ? 'active' : 'block';
+
       await axiosInstance.patch(`/users/${id}`, { status: updatedStatus });
 
-      setOrganizations((prev) =>
-        prev.map((org) => (org._id === id ? { ...org, status: updatedStatus } : org))
+      // Update state locally 👇
+      setStudents((prevStudents) =>
+        prevStudents.map((student) =>
+          student._id === id ? { ...student, status: updatedStatus } : student
+        )
       );
 
-      toast({ title: 'Organization status updated successfully' });
+      toast({
+        title: 'Student status updated successfully'
+      });
     } catch (error: any) {
+      console.error('Error updating status:', error);
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to update status.',
+        description:
+          error?.response?.data?.message || 'Failed to update status.',
         variant: 'destructive'
       });
     }
   };
 
+  const handleEdit = (student: any) => {
+    setEditingStudent(student);
+    setDialogOpen(true);
+  };
+
   useEffect(() => {
     fetchData(currentPage, entriesPerPage, searchTerm);
-  }, [currentPage, entriesPerPage]);
+  }, [currentPage, entriesPerPage]); // Added searchTerm to dependency array
+
+  useEffect(() => {
+    if (!dialogOpen) {
+      setEditingStudent(null);
+    }
+  }, [dialogOpen]);
 
   const handleSearch = () => {
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page on new search
     fetchData(1, entriesPerPage, searchTerm);
+  };
+
+  // Handle Enter key press in search input
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   if (initialLoading) {
@@ -92,15 +123,16 @@ export default function OrganizationPage() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 ">
       <div className="flex items-center justify-between">
-        <div className="flex flex-row items-center gap-4">
-          <h1 className="text-2xl font-semibold">All Organizations</h1>
+        <div className='flex flex-row items-center gap-4'>
+          <h1 className="text-2xl font-semibold">All Staff</h1>
           <div className="flex items-center space-x-4">
             <Input
+              type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              onKeyDown={handleKeyDown} // Trigger search on Enter
               placeholder="Search by Name, Email"
               className="h-8 min-w-[300px]"
             />
@@ -114,15 +146,14 @@ export default function OrganizationPage() {
           </div>
         </div>
 
-        <Button size="default" onClick={() => navigate(-1)} variant="outline">
-          <MoveLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
+         <Button size="default" onClick={() => navigate(-1)} variant="outline">
+            <MoveLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
       </div>
-
-      <Card>
+      <Card className="">
         <CardHeader>
-          <CardTitle>Organizations List</CardTitle>
+          <CardTitle>Staff List</CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -132,37 +163,33 @@ export default function OrganizationPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
-                <TableHead>Staff</TableHead>
                 <TableHead className="w-32 text-center">Status</TableHead>
                 <TableHead className="w-32 text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
-              {organizations.length === 0 ? (
+              {students.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-gray-500">
-                    No organizations found
+                  <TableCell
+                    colSpan={5}
+                    className="py-8 text-center text-gray-500"
+                  >
+                    No students found
                   </TableCell>
                 </TableRow>
               ) : (
-                organizations.map((org) => (
-                  <TableRow key={org._id}>
-                    <TableCell>{org.name}</TableCell>
-                    <TableCell>{org.email}</TableCell>
-                    <TableCell>{org.phone || 'N/A'}</TableCell>
-                    <TableCell> <Button
-                        variant="ghost"
-                        size="sm"
-                        className="bg-supperagent text-white hover:bg-supperagent/90"
-                        onClick={() => navigate(`${org._id}/staffs`)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" /> View
-                      </Button></TableCell>
+                students.map((student) => (
+                  <TableRow key={student._id}>
+                    <TableCell>{student.name}</TableCell>
+                    <TableCell>{student.email}</TableCell>
+                    <TableCell>{student.phone || 'N/A'}</TableCell>
                     <TableCell className="text-center">
                       <Switch
-                        checked={org.status === 'active'}
-                        onCheckedChange={(checked) => handleStatusChange(org._id, checked)}
+                        checked={student.status === 'active'}
+                        onCheckedChange={(checked) =>
+                          handleStatusChange(student._id, checked)
+                        }
                         className="mx-auto"
                       />
                     </TableCell>
@@ -171,7 +198,7 @@ export default function OrganizationPage() {
                         variant="ghost"
                         size="icon"
                         className="bg-supperagent text-white hover:bg-supperagent/90"
-                        onClick={() => setEditingOrganization(org)}
+                        onClick={() => handleEdit(student)}
                       >
                         <Pen className="h-4 w-4" />
                       </Button>
@@ -182,7 +209,7 @@ export default function OrganizationPage() {
             </TableBody>
           </Table>
 
-          {organizations.length > 40 && (
+          {students.length > 40 && (
             <div className="mt-4">
               <DataTablePagination
                 pageSize={entriesPerPage}

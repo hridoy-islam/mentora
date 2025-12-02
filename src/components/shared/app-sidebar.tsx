@@ -84,63 +84,7 @@ const adminNav = [
   },
 ];
 
-// Based on your screenshot
-const studentNav = [
-  {
-    title: 'Dashboard',
-    url: '/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'Course Manage',
-    icon: Box,
-    items: [
-      { title: 'My Enrolled', url: '/dashboard/student/enrolled' },
-      { title: 'Course Purchase', url: '/dashboard/student/purchase-history' },
-      { title: 'Bundle Purchase', url: '/dashboard/student/bundle-history' },
-    ],
-  },
-  {
-    title: 'Certificate',
-    url: '/dashboard/student/certificates',
-    icon: Award,
-  },
-  {
-    title: 'Quizzes',
-    url: '/dashboard/student/quizzes',
-    icon: HelpCircle,
-  },
-  {
-    title: 'Assignment',
-    url: '/dashboard/student/assignments',
-    icon: ClipboardCheck,
-  },
-  {
-    title: 'Review',
-    url: '/dashboard/student/reviews',
-    icon: Star,
-  },
-  {
-    title: 'Offline Payment',
-    url: '/dashboard/student/offline-payment',
-    icon: CreditCard,
-  },
-  {
-    title: 'Support Manage',
-    url: '/dashboard/support',
-    icon: Headset,
-  },
-  {
-    title: 'Notifications',
-    url: '/dashboard/notifications',
-    icon: Bell,
-  },
-  {
-    title: 'Wishlist',
-    url: '/dashboard/student/wishlist',
-    icon: Heart,
-  },
-];
+
 
 const instructorNav = [
   {
@@ -189,35 +133,23 @@ const companyNav = [
     icon: LayoutDashboard,
   },
   {
-    title: 'Manage Instructors',
-    url: '/dashboard/company/instructors',
+    title: 'My Staff',
+    url: '/dashboard/my-staff',
     icon: Users,
   },
-  {
-    title: 'Manage Students',
-    url: '/dashboard/company/students',
-    icon: UserRoundSearch,
-  },
+ 
   {
     title: 'Courses',
     url: '/dashboard/company/courses',
     icon: Box,
   },
-  {
-    title: 'Reports',
-    url: '/dashboard/company/reports',
-    icon: BarChart3,
-  },
+ 
   {
     title: 'Company Profile',
     url: '/dashboard/company/profile',
     icon: Building,
   },
-  {
-    title: 'Settings',
-    url: '/dashboard/settings/profile',
-    icon: Settings,
-  },
+ 
 ];
 
 // --- 2. Helper function to get nav items ---

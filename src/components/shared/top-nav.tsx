@@ -8,7 +8,8 @@ import {
   X,
   Plus,
   Minus,
-  Trash
+  Trash,
+  Grip
 } from 'lucide-react';
 import { NavLink as RouterNavLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -20,11 +21,15 @@ import {
 
 // Logo (no change)
 function Logo() {
+  const navigate = useNavigate();
   return (
-    <RouterNavLink to="/" className="flex items-center space-x-2">
+    <div
+      onClick={() => navigate('/')}
+      className="flex cursor-pointer items-center space-x-2"
+    >
       <GraduationCap className="h-10 w-10 text-supperagent" />
       <span className="text-3xl font-bold text-supperagent">Mentora</span>
-    </RouterNavLink>
+    </div>
   );
 }
 
@@ -35,9 +40,10 @@ function NavLink({ to, children }) {
       <RouterNavLink
         to={to}
         className={({ isActive }) =>
-          `pb-1 ${isActive
-            ? 'border-b-2 border-supperagent font-medium text-supperagent'
-            : 'text-gray-600 hover:text-supperagent'
+          `pb-1 ${
+            isActive
+              ? 'border-b-2 border-supperagent font-medium text-supperagent'
+              : 'text-gray-600 hover:text-supperagent'
           }`
         }
       >
@@ -90,12 +96,9 @@ export function TopNav() {
   }, [isCartOpen]);
 
   const handleCart = () => {
-
-    navigate('/cart')
+    navigate('/cart');
     setIsCartOpen(false);
-
-  }
-
+  };
 
   return (
     <div className="z-[9999] flex items-center justify-between bg-white p-4 shadow-sm">
@@ -150,7 +153,7 @@ export function TopNav() {
                             className="h-16 w-16 rounded-md object-cover"
                           />
                           <div className="ml-3 min-w-0 flex-1">
-                            <p className=" font-medium text-xs text-gray-800">
+                            <p className=" text-xs font-medium text-gray-800">
                               {item.title}
                             </p>
 
@@ -197,7 +200,7 @@ export function TopNav() {
                     <div className="border-t border-gray-200 p-4">
                       <div className="mb-2 flex justify-between font-medium text-gray-800">
                         <span>Total:</span>
-                        <span className='font-bold'>
+                        <span className="font-bold">
                           $
                           {cartItems
                             .reduce(
@@ -209,7 +212,6 @@ export function TopNav() {
                       </div>
 
                       <div
-
                         onClick={() => handleCart()}
                         className="block w-full rounded-md bg-supperagent px-4 py-2 text-center text-sm font-medium text-white hover:bg-supperagent/90"
                       >
@@ -225,22 +227,41 @@ export function TopNav() {
               </div>
             )}
           </div>
-
+          {!user ? (
+            <>
+              <RouterNavLink
+                to="/login"
+                className="flex items-center space-x-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                <User className="h-4 w-4" />
+                <span>Log in</span>
+              </RouterNavLink>
+              <RouterNavLink
+                to="/signup"
+                className="flex items-center space-x-2 rounded-md bg-supperagent px-4 py-2 text-sm font-medium text-white hover:bg-supperagent/90"
+              >
+                <span>Sign up</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </RouterNavLink>
+            </>
+          ) : (
+            <>
+              <div
+                onClick={() => {
+                  if (user?.role === 'student') navigate('/student');
+                  else if (
+                    ['admin', 'instructor', 'company'].includes(user?.role)
+                  )
+                    navigate('/dashboard');
+                }}
+                className="flex cursor-pointer items-center space-x-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium  hover:bg-supperagent/90 hover:text-white bg-supperagent text-white"
+              >
+                <Grip className="h-4 w-4" />
+                <span>Dashboard</span>
+              </div>
+            </>
+          )}
           {/* Auth Buttons (no change) */}
-          <RouterNavLink
-            to="/login"
-            className="flex items-center space-x-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <User className="h-4 w-4" />
-            <span>Log in</span>
-          </RouterNavLink>
-          <RouterNavLink
-            to="/signup"
-            className="flex items-center space-x-2 rounded-md bg-supperagent px-4 py-2 text-sm font-medium text-white hover:bg-supperagent/90"
-          >
-            <span>Sign up</span>
-            <ArrowUpRight className="h-4 w-4" />
-          </RouterNavLink>
         </div>
       </div>
     </div>

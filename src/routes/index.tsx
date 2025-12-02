@@ -31,6 +31,12 @@ import StudentPage from '@/pages/studentPage';
 import OrganizationPage from '@/pages/orgnizationPage';
 import InstructorPage from '@/pages/InstructorPage';
 import QuestionBankPage from '@/pages/questionPage';
+import PreviewCourseDetails from '@/pages/previewCourseWebsite';
+import OrganizationStaffPage from '@/pages/orgnizationPage/staffPage';
+import { PreviewStudentCourseDetailsPage } from '@/pages/previewCourseStudent';
+import PreviewLayout from '@/components/layout/preview-layout';
+import MyStaffPage from '@/pages/my-staff';
+import OrganizationCoursesPage from '@/pages/organizationCourse';
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 const DashboardPage = lazy(() => import('@/pages/dashboard'));
 
@@ -86,6 +92,7 @@ export default function AppRouter() {
           path: 'courses/:cid/course-modules/:mid/lessons/edit/:id',
           element: <EditLessonPage />
         },
+        
          {
           path: 'students',
           element: <StudentPage />
@@ -95,6 +102,10 @@ export default function AppRouter() {
           element: <OrganizationPage />
         },
          {
+          path: 'organizations/:id/staffs',
+          element: <OrganizationStaffPage />
+        },
+         {
           path: 'instructors',
           element: <InstructorPage />
         },
@@ -102,11 +113,45 @@ export default function AppRouter() {
           path: 'questions',
           element: <QuestionBankPage />
         },
+        {
+          path: 'my-staff',
+          element: <MyStaffPage />
+        },
+        {
+          path: 'company/courses',
+          element: <OrganizationCoursesPage />
+        },
       ]
     }
   ];
 
-    const StudentRoutes = [
+    const PreviewRoutes = [
+    {
+      path: '/dashboard',
+      element: (
+        <PreviewLayout>
+          <ProtectedRoute>
+            <Suspense>
+              <Outlet />
+            </Suspense>
+          </ProtectedRoute>
+        </PreviewLayout>
+      ),
+      children: [
+         {
+          path: 'courses/:cid/website-preview',
+          element: <PreviewCourseDetails />
+        },
+         {
+          path: 'courses/:cid/student-preview',
+          element: <PreviewStudentCourseDetailsPage />
+        },
+      ]
+    }
+  ];
+
+
+   const StudentRoutes = [
     {
       path: '/student',
       element: (
@@ -147,6 +192,7 @@ export default function AppRouter() {
       ]
     }
   ];
+
   const publicRoutes = [
     {
       path: '/',
@@ -219,7 +265,7 @@ export default function AppRouter() {
     }
   ];
 
-  const routes = useRoutes([...StudentRoutes,...publicRoutes, ...adminRoutes]);
+  const routes = useRoutes([...StudentRoutes,...publicRoutes, ...adminRoutes,...PreviewRoutes]);
 
   return routes;
 }

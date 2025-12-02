@@ -1,57 +1,118 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Sliders, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CourseCard from './components/CourseCard';
-import { courses } from '@/lib/demoData';
+import axiosInstance from '@/lib/axios';
 
 export default function CoursePage() {
   const navigate = useNavigate();
-  
+
   // State
-  const [selectedTopics, setSelectedTopics] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedInstructors, setSelectedInstructors] = useState([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [instructors, setInstructors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedInstructorIds, setSelectedInstructorIds] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 300 });
   const [sortBy, setSortBy] = useState('default');
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
 
-  // === DYNAMIC DERIVED DATA ===
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [coursesRes, categoriesRes, instructorsRes] = await Promise.all([
+          axiosInstance.get('/courses'),
+          axiosInstance.get('/category'),
+          axiosInstance.get('/users', { params: { role: 'instructor', limit: 'all' } }),
+        ]);
+
+        const courseData = coursesRes.data.data.result || [];
+        setCourses(courseData);
+
+        const categoryData = categoriesRes.data.data.result || [];
+        setCategories(categoryData);
+
+        const instructorData = instructorsRes.data.data.result || instructorsRes.data.data || [];
+        setInstructors(instructorData);
+
+        // Set price range
+        if (courseData.length > 0) {
+          const prices = courseData.map((c) => c.price || 0);
+          const min = Math.min(...prices);
+          const max = Math.max(...prices);
+          setPriceRange({ min, max });
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error('Failed to load data:', err);
+        setError('Failed to load course data.');
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // === Helper: Map category ID to name ===
+  const getCategoryNameById = (id: string) => {
+    const cat = categories.find((c) => c._id === id || c.id === id);
+    return cat?.name || 'Uncategorized';
+  };
+
+  // === Derived Data ===
   const allCategories = useMemo(() => {
-    const cats = [...new Set(courses.map(c => c.category))];
+    const cats = categories.map((c) => c.name).filter(Boolean);
     return ['All', ...cats.sort()];
-  }, []);
+  }, [categories]);
 
-  const allInstructors = useMemo(() => {
-    return [...new Set(courses.map(c => c.instructor))].sort();
-  }, []);
+  const allInstructorOptions = useMemo(() => {
+    return instructors
+      .filter((inst) => inst.name || inst.realName)
+      .map((inst) => ({
+        id: inst._id || inst.id,
+        name: inst.realName || inst.name || 'Instructor',
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [instructors]);
 
-const allTopics = useMemo(() => {
-  const cats = [...new Set(courses.map(c => c.category))];
-  return cats.sort(); // optional: sort alphabetically
-}, []);
+  const allTopics = useMemo(() => {
+    const topics = categories
+      .map((c) =>
+        c.name || 'Uncategorized'
+      )
+      .filter(Boolean);
+    return [...new Set(topics)].sort();
+  }, [courses, categories]);
 
+  const globalMinPrice = useMemo(() => Math.min(...courses.map((c) => c.price || 0)), [courses]);
+  const globalMaxPrice = useMemo(() => Math.max(...courses.map((c) => c.price || 0)), [courses]);
 
-  // Auto-set price range based on data
-  const globalMinPrice = useMemo(() => Math.min(...courses.map(c => c.price)), []);
-  const globalMaxPrice = useMemo(() => Math.max(...courses.map(c => c.price)), []);
-  
-  // Initialize price range dynamically (only once)
-  useState(() => {
-    setPriceRange({ min: globalMinPrice, max: globalMaxPrice });
-  });
+  useEffect(() => {
+    if (courses.length > 0) {
+      setPriceRange({ min: globalMinPrice, max: globalMaxPrice });
+    }
+  }, [globalMinPrice, globalMaxPrice, courses.length]);
 
-  // === FILTER HANDLERS ===
-  const toggleTopic = (topic) => {
-    setSelectedTopics(prev =>
-      prev.includes(topic) ? prev.filter(t => t !== topic) : [...prev, topic]
+  // === Filter Handlers ===
+  const toggleTopic = (topic: string) => {
+    setSelectedTopics((prev) =>
+      prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic]
     );
     setCurrentPage(1);
   };
 
-  const toggleInstructor = (instructor) => {
-    setSelectedInstructors(prev =>
-      prev.includes(instructor) ? prev.filter(i => i !== instructor) : [...prev, instructor]
+  const toggleInstructor = (instructorId: string) => {
+    setSelectedInstructorIds((prev) =>
+      prev.includes(instructorId)
+        ? prev.filter((id) => id !== instructorId)
+        : [...prev, instructorId]
     );
     setCurrentPage(1);
   };
@@ -59,27 +120,43 @@ const allTopics = useMemo(() => {
   const resetFilters = () => {
     setSelectedTopics([]);
     setSelectedCategory('All');
-    setSelectedInstructors([]);
+    setSelectedInstructorIds([]);
     setPriceRange({ min: globalMinPrice, max: globalMaxPrice });
     setCurrentPage(1);
   };
 
-  // === FILTERING & SORTING ===
+  // === Filtering & Sorting ===
   const filteredAndSortedCourses = useMemo(() => {
-    let result = courses.filter(course => {
-      // Topic filter: match against title/category words (case-insensitive)
-      const matchesTopic = selectedTopics.length === 0 || 
-        selectedTopics.some(topic => {
+    let result = courses.filter((course) => {
+      // Resolve category name for comparison
+      const courseCategoryName =
+        typeof course.category === 'string'
+          ? course.category
+          : getCategoryNameById(course.category);
+
+      // Topic filter: match title or resolved category name
+      const matchesTopic =
+        selectedTopics.length === 0 ||
+        selectedTopics.some((topic) => {
           const lowerTopic = topic.toLowerCase();
           return (
-            course.title.toLowerCase().includes(lowerTopic) ||
-            course.category.toLowerCase().includes(lowerTopic)
+            (course.title || '').toLowerCase().includes(lowerTopic) ||
+            courseCategoryName.toLowerCase().includes(lowerTopic)
           );
         });
 
-      const matchesCategory = selectedCategory === 'All' || course.category === selectedCategory;
-      const matchesInstructor = selectedInstructors.length === 0 || selectedInstructors.includes(course.instructor);
-      const matchesPrice = course.price >= priceRange.min && course.price <= priceRange.max;
+      // Category filter
+      const matchesCategory =
+        selectedCategory === 'All' || courseCategoryName === selectedCategory;
+
+      // Instructor filter (by ID)
+      const matchesInstructor =
+        selectedInstructorIds.length === 0 ||
+        selectedInstructorIds.includes(course.instructorId);
+
+      // Price filter
+      const price = course.price || 0;
+      const matchesPrice = price >= priceRange.min && price <= priceRange.max;
 
       return matchesTopic && matchesCategory && matchesInstructor && matchesPrice;
     });
@@ -87,20 +164,20 @@ const allTopics = useMemo(() => {
     // Sorting
     if (sortBy === 'price-low') result.sort((a, b) => a.price - b.price);
     if (sortBy === 'price-high') result.sort((a, b) => b.price - a.price);
-    if (sortBy === 'rating') result.sort((a, b) => b.rating - a.rating);
+    if (sortBy === 'rating') result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
     return result;
   }, [
+    courses,
     selectedTopics,
     selectedCategory,
-    selectedInstructors,
+    selectedInstructorIds,
     priceRange,
     sortBy,
-    globalMinPrice,
-    globalMaxPrice
+    categories,
   ]);
 
-  // === PAGINATION ===
+  // === Pagination ===
   const itemsPerPage = 12;
   const totalPages = Math.ceil(filteredAndSortedCourses.length / itemsPerPage);
   const paginatedCourses = filteredAndSortedCourses.slice(
@@ -108,7 +185,24 @@ const allTopics = useMemo(() => {
     currentPage * itemsPerPage
   );
 
-  const handleSelectCourse = (courseId) => navigate(`/courses/${courseId}`);
+  const handleSelectCourse = (courseId: string) => navigate(`/courses/${courseId}`);
+
+  // === Render ===
+  if (loading) {
+    return (
+      <div className="container mx-auto py-16 text-center">
+        <p>Loading courses...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-16 text-center text-red-600">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -116,17 +210,15 @@ const allTopics = useMemo(() => {
       <div className="bg-supperagent text-white py-16 px-4">
         <div className="container mx-auto">
           <h1 className="text-5xl font-bold mb-4">Explore Courses</h1>
-          
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="container mx-auto py-12 relative">
-        {/* Dynamic Topics Filter */}
+        {/* Topics */}
         <div className="mb-10">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Explore Topics</h3>
           <div className="flex flex-wrap gap-3">
-            {allTopics.map(topic => (
+            {allTopics.map((topic) => (
               <button
                 key={topic}
                 onClick={() => toggleTopic(topic)}
@@ -143,7 +235,7 @@ const allTopics = useMemo(() => {
         </div>
 
         {/* Filters Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10 pb-6 border-b border-gray-200">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10 pb-6 border-b border-gray-200 z-50">
           <button
             onClick={() => setShowFilters(true)}
             className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
@@ -158,7 +250,7 @@ const allTopics = useMemo(() => {
             </span>
             <div className="flex items-center gap-2 text-gray-600">
               <span className="text-sm">Sort by</span>
-              <select 
+              <select
                 value={sortBy}
                 onChange={(e) => {
                   setSortBy(e.target.value);
@@ -178,11 +270,11 @@ const allTopics = useMemo(() => {
         {/* Courses Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {paginatedCourses.length > 0 ? (
-            paginatedCourses.map(course => (
-              <CourseCard 
-                key={course.id} 
+            paginatedCourses.map((course) => (
+              <CourseCard
+                key={course._id || course.id}
                 course={course}
-                onClick={() => handleSelectCourse(course.id)}
+                onClick={() => handleSelectCourse(course._id || course.id)}
               />
             ))
           ) : (
@@ -240,10 +332,10 @@ const allTopics = useMemo(() => {
           </div>
         )}
 
-        {/* DYNAMIC FILTER SIDEBAR */}
+        {/* Filter Sidebar */}
         {showFilters && (
           <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-40 flex justify-end">
-            <div 
+            <div
               className="w-full max-w-xs bg-white h-full p-6 relative"
               onClick={(e) => e.stopPropagation()}
             >
@@ -259,11 +351,16 @@ const allTopics = useMemo(() => {
                 <h3 className="font-medium text-gray-900 mb-2">Category</h3>
                 <select
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="w-full border border-gray-300 rounded px-3 py-2"
                 >
-                  {allCategories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {allCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -272,15 +369,15 @@ const allTopics = useMemo(() => {
               <div className="mb-6">
                 <h3 className="font-medium text-gray-900 mb-2">Instructor</h3>
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                  {allInstructors.map(instructor => (
-                    <label key={instructor} className="flex items-center gap-2">
+                  {allInstructorOptions.map((inst) => (
+                    <label key={inst.id} className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        checked={selectedInstructors.includes(instructor)}
-                        onChange={() => toggleInstructor(instructor)}
+                        checked={selectedInstructorIds.includes(inst.id)}
+                        onChange={() => toggleInstructor(inst.id)}
                         className="rounded text-supperagent"
                       />
-                      <span className="text-sm">{instructor}</span>
+                      <span className="text-sm">{inst.name}</span>
                     </label>
                   ))}
                 </div>
@@ -297,7 +394,9 @@ const allTopics = useMemo(() => {
                   max={globalMaxPrice}
                   step={5}
                   value={priceRange.max}
-                  onChange={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
+                  onChange={(e) =>
+                    setPriceRange((prev) => ({ ...prev, max: Number(e.target.value) }))
+                  }
                   className="w-full mb-2"
                 />
                 <div className="flex justify-between text-sm text-gray-600">

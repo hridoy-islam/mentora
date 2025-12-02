@@ -14,17 +14,17 @@ export default function PublicLayout({
 
   const navigate = useNavigate()
 
-    useEffect(() => {
-    if (user?.role) {
-      if (user.role === 'student') navigate('/student');
-      else if (['admin', 'instructor', 'company'].includes(user.role)) navigate('/dashboard');
-    }
-  }, [user]);
+  //   useEffect(() => {
+  //   if (user?.role) {
+  //     if (user.role === 'student') navigate('/student');
+  //     else if (['admin', 'instructor', 'company'].includes(user.role)) navigate('/dashboard');
+  //   }
+  // }, [user]);
  return (
     <div className="flex min-h-screen flex-col overflow-hidden bg-white">
       
       {/* Top contact bar */}
-      <div className="bg-supperagent h-12 p-4 text-white">
+      <div className="bg-supperagent h-12 text-white">
         <div className="container mx-auto flex h-full items-center justify-start  gap-8">
           
           {/* Email */}

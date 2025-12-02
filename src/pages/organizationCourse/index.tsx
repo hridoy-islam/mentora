@@ -1,5 +1,6 @@
-import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { MoveLeft, Search, BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -8,40 +9,32 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Book, BookOpen, Plus, Star } from 'lucide-react';
-import { useSelector } from 'react-redux';
-import { useEffect, useState } from 'react';
 import axiosInstance from '@/lib/axios';
 import { useToast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
 import { DataTablePagination } from '@/components/shared/data-table-pagination';
+import { BlinkingDots } from '@/components/shared/blinking-dots';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useSelector } from 'react-redux';
 
-
-const companyStats = [
-  { title: 'Purchase Amount', value: '$513.40' },
-  { title: 'Platform Fee', value: '$10.00' },
-  { title: 'Total Profit', value: '$503.4' },
-  { title: 'Available Balance', value: '$0.00' },
-  { title: 'Total Course', value: '11' },
-  { title: 'Total Bundles', value: '01' }
-];
-
-
-
-
-export function CompanyDashboard() {
- const [courses, setCourses] = useState<any[]>([]);
+export default function OrganizationCoursesPage() {
+  const [courses, setCourses] = useState<any[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
-  const {toast} = useToast()
+
   // Pagination & Search
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(5); // Default to 10 for courses
+  const [entriesPerPage, setEntriesPerPage] = useState(100); // Default to 10 for courses
   const [searchTerm, setSearchTerm] = useState('');
-      const { user } = useSelector((state: any) => state.auth);
- const fetchData = async (
+
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useSelector((state: any) => state.auth);
+
+  // --- FETCH DATA ---
+  const fetchData = async (
     page: number,
     limit: number,
     search: string = ''
@@ -78,72 +71,66 @@ export function CompanyDashboard() {
     }
   };
 
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchData(1, entriesPerPage, searchTerm);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   useEffect(() => {
-    fetchData(currentPage, entriesPerPage);
+    fetchData(currentPage, entriesPerPage, searchTerm);
   }, [currentPage, entriesPerPage]);
 
+  if (initialLoading) {
+    return (
+      <div className="flex justify-center py-6">
+        <BlinkingDots size="large" color="bg-supperagent" />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 space-y-6 ">
-      {/* Section 1: Profile & Stats */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Profile Card */}
-        <div className="lg:col-span-4">
-          <Card className="overflow-hidden">
-            <div className="relative h-32 w-full">
-              <img
-                src={user.image}
-                alt="Banner"
-                className="h-full w-full object-cover"
-              />
-              <Avatar className="absolute -bottom-10 left-6 h-20 w-20 border-4 border-white">
-                <AvatarImage src={user?.image} />
-                <AvatarFallback>
-                  {user?.name.substring(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-            <CardContent className="mt-12">
-              <h2 className="text-xl font-bold">{user.name}</h2>
-              <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span>{user?.rating}</span>
-                <span>({user?.reviews}+ Positive)</span>
-              </div>
+    <div className="space-y-3">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <h1 className="text-2xl font-semibold">My Courses</h1>
 
-              <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                <Book className="h-4 w-4" />
-                <span>{user?.totalCourses} Courses</span>
-              </div>
-
-              <Button className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700">
-                <Plus className="mr-2 h-4 w-4" />
-                New course
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Search Bar */}
+          {/* <div className="flex items-center space-x-2">
+            <Input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Search by Course Name"
+              className="h-9 min-w-[200px] lg:min-w-[300px]"
+            />
+            <Button
+              onClick={handleSearch}
+              size="sm"
+              className="bg-supperagent text-white hover:bg-supperagent/90"
+            >
+              <Search className="mr-2 h-4 w-4" /> Search
+            </Button>
+          </div> */}
         </div>
 
-        {/* Stats Grid */}
-        <div className="lg:col-span-8">
-          <div className="grid gap-6 sm:grid-cols-3">
-            {companyStats.map((stat) => (
-              <Card key={stat.title}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <div className="flex items-center gap-2">
+          <Button size="default" onClick={() => navigate(-1)} variant="outline">
+            <MoveLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
         </div>
       </div>
 
-      {/* Section 2: Course List */}
-     <Card>
+      {/* TABLE CARD */}
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
              <BookOpen className="h-5 w-5" /> Enrolled Course List
@@ -205,7 +192,7 @@ export function CompanyDashboard() {
             </TableBody>
           </Table>
 
-          {courses.length > 6 && (
+          {courses.length > 0 && (
             <div className="mt-4">
               <DataTablePagination
                 pageSize={entriesPerPage}
