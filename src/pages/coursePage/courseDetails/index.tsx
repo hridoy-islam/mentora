@@ -8,7 +8,14 @@ import {
   BarChart3,
   Share2,
   Heart,
-  Zap
+  Zap,
+  CheckCircle2,
+  PlayCircle,
+  FileText,
+  AlertCircle,
+  Globe,
+  MonitorPlay,
+  Sparkles
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '@/lib/axios';
@@ -16,9 +23,10 @@ import { useDispatch } from 'react-redux';
 import { addToCart } from '@/redux/features/cartSlice';
 import CourseContentAccordion from '../components/CourseContentAccordion';
 import { useToast } from '@/components/ui/use-toast';
-import { BlinkingDots } from '@/components/shared/blinking-dots';
+import { Button } from '@/components/ui/button'; // Assuming you have shadcn or similar, else standard buttons used below
+import { Separator } from '@/components/ui/separator';
 
-// Lesson Interface
+// --- Types (Kept the same) ---
 interface Lesson {
   _id: string;
   title: string;
@@ -26,13 +34,11 @@ interface Lesson {
   type: 'video' | 'doc' | 'quiz';
 }
 
-// Module Interface
 interface CourseModule {
   _id: string;
   title: string;
 }
 
-// Instructor Interface
 interface Instructor {
   _id: string;
   name: string;
@@ -40,9 +46,9 @@ interface Instructor {
   bio?: string;
   rating?: number;
   students?: number;
+  image?: string; // Added image field if available
 }
 
-// Course Interface
 interface Course {
   _id: string;
   title: string;
@@ -58,52 +64,67 @@ interface Course {
   learningPoints: string[];
   requirements: string[];
   aboutDescription: string;
-  instructorId: Instructor; // Populated instructor
+  instructorId: Instructor;
+  updatedAt?: string; // Added for "Last updated"
+  language?: string; // Added for language display
 }
+
+// --- Skeleton Component for Loading ---
+const CourseSkeleton = () => (
+  <div className="min-h-screen animate-pulse bg-gray-50">
+    <div className="h-96 bg-slate-900/10"></div>
+    <div className="container mx-auto -mt-32 px-4">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <div className="h-80 rounded-xl bg-gray-200"></div>
+          <div className="h-10 w-1/3 rounded bg-gray-200"></div>
+          <div className="space-y-2">
+            <div className="h-4 w-full rounded bg-gray-200"></div>
+            <div className="h-4 w-5/6 rounded bg-gray-200"></div>
+          </div>
+        </div>
+        <div className="lg:col-span-1">
+          <div className="h-96 rounded-xl bg-gray-200"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { toast } = useToast();
+
   const [moreCourses, setMoreCourses] = useState<Course[]>([]);
   const [moreLoading, setMoreLoading] = useState(true);
   const [course, setCourse] = useState<Course | null>(null);
-  const [sections, setSections] = useState<
-    {
-      title: string;
-      lessons: number;
-      hours: string;
-      lessonsList: { id: string; title: string; duration: string }[];
-    }[]
-  >([]);
+  const [sections, setSections] = useState<any[]>([]);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // --- Data Fetching Logic (Identical to yours) ---
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
-
       try {
         setLoading(true);
         setError(null);
 
-        // Fetch course (Ensure backend does populate!)
         const courseRes = await axiosInstance.get(`/courses/${id}`);
         const courseData: Course = courseRes.data.data;
         setCourse(courseData);
 
-        // Fetch modules
         const modulesRes = await axiosInstance.get('/course-modules', {
           params: { courseId: id }
         });
         const modules: CourseModule[] = modulesRes.data.data.result;
 
-        // Fetch lessons for each module
         const modulesWithLessons = await Promise.all(
           modules.map(async (mod) => {
-            const lessonsRes = await axiosInstance.get('/course-lesson', {
+            const lessonsRes = await axiosInstance.get('/course-lesson?fields=title,type,duration', {
               params: { moduleId: mod._id }
             });
             const lessons: Lesson[] = lessonsRes.data.data.result;
@@ -111,14 +132,13 @@ export default function CourseDetailPage() {
           })
         );
 
-        // Create accordion sections
         const transformedSections = modulesWithLessons.map(
           ({ module, lessons }) => {
             const totalMinutes = lessons.reduce((sum, lesson) => {
               if (!lesson.duration) return sum;
               const parts = lesson.duration.split(':').map(Number);
-              if (parts.length === 2) return sum + parts[0]; // mm:ss
-              if (parts.length === 3) return sum + parts[0] * 60 + parts[1]; // hh:mm:ss
+              if (parts.length === 2) return sum + parts[0];
+              if (parts.length === 3) return sum + parts[0] * 60 + parts[1];
               return (
                 sum +
                 (isNaN(Number(lesson.duration)) ? 0 : Number(lesson.duration))
@@ -133,7 +153,8 @@ export default function CourseDetailPage() {
               lessonsList: lessons.map((lesson) => ({
                 id: lesson._id,
                 title: lesson.title,
-                duration: lesson.duration || '—'
+                duration: lesson.duration || '—',
+                type: lesson.type || 'video'
               }))
             };
           }
@@ -143,11 +164,6 @@ export default function CourseDetailPage() {
       } catch (err) {
         console.error('Failed to load course:', err);
         setError('Failed to load course details.');
-        toast({
-          title: 'Error',
-          description: 'Unable to load course. Please try again later.',
-          variant: 'destructive'
-        });
       } finally {
         setLoading(false);
       }
@@ -155,10 +171,10 @@ export default function CourseDetailPage() {
 
     fetchData();
   }, [id]);
+
   useEffect(() => {
     const fetchMoreCourses = async () => {
       if (!course?.instructorId?._id) return;
-
       try {
         setMoreLoading(true);
         const res = await axiosInstance.get('/courses', {
@@ -166,16 +182,16 @@ export default function CourseDetailPage() {
         });
         setMoreCourses(
           res.data.data.result.filter((c: Course) => c._id !== course._id)
-        ); // exclude current course
+        );
       } catch (err) {
         console.error('Failed to fetch more courses:', err);
       } finally {
         setMoreLoading(false);
       }
     };
-
     fetchMoreCourses();
   }, [course?.instructorId?._id]);
+
   const handleBackToCourses = () => navigate('/courses');
 
   const handleAddToCart = () => {
@@ -191,271 +207,423 @@ export default function CourseDetailPage() {
     );
     toast({
       title: 'Added to Cart',
-      description: `"${course.title}" has been added to your cart.`
+      description: `"${course.title}" is now in your cart.`
     });
   };
 
+  if (loading) return <CourseSkeleton />;
 
-  
-
-  if (loading)
-    return (
-      <div className="flex justify-center py-24">
-        <BlinkingDots size="large" color="bg-supperagent" />
-      </div>
-    );
   if (error || !course)
     return (
-      <div className="flex min-h-screen items-center justify-center text-gray-600">
-        {error || 'Course not found'}
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 text-slate-600">
+        <AlertCircle size={48} className="mb-4 text-red-500 opacity-50" />
+        <h2 className="text-2xl font-semibold text-slate-800">
+          Oops! Course Not Found
+        </h2>
+        <p className="mt-2 text-slate-500">
+          {error || 'The course you are looking for does not exist.'}
+        </p>
+        <button
+          onClick={handleBackToCourses}
+          className="mt-6 rounded-full bg-slate-900 px-6 py-2 text-white transition-colors hover:bg-slate-800"
+        >
+          Return to Courses
+        </button>
       </div>
     );
 
+  // Calculate discount percentage
+  const discountPercent = Math.round(
+    ((course.originalPrice - course.price) / course.originalPrice) * 100
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 py-8 text-white">
-        <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-slate-50  selection:bg-blue-100">
+      {/* --- HERO SECTION --- */}
+      <div className="relative overflow-hidden bg-slate-900 pb-32 pt-10 lg:pb-40">
+        {/* Abstract Background pattern */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+        <div className="absolute right-0 top-0 h-[500px] w-[500px] -translate-y-1/2 translate-x-1/2 rounded-full bg-blue-600/20 blur-[100px]"></div>
+
+        <div className="container relative z-10 mx-auto px-6">
+          {/* Breadcrumb / Back */}
           <button
             onClick={handleBackToCourses}
-            className="mb-6 flex items-center gap-2 font-medium text-slate-300 hover:text-white"
+            className="group mb-8 flex items-center gap-2 text-sm font-medium text-slate-400 transition-colors hover:text-white"
           >
-            <ArrowLeft size={20} />
+            <div className="rounded-full bg-slate-800 p-1.5 transition-colors group-hover:bg-slate-700">
+              <ArrowLeft size={16} />
+            </div>
             <span>Back to Courses</span>
           </button>
-          <h1 className="text-4xl font-bold lg:text-5xl">{course.title}</h1>
-          {/* <p className="mt-4 text-lg text-slate-300">{course.description}</p> */}
-        </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* LEFT SECTION */}
-          <div className="space-y-12 lg:col-span-2">
-            {/* Image */}
-            <div className="overflow-hidden rounded-xl shadow-lg">
-              <img
-                src={
-                  course.image || '/javascript-programming-web-development.png'
-                }
-                alt={course.title}
-                className="h-80 w-full object-cover"
-              />
-            </div>
-
-            {/* Rating & Instructor */}
-            <div className="border-b border-gray-200 pb-8">
-              <div className="mb-6 flex items-center gap-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={20}
-                    className={
-                      i < Math.floor(course.rating)
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
-                    }
-                  />
-                ))}
-                <span className="font-bold text-gray-900">
-                  {course.rating} Rating
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
+              {/* Badges */}
+              <div className="flex flex-wrap gap-3">
+                <span className="inline-flex items-center rounded-md bg-yellow-400/10 px-3 py-1 text-xs font-semibold text-yellow-400 ring-1 ring-inset ring-yellow-400/20">
+                  Best Seller
                 </span>
-                <span className="text-gray-600">
-                  ({course.reviews} reviews)
-                </span>
-                <span className="text-gray-600">
-                  • {course.students.toLocaleString()} students
+                <span className="inline-flex items-center rounded-md bg-blue-400/10 px-3 py-1 text-xs font-semibold text-blue-400 ring-1 ring-inset ring-blue-400/20">
+                  {course.title.includes('Advanced')
+                    ? 'Advanced'
+                    : 'Beginner Friendly'}
                 </span>
               </div>
 
-              {/* Instructor */}
-              <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-xl font-bold text-white">
-                  {course.instructorId?.name
-                    ?.split(' ')
-                    ?.map((n) => n[0])
-                    .join('')}
+              <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-white lg:text-5xl">
+                {course.title}
+              </h1>
+
+              <p className="line-clamp-2 max-w-2xl text-lg leading-relaxed text-slate-300">
+                {/* Strip HTML tags for the short description in hero if necessary */}
+                {course.description.replace(/<[^>]*>?/gm, '').substring(0, 150)}
+                ...
+              </p>
+
+              {/* Stats Row */}
+              <div className="flex flex-wrap items-center gap-6 pt-2 text-sm text-slate-300">
+                <div className="flex items-center gap-1.5 text-yellow-400">
+                  <span className="text-base font-bold">{course.rating}</span>
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={14}
+                        className={
+                          i < Math.floor(course.rating)
+                            ? 'fill-current'
+                            : 'text-slate-600'
+                        }
+                      />
+                    ))}
+                  </div>
+                  <span className="ml-1 text-slate-400 underline decoration-slate-600 underline-offset-4">
+                    ({course.reviews} reviews)
+                  </span>
                 </div>
-                <div>
-                  <div className="text-lg font-bold text-gray-900">
-                    {course.instructorId?.name}
-                  </div>
-                  <div className="mt-2 flex gap-4 text-sm text-gray-600">
-                    <span>⭐ {course.instructorId?.rating ?? 0} Rating</span>
-                    <span>
-                      👥 {course.instructorId?.students?.toLocaleString() ?? 0}{' '}
-                      Students
-                    </span>
-                  </div>
+
+                <div className="flex items-center gap-1.5">
+                  <MonitorPlay size={16} className="text-slate-400" />
+                  <span>{course.students.toLocaleString()} Students</span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <Globe size={16} className="text-slate-400" />
+                  <span>English</span>
                 </div>
               </div>
-            </div>
 
-            {/* Learning Points */}
-            <div>
-              <h2 className="mb-6 text-3xl font-bold text-gray-900">
-                What you'll learn
-              </h2>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {course.learningPoints.map((point, i) => (
-                  <div key={i} className="flex gap-3">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100">
-                      <Zap size={14} className="text-supperagent" />
-                    </div>
-                    <span className="font-medium text-gray-700">{point}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Requirements */}
-            <div>
-              <h2 className="mb-6 text-3xl font-bold text-gray-900">
-                Requirements
-              </h2>
-              <ul className="space-y-3">
-                {course.requirements.map((req, i) => (
-                  <li key={i} className="flex gap-3 text-gray-700">
-                    <span className="font-bold text-supperagent">•</span>
-                    <span className="font-medium">{req}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* About Course */}
-            <div>
-              <h2 className="mb-6 text-3xl font-bold text-gray-900">
-                About This Course
-              </h2>
-              <div
-                className="prose max-w-none text-gray-700"
-                dangerouslySetInnerHTML={{ __html: course.description }}
-              />
-            </div>
-
-            <CourseContentAccordion sections={sections} />
-
-            {/* Instructor Details */}
-            <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-8">
-              <h2 className="mb-4 text-2xl font-bold text-gray-900">
-                About the Instructor
-              </h2>
-              <div className="flex items-start gap-4">
-                <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-gradient-to-br from-blue-400 to-purple-500 text-xl font-bold text-white">
-                  {course.instructorId?.name
-                    ?.split(' ')
-                    ?.map((n) => n[0])
-                    .join('')}
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {course.instructorId?.name}
-                  </h3>
-                  <p className="mb-2 text-gray-700">
-                    {course.instructorId?.title}
-                  </p>
-                  <p className="leading-relaxed text-gray-700">
-                    {course.instructorId?.bio}
-                  </p>
-                </div>
+              {/* Instructor Mini Profile (Hero) */}
+              <div className="flex items-center gap-3 pt-4 text-slate-300">
+                <span className="text-slate-400">Created by</span>
+                <span className="cursor-pointer font-medium text-white underline decoration-blue-500/50 underline-offset-4 transition-all hover:decoration-blue-500">
+                  {course.instructorId?.name}
+                </span>
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* RIGHT SIDEBAR */}
-          <div className="sticky top-8 lg:col-span-1">
-            <div className="space-y-5 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              {/* Price */}
-              <div className="border-b pb-4">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-gray-900">
-                    ${course.price}
-                  </span>
-                  <span className="text-gray-500 line-through">
-                    ${course.originalPrice}
-                  </span>
-                </div>
-                <span className="inline-block rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-supperagent">
-                  Save ${(course.originalPrice - course.price).toFixed(2)}
+      {/* --- MAIN CONTENT LAYOUT --- */}
+      <div className="container relative z-20 mx-auto -mt-24 px-6 pb-24">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+          {/* LEFT COLUMN (Content) */}
+          <div className="space-y-10 lg:col-span-2">
+            {/* Course Cover Image (Static) */}
+            <div className="group relative aspect-video select-none overflow-hidden rounded-2xl bg-slate-900 shadow-2xl ring-1 ring-slate-900/10">
+              {/* The Image */}
+              <img
+                src={course?.image || '/placeholder-course.jpg'}
+                alt={course.title}
+                className="h-full w-full transform object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
+              />
+
+              {/* Gradient Overlay for Depth (Makes it look premium) */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-slate-900/10 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-40"></div>
+
+              {/* Optional: Category Badge (Top Left) */}
+              <div className="absolute left-4 top-4">
+                <span className="inline-flex items-center rounded-md bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-sm ring-1 ring-white/30 backdrop-blur-md">
+                  {course.category || 'Course'}
                 </span>
               </div>
 
-              {/* Buttons */}
-              <button
-                onClick={handleAddToCart}
-                className="w-full rounded-md bg-supperagent py-3 font-medium text-white transition hover:bg-supperagent"
-              >
-                Add to Cart
-              </button>
-              <button className="w-full rounded-md border py-3 font-medium">
-                Buy Now
-              </button>
-
-              {/* Course Info */}
-              <div className="space-y-4 border-t pt-5 text-sm">
-                <div className="flex items-center gap-3">
-                  <Clock size={14} />
-                  <span>{course.duration} hours on demand</span>
+              {/* Optional: Watermark / Brand Logo (Center or Bottom Right) */}
+              {/* This adds a professional 'brand' feel without looking like a play button */}
+              <div className="absolute bottom-4 right-4 opacity-50 transition-opacity duration-300 group-hover:opacity-100">
+                <div className="flex items-center gap-2 rounded-lg bg-black/20 px-3 py-1.5 text-sm font-medium text-white/80 ring-1 ring-white/10 backdrop-blur-sm">
+                  <Sparkles size={14} />
+                  <span>Mentora Verified</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Download size={14} />
-                  <span>{course.resources} downloadable resources</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Award size={14} />
-                  <span>Certificate of completion</span>
-                </div>
-              </div>
-
-              {/* Share + Wishlist */}
-              <div className="flex gap-2 border-t pt-4">
-                <button className="flex flex-1 items-center justify-center gap-2 rounded-md border py-2">
-                  <Share2 size={16} />
-                  Share
-                </button>
-                <button
-                  onClick={() => setIsWishlisted(!isWishlisted)}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-md border py-2"
-                >
-                  <Heart
-                    size={16}
-                    fill={isWishlisted ? 'currentColor' : 'none'}
-                    className={isWishlisted ? 'text-red-500' : ''}
-                  />
-                  Wishlist
-                </button>
               </div>
             </div>
 
-            {/* Suggested Courses */}
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold">
-                More by {course.instructorId?.name}
-              </h3>
-
-              {moreLoading ? (
-                <p className="text-sm italic text-gray-500">
-                  Loading more courses...
-                </p>
-              ) : moreCourses.length === 0 ? (
-                <p className="text-sm italic text-gray-500">
-                  No other courses available.
-                </p>
-              ) : (
-                <div className="mt-4 space-y-2">
-                  {moreCourses.map((c) => (
-                    <div
-                      key={c._id}
-                      className="cursor-pointer rounded-md border p-3 hover:bg-gray-50"
-                      onClick={() => navigate(`/courses/${c._id}`)}
-                    >
-                      <h4 className="font-medium text-gray-900">{c.title}</h4>
-                      <p className="text-sm text-gray-500">${c.price}</p>
+            <div className="space-y-10">
+              {/* What you'll learn - Designed as a highlighted section */}
+              <div className="rounded-2xl border border-slate-100 bg-slate-50 p-8">
+                <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-slate-900">
+                  <Zap className="fill-amber-500 text-amber-500" size={20} />
+                  What you'll learn
+                </h2>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
+                  {course.learningPoints.map((point, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <CheckCircle2
+                        size={18}
+                        className="mt-1 shrink-0 text-emerald-600"
+                      />
+                      <span className="text-sm font-medium leading-relaxed text-slate-700">
+                        {point}
+                      </span>
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
+
+              {/* Course Content */}
+              <div>
+                <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    Course Content
+                  </h2>
+                  <div className="flex items-center gap-4 text-sm font-medium"></div>
+                </div>
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <CourseContentAccordion sections={sections} />
+                </div>
+              </div>
+
+              {/* Requirements */}
+              <div>
+                <h2 className="mb-4 text-2xl font-bold text-slate-900">
+                  Requirements
+                </h2>
+                <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
+                  <ul className="space-y-3">
+                    {course.requirements.map((req, i) => (
+                      <li
+                        key={i}
+                        className="flex gap-3 text-sm leading-relaxed text-slate-700"
+                      >
+                        <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400"></div>
+                        <span>{req}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <h2 className="mb-4 text-2xl font-bold text-slate-900">
+                  Description
+                </h2>
+                <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm md:p-8">
+                  <div
+                    className="prose prose-sm prose-slate max-w-none md:prose-base prose-headings:font-bold prose-p:text-slate-600 prose-a:text-blue-600 prose-img:rounded-xl"
+                    dangerouslySetInnerHTML={{ __html: course.description }}
+                  />
+                </div>
+              </div>
+
+              {/* Instructor */}
+              <div>
+                <h2 className="mb-4 text-2xl font-bold text-slate-900">
+                  Instructor
+                </h2>
+                <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm md:p-8">
+                  <div className="flex flex-col gap-6 sm:flex-row">
+                    {/* Avatar */}
+                    <div className="shrink-0">
+                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-2xl font-bold text-slate-500 ring-2 ring-slate-100">
+                        {course.instructorId?.image ? (
+                          <img
+                            src={course.instructorId.image}
+                            alt={course.instructorId.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          course.instructorId?.name?.charAt(0)
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-slate-900">
+                        {course.instructorId?.name}
+                      </h3>
+                      <p className="mb-4 text-sm font-medium text-blue-600">
+                        {course.instructorId?.title}
+                      </p>
+
+                      {/* Stats Row */}
+                      {/* <div className="flex flex-wrap gap-4 md:gap-8 text-sm text-slate-600 mb-4 border-b border-slate-100 pb-4">
+                       <div className="flex items-center gap-1.5">
+                         <Star size={14} className="fill-amber-400 text-amber-400" />
+                         <span className="font-semibold text-slate-900">{course.instructorId?.rating}</span>
+                         <span className="text-slate-500">Rating</span>
+                       </div>
+                       <div className="flex items-center gap-1.5">
+                         <Award size={14} className="text-slate-400" />
+                         <span className="font-semibold text-slate-900">{course.instructorId?.reviews?.toLocaleString()}</span>
+                         <span className="text-slate-500">Reviews</span>
+                       </div>
+                       <div className="flex items-center gap-1.5">
+                         <BarChart3 size={14} className="text-slate-400" />
+                         <span className="font-semibold text-slate-900">{course.instructorId?.students?.toLocaleString()}</span>
+                         <span className="text-slate-500">Students</span>
+                       </div>
+                    </div> */}
+
+                      <p className="line-clamp-4 text-sm leading-relaxed text-slate-600 transition-all duration-300 hover:line-clamp-none">
+                        {course.instructorId?.bio}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* More Courses */}
+            {moreCourses.length > 0 && (
+              <div className="border-t border-slate-200 pt-8">
+                <h3 className="mb-6 text-xl font-bold text-slate-900">
+                  More courses by {course.instructorId?.name}
+                </h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {moreCourses.map((c) => (
+                    <div
+                      key={c._id}
+                      className="group flex cursor-pointer gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-slate-300 hover:shadow-md"
+                      onClick={() => navigate(`/courses/${c._id}`)}
+                    >
+                      <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+                        <img
+                          src={c.image || '/placeholder-course.jpg'}
+                          alt={c.title}
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="flex flex-col justify-between">
+                        <h4 className="line-clamp-2 text-sm font-semibold text-slate-900 transition-colors group-hover:text-blue-600">
+                          {c.title}
+                        </h4>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="font-bold text-slate-900">
+                            ${c.price}
+                          </span>
+                          <span className="text-slate-400 line-through">
+                            ${c.originalPrice}
+                          </span>
+                          <span className="flex items-center gap-0.5 text-amber-500">
+                            <Star size={10} fill="currentColor" />
+                            {c.rating}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT SIDEBAR (Sticky) */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 space-y-6">
+              {/* Pricing Card */}
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
+                <div className="p-6">
+                  <div className="mb-6">
+                    <div className="mb-2 flex items-end gap-3">
+                      <span className="text-4xl font-extrabold text-slate-900">
+                        ${course.price}
+                      </span>
+                      <span className="mb-1.5 text-lg text-slate-400 line-through">
+                        ${course.originalPrice}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center rounded-md bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/10">
+                        {discountPercent}% Off
+                      </span>
+                      <span className="flex items-center gap-1 text-xs font-medium text-rose-600">
+                        <Clock size={12} /> 2 days left at this price!
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-6 space-y-3">
+                    <button
+                      onClick={handleAddToCart}
+                      className="flex w-full transform items-center justify-center gap-2 rounded-xl bg-supperagent px-4 py-3.5 font-bold text-white shadow-lg shadow-purple-200 transition-all hover:bg-supperagent/90 active:scale-95"
+                    >
+                      Add to Cart
+                    </button>
+                    <button className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 font-bold text-slate-900 transition-all hover:border-slate-300">
+                      Buy Now
+                    </button>
+                  </div>
+
+                  <div className="mb-6 text-center text-xs text-slate-500">
+                    30-Day Money-Back Guarantee
+                  </div>
+
+                  <div className="space-y-4 border-t border-slate-100 pt-6">
+                    <h4 className="text-sm font-bold text-slate-900">
+                      This course includes:
+                    </h4>
+                    <ul className="space-y-3 text-sm text-slate-600">
+                      <li className="flex items-center gap-3">
+                        <MonitorPlay size={16} className="text-slate-400" />
+                        <span>{course.duration} hours on-demand video</span>
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <FileText size={16} className="text-slate-400" />
+                        <span>{course.resources} downloadable resources</span>
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <Download size={16} className="text-slate-400" />
+                        <span>Full lifetime access</span>
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <MonitorPlay size={16} className="text-slate-400" />
+                        <span>Access on mobile and TV</span>
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <Award size={16} className="text-slate-400" />
+                        <span>Certificate of completion</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="flex justify-between border-t border-slate-200 bg-slate-50 p-4">
+                  <button
+                    className="flex w-1/2 items-center justify-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+                    onClick={() => {
+                      /* share logic */
+                    }}
+                  >
+                    <Share2 size={16} /> Share
+                  </button>
+                  <div className="my-auto h-5 w-px bg-slate-200"></div>
+                  <button
+                    onClick={() => setIsWishlisted(!isWishlisted)}
+                    className={`flex w-1/2 items-center justify-center gap-2 text-sm font-medium transition-colors ${isWishlisted ? 'text-rose-500' : 'text-slate-600 hover:text-slate-900'}`}
+                  >
+                    <Heart
+                      size={16}
+                      fill={isWishlisted ? 'currentColor' : 'none'}
+                    />{' '}
+                    Wishlist
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

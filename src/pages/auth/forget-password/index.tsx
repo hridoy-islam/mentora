@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
   // --- End OnSubmit Logic ---
 
   return (
-    <div className="flex w-full py-16">
+    <div className="flex container mx-auto py-16">
       {/* Left Column - Fixed Image */}
       <div className="relative hidden items-center justify-center overflow-hidden   lg:flex lg:w-1/2">
         <img
@@ -79,7 +79,6 @@ export default function ForgotPasswordPage() {
           alt="Sign In Illustration"
           className="z-10 w-full  rounded-lg"
         />
-        <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-purple-100 opacity-50"></div>
       </div>
 
       {/* Right Column - Form */}

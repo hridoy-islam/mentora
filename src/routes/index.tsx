@@ -12,7 +12,7 @@ import PublicLayout from '@/components/layout/public-layout';
 import HomePage from '@/pages/homePage';
 import  CoursePage  from '@/pages/coursePage';
 import CourseDetailPage from '@/pages/coursePage/courseDetails';
-import { ContactPage } from '@/pages/auth/contactPage';
+import { ContactPage } from '@/pages/contactPage';
 import { CartPage } from '@/pages/cartPage';
 import StudentLayout from '@/components/layout/student-layout';
 import { StudentDashboard } from '@/pages/dashboard/rolewise-dashboard/student-dashboard';
@@ -37,6 +37,7 @@ import { PreviewStudentCourseDetailsPage } from '@/pages/previewCourseStudent';
 import PreviewLayout from '@/components/layout/preview-layout';
 import MyStaffPage from '@/pages/my-staff';
 import OrganizationCoursesPage from '@/pages/organizationCourse';
+import AboutPage from '@/pages/aboutPage';
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 const DashboardPage = lazy(() => import('@/pages/dashboard'));
 
@@ -209,6 +210,11 @@ export default function AppRouter() {
         {
           path: '/contact',
           element: <ContactPage />,
+          index: true
+        },
+        {
+          path: '/about-us',
+          element: <AboutPage />,
           index: true
         },
         {

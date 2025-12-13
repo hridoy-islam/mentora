@@ -286,13 +286,14 @@ export default function CourseModulesPage() {
                             <TooltipTrigger asChild>
                               <Button
                                 variant="default"
-                                size="icon"
-                                className="h-8 w-8"
+                                size="sm"
+                             
                                 onClick={() =>
                                   navigate(`${module._id}/lessons`)
                                 }
                               >
-                                <BookOpen className="h-4 w-4" />
+                                <BookOpen className="h-4 w-4 mr-2" />
+                                View Lessons
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -305,10 +306,10 @@ export default function CourseModulesPage() {
                               <Button
                                 variant="default"
                                 size="sm"
-                                className="h-8 w-8 "
+      
                                 onClick={() => openEditDialog(module)}
                               >
-                                <Pen className="mr h-4 w-4" />
+                                <Pen className="mr-2 h-4 w-4" />
                                 Edit
                               </Button>
                             </TooltipTrigger>
@@ -321,14 +322,14 @@ export default function CourseModulesPage() {
                             <TooltipTrigger asChild>
                               <Button
                                 variant="destructive"
-                                size="icon"
-                                className="h-8 w-8"
+                                size="sm"
                                 onClick={() => {
                                   setDeletingModuleId(module._id);
                                   setDeleteConfirmOpen(true);
                                 }}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>

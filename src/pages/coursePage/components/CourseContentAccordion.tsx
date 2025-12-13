@@ -48,7 +48,6 @@ export default function CourseContentAccordion({ sections }) {
 
   return (
     <div id="course-content">
-      <h2 className="text-3xl font-bold text-gray-900 mb-6">Course Content</h2>
       <div className="space-y-3">
         {sections.map((section, index) => {
           const isOpen = openSections.has(index);

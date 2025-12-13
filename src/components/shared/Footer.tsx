@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,14 +12,17 @@ import {
   Send,
   Apple,
   ArrowUp,
+  ChevronRight,
+  GraduationCap
 } from "lucide-react";
 
-// A simple stand-in for a Google Play icon
+// Google Play Icon Component
 const GooglePlayIcon = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 512 512"
-    className="w-5 h-5"
+    width="20"
+    height="20"
     {...props}
   >
     <path
@@ -61,160 +62,157 @@ export function Footer() {
 
   return (
     <>
-      <footer className="bg-white border-t border-gray-200">
-        <div className="container mx-auto  py-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="md:col-span-1 lg:col-span-1 space-y-4">
-              <h2 className="text-3xl font-bold text-gray-900 ">
-                Mentora
-              </h2>
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-supperagent" />
-                  <span>+1 (555) 123-4567</span>
+      <footer className="relative bg-slate-50 pt-20 pb-10 overflow-hidden border-t border-gray-200">
+        
+        {/* --- Visual Objects (Decorations) --- */}
+        {/* Soft Gradient Blob Top Left */}
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-supperagent/5 rounded-full blur-3xl pointer-events-none" />
+        
+        {/* Soft Gradient Blob Bottom Right */}
+        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-3xl pointer-events-none" />
+        
+        {/* Dot Pattern Overlay (Top Right) */}
+        <div className="absolute top-10 right-10 opacity-10 pointer-events-none">
+            <svg width="100" height="100" fill="none">
+                <pattern id="dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <circle cx="2" cy="2" r="2" className="text-gray-400" fill="currentColor" />
+                </pattern>
+                <rect width="100" height="100" fill="url(#dots)" />
+            </svg>
+        </div>
+
+        <div className="container relative z-10 mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+            
+            {/* Column 1: Brand & Contact */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-supperagent text-white shadow-lg shadow-supperagent/20">
+                   <GraduationCap className="w-6 h-6" />
+                </div>
+                <span className="text-2xl font-bold text-gray-900 tracking-tight">Mentora</span>
+              </div>
+              
+              <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
+                Empowering learners worldwide with accessible, high-quality education. Join the revolution today.
+              </p>
+
+              <ul className="space-y-4 text-sm text-gray-600">
+                <li className="flex items-center gap-3 group">
+                  <div className="p-2 bg-white rounded-full shadow-sm ring-1 ring-gray-100 group-hover:ring-supperagent/50 transition-all">
+                     <Phone className="w-4 h-4 text-supperagent" />
+                  </div>
+                  <span className="group-hover:text-supperagent transition-colors">+1 (555) 123-4567</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-supperagent" />
-                  <span>support@mentora.com</span>
+                <li className="flex items-center gap-3 group">
+                  <div className="p-2 bg-white rounded-full shadow-sm ring-1 ring-gray-100 group-hover:ring-supperagent/50 transition-all">
+                     <Mail className="w-4 h-4 text-supperagent" />
+                  </div>
+                  <span className="group-hover:text-supperagent transition-colors">support@mentora.com</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-supperagent mt-1" />
-                  <span>
-                    123 Learning Ave #100
-                    <br />
+                <li className="flex items-start gap-3 group">
+                   <div className="p-2 bg-white rounded-full shadow-sm ring-1 ring-gray-100 group-hover:ring-supperagent/50 transition-all mt-[-2px]">
+                     <MapPin className="w-4 h-4 text-supperagent" />
+                   </div>
+                  <span className="group-hover:text-supperagent transition-colors leading-tight">
+                    123 Learning Ave #100<br />
                     San Francisco, CA 94101
                   </span>
                 </li>
               </ul>
-              <div className="flex space-x-2 pt-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-gray-500 hover:text-white hover:bg-supperagent"
-                >
-                  <Facebook className="w-5 h-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-gray-500 hover:text-white hover:bg-supperagent"
-                >
-                  <Twitter className="w-5 h-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-gray-500 hover:text-white hover:bg-supperagent"
-                >
-                  <Instagram className="w-5 h-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-gray-500 hover:text-white hover:bg-supperagent"
-                >
-                  <Linkedin className="w-5 h-5" />
-                </Button>
-              </div>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900  text-lg">
-                Company
-              </h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-supperagent">About</a></li>
-                <li><a href="#" className="hover:text-supperagent">Courses</a></li>
-                <li><a href="#" className="hover:text-supperagent">Instructors</a></li>
-                <li><a href="#" className="hover:text-supperagent">Events</a></li>
-                <li><a href="#" className="hover:text-supperagent">Become a Teacher</a></li>
+            {/* Column 2: Company Links */}
+            <div className="lg:pl-8">
+              <h3 className="font-bold text-gray-900 text-lg mb-6">Company</h3>
+              <ul className="space-y-3">
+                {['About Us', 'All Courses', 'Our Instructors', 'Upcoming Events', 'Become a Teacher'].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="group flex items-center text-sm text-gray-500 hover:text-supperagent transition-colors">
+                      <ChevronRight className="w-3 h-3 mr-2 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                      {item}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900  text-lg">
-                Useful Links
-              </h3>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-supperagent">Testimonials</a></li>
-                <li><a href="#" className="hover:text-supperagent">Pricing</a></li>
-                <li><a href="#" className="hover:text-supperagent">FAQs</a></li>
-                <li><a href="#" className="hover:text-supperagent">Help Center</a></li>
-                <li><a href="#" className="hover:text-supperagent">Terms</a></li>
-                <li><a href="#" className="hover:text-supperagent">Sitemap</a></li>
-                <li><a href="#" className="hover:text-supperagent">Privacy</a></li>
+            {/* Column 3: Useful Links */}
+            <div>
+              <h3 className="font-bold text-gray-900 text-lg mb-6">Support</h3>
+              <ul className="space-y-3">
+                {['Testimonials', 'Pricing Plans', 'FAQs', 'Help Center', 'Terms of Service', 'Privacy Policy'].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="group flex items-center text-sm text-gray-500 hover:text-supperagent transition-colors">
+                      <ChevronRight className="w-3 h-3 mr-2 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
+                      {item}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
 
-           
-
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900  text-lg">
-                Subscribe
-              </h3>
-              <p className="text-sm">
-                2000+ Our students are subscribe Around the World. Don’t be
-                shy introduce yourself!
+            {/* Column 4: Newsletter & App */}
+            <div className="space-y-6">
+              <h3 className="font-bold text-gray-900 text-lg">Stay Updated</h3>
+              <p className="text-sm text-gray-500">
+                Join 2000+ students. Get the latest news and course offers.
               </p>
-              <form onSubmit={handleSubscribe} className="flex space-x-2">
+              
+              {/* Modern Pill Input */}
+              <form onSubmit={handleSubscribe} className="relative group">
                 <Input
                   type="email"
-                  placeholder="Your e-mail"
-                  className="flex-1"
+                  placeholder="Your e-mail address"
+                  className="w-full h-12 rounded-full border-gray-200 bg-white pr-12 pl-5 focus:ring-2 focus:ring-supperagent/20 focus:border-supperagent transition-all shadow-sm group-hover:shadow-md"
                   required
                 />
                 <Button
                   type="submit"
-                  variant="ghost"
                   size="icon"
-                  className="text-supperagent hover:bg-blue-100 dark:hover:bg-gray-800"
+                  className="absolute right-1 top-1 h-10 w-10 rounded-full bg-supperagent hover:bg-supperagent/90 text-white shadow-md transition-transform hover:scale-105"
                 >
-                  <Send className="w-5 h-5" />
+                  <Send className="w-4 h-4" />
                 </Button>
               </form>
-              <h3 className="font-semibold text-gray-900  text-lg pt-4">
-                Get the app
-              </h3>
-              <div className="space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start h-12"
-                >
-                  <Apple className="w-6 h-6 mr-3" />
-                  <div className="text-left">
-                    <div className="text-xs">Download on the</div>
-                    <div className="text-sm font-semibold">Apple Store</div>
-                  </div>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start h-12"
-                >
-                  <GooglePlayIcon className="w-6 h-6 mr-3" />
-                  <div className="text-left">
-                    <div className="text-xs">Get in on</div>
-                    <div className="text-sm font-semibold">Google Play</div>
-                  </div>
-                </Button>
-              </div>
+
+              
             </div>
+
           </div>
         </div>
 
-        <div className="border-t dark:border-gray-200">
-          <div className="container mx-auto  py-6 text-center text-sm">
-            <p>© {new Date().getFullYear()} Mentora. All Rights Reserved.</p>
+        {/* --- Bottom Bar --- */}
+        <div className="relative z-10 mt-16 pt-8 border-t border-gray-200/60">
+          <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-xs text-gray-500 text-center md:text-left">
+              © {new Date().getFullYear()} Mentora Inc. All Rights Reserved.
+            </p>
+            
+            {/* Social Icons */}
+            <div className="flex space-x-2">
+              {[Facebook, Twitter, Instagram, Linkedin].map((Icon, idx) => (
+                <a
+                  key={idx}
+                  href="#"
+                  className="p-2 text-gray-400 transition-all duration-300 hover:text-white hover:bg-supperagent rounded-full hover:shadow-lg hover:shadow-supperagent/30"
+                >
+                  <Icon className="w-4 h-4" />
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       </footer>
 
+      {/* Scroll to Top Button */}
       {isVisible && (
         <Button
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 w-12 h-12 rounded-full shadow-lg"
+          className="fixed bottom-8 right-8 z-50 w-12 h-12 rounded-full shadow-2xl bg-supperagent hover:bg-supperagent/90 text-white animate-bounce-in "
           size="icon"
         >
-          <ArrowUp className="w-6 h-6" />
+          <ArrowUp className="w-5 h-5" />
         </Button>
       )}
     </>

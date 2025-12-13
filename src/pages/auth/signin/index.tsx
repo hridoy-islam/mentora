@@ -15,7 +15,7 @@ export default function SignInPage() {
   }, [user, navigate]);
 
   return (
-<div className="flex w-full py-16">
+<div className="flex container mx-auto py-16">
   {/* Left Column - Image */}
   <div className="hidden lg:flex w-full lg:w-1/2 items-center justify-center   relative overflow-hidden">
     <img
@@ -23,7 +23,6 @@ export default function SignInPage() {
       alt="Sign In Illustration"
       className="w-full z-10 rounded-lg"
     />
-    <div className="absolute -top-16 -left-16 w-48 h-48 bg-purple-100 rounded-full opacity-50"></div>
   </div>
 
   {/* Right Column - Form */}

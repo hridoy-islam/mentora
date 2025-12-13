@@ -15,7 +15,7 @@ export default function SignUpPage() {
   }, [user, navigate]);
 
   return (
-    <div className="flex w-full py-16">
+    <div className="flex container mx-auto py-16">
   {/* Left Column - Image */}
   <div className="relative hidden lg:flex w-full lg:w-1/2 items-center justify-center overflow-hidden">
     <img
