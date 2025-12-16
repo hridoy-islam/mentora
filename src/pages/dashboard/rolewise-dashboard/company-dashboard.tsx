@@ -17,10 +17,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { DataTablePagination } from '@/components/shared/data-table-pagination';
 import moment from 'moment';
 
-const companyStats = [
-  { title: 'Purchase Amount', value: '$513.40' },
-  { title: 'Total Course', value: '11' }
-];
 
 export function CompanyDashboard() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -31,11 +27,14 @@ export function CompanyDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(5);
+  const[totalCourse,setTotalCourse] = useState(0);
+  const[totalAmount,setTotalAmount] = useState(0);
+
   const [searchTerm, setSearchTerm] = useState('');
 
   // Get user from Redux
   const { user } = useSelector((state: any) => state.auth);
-
+  
   const fetchData = async (
     page: number,
     limit: number,
@@ -43,7 +42,7 @@ export function CompanyDashboard() {
   ) => {
     try {
       setInitialLoading(true);
-
+      
       const response = await axiosInstance.get(`/course-license`, {
         params: {
           companyId: user?._id,
@@ -53,20 +52,28 @@ export function CompanyDashboard() {
         }
       });
 
+      setTotalCourse(response.data.data.meta.total||0)
       setCourses(response.data.data.result);
       setTotalPages(response.data.data.meta.totalPage);
+      setTotalAmount(response.data.data.totalOrderAmount||0)
     } catch (error: any) {
       console.error('Error fetching courses:', error);
       toast({
         title: 'Error',
         description:
-          error?.response?.data?.message || 'Failed to fetch course list.',
+        error?.response?.data?.message || 'Failed to fetch course list.',
         variant: 'destructive'
       });
     } finally {
       setInitialLoading(false);
     }
   };
+
+
+  const companyStats = [
+    { title: 'Purchase Amount', value: `£${totalAmount}` },
+    { title: 'Total Course', value: totalCourse }
+  ];
 
   useEffect(() => {
     if (user?._id) {

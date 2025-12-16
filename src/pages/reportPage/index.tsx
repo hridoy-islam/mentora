@@ -300,7 +300,6 @@ export default function ReportPage() {
                     {/* Total Amount */}
                     <TableCell className="font-semibold text-gray-700">
                       <div className="flex items-center">
-                        <DollarSign className="mr-1 h-3 w-3" />
                         {report.totalAmount?.toLocaleString()}
                       </div>
                     </TableCell>
