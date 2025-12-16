@@ -17,7 +17,11 @@ import {
   Globe,
   CreditCard,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  MapPin,      
+  Building,    
+  Navigation,   
+  LocateFixed   
 } from 'lucide-react';
 
 // Redux & Utils
@@ -40,13 +44,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea"; // Assuming standard shadcn path
+import { countries } from '@/types';
 
-// --- Constants ---
-const COUNTRIES = [
-  "United States", "United Kingdom", "Canada", "Australia", 
-  "Germany", "France", "India", "Bangladesh", "Japan", "Brazil", 
-  "Singapore", "United Arab Emirates"
-];
+
 
 // --- Reusable Input Component ---
 const FormInput = ({
@@ -152,10 +153,18 @@ export function CartPage() {
     fullName: '',
     email: '',
     phone: '',
-    country: ''
+    country: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    address: ''
   });
 
   const [loadingUserData, setLoadingUserData] = useState(false);
+  
+  // We use this ref to store the initial state of the user from the DB
+  // This allows us to check if the fields were empty initially
+  const initialUserRef = useRef(null);
 
   // Fetch User Data when logged in
   useEffect(() => {
@@ -164,23 +173,32 @@ export function CartPage() {
         setLoadingUserData(true);
         try {
           const res = await axiosInstance.get(`/users/${user._id}`);
-          // Adjust based on your actual API response structure (e.g. res.data.data or res.data)
-          const userData = res.data.data || res.data; 
+          const userData = res.data.data || res.data;
           
+          // Store the fetched data to compare later
+          initialUserRef.current = userData;
+
           setFormData({
             fullName: userData.name || '',
             email: userData.email || '',
             phone: userData.phone || '',
             country: userData.country || '',
+            city: userData.city || '',
+            state: userData.state || '',
+            zipCode: userData.zipCode || '',
+            address: userData.address || '',
           });
         } catch (error) {
           console.error("Failed to fetch user details:", error);
-          // Fallback to Redux store data if API fails
           setFormData({
             fullName: user.name || '',
             email: user.email || '',
             phone: user.phone || '',
             country: user.country || '',
+            city: '',
+            state: '',
+            zipCode: '',
+            address: ''
           });
         } finally {
           setLoadingUserData(false);
@@ -247,17 +265,22 @@ export function CartPage() {
     }
 
     // Basic validation
-    if (!formData.fullName || !formData.email || !formData.country) {
+    const requiredFields = ['fullName', 'email', 'country', 'city', 'state', 'zipCode', 'address'];
+    const hasEmptyFields = requiredFields.some(field => !formData[field]);
+
+    if (hasEmptyFields) {
        toast({
         title: 'Missing Information',
-        description: 'Please fill in all required delivery details.',
+        description: 'Please fill in all required delivery details including address.',
         variant: 'destructive'
       });
       return;
     }
 
     setIsProcessingOrder(true);
+    
     try {
+      // 1. Prepare Order Data
       const orderData = {
         items: cartItems.map((item) => ({
           courseId: item?.id,
@@ -270,12 +293,40 @@ export function CartPage() {
         discount: discount,
         role: user?.role,
         couponCode: isApplied ? couponCode : null,
-        shippingDetails: formData // Sending the updated form data
+        shippingDetails: formData
       };
-      
-      const response = await axiosInstance.post('/order', orderData);
 
-      if (response.status === 200 || response.status === 201) {
+      const requestPromises = [];
+
+      // 2. Add Order Request to promises
+      requestPromises.push(axiosInstance.post('/order', orderData));
+
+      // 3. Check if we need to update User Profile
+      // Logic: If the DB field was empty (from initial fetch) AND we have data now, we patch.
+      if (initialUserRef.current) {
+        const fieldsToCheck = ['city', 'zipCode', 'state', 'address', 'country', 'phone'];
+        const updatePayload = {};
+        let shouldUpdate = false;
+
+        fieldsToCheck.forEach((field) => {
+          // If initial value was falsy (empty/null) AND current form value exists
+          if (!initialUserRef.current[field] && formData[field]) {
+            updatePayload[field] = formData[field];
+            shouldUpdate = true;
+          }
+        });
+
+        if (shouldUpdate) {
+          console.log("Updating missing user profile fields:", updatePayload);
+          requestPromises.push(axiosInstance.patch(`/users/${user._id}`, updatePayload));
+        }
+      }
+
+      // 4. Execute requests concurrently
+      const [orderResponse, userUpdateResponse] = await Promise.all(requestPromises);
+
+      // Check order success (user update failure shouldn't necessarily block order success, but logging it is good)
+      if (orderResponse.status === 200 || orderResponse.status === 201) {
         dispatch(clearCart());
         setOrderComplete(true);
         toast({
@@ -283,7 +334,9 @@ export function CartPage() {
           description: 'Your order has been placed successfully.'
         });
       }
+
     } catch (error) {
+      console.error(error);
       toast({
         title: 'Order Failed',
         description: 'Something went wrong. Please try again.',
@@ -298,7 +351,7 @@ export function CartPage() {
     return <OrderSuccess />;
   }
 
-  // --- Empty State ---
+
   if (cartItems.length === 0) {
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center bg-gray-50/50 px-4 text-center">
@@ -332,7 +385,6 @@ export function CartPage() {
         {/* Breadcrumb / Header Area */}
         <div className="border-b border-gray-200 bg-white">
           <div className="container mx-auto  py-6 ">
-            
             <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
               Secure Checkout
             </h1>
@@ -347,12 +399,13 @@ export function CartPage() {
               <div className="rounded-2xl bg-white p-6 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:p-8">
                 <div className="mb-8 flex items-center gap-4">
                   <h2 className="text-lg font-bold text-gray-900">
-                    Contact Information
+                    Delivery Information
                   </h2>
                   {loadingUserData && <Loader2 className="animate-spin text-blue-500 h-5 w-5" />}
                 </div>
 
                 <div className="grid gap-6">
+                  {/* Name & Email */}
                   <FormInput
                     label="Full Name"
                     icon={User}
@@ -386,7 +439,12 @@ export function CartPage() {
                     />
                   </div>
 
-                  {/* SHADCN Select Component for Country */}
+                  {/* Address Section Title */}
+                  <div className="pt-4 pb-2 border-b border-gray-100">
+                    <h3 className="text-sm font-bold text-gray-800">Address Details</h3>
+                  </div>
+
+                  {/* Country */}
                   <div className="space-y-2">
                     <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Country / Region
@@ -402,8 +460,8 @@ export function CartPage() {
                         <SelectTrigger className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-3.5 pl-10 h-[50px] text-sm font-medium text-gray-900 shadow-sm transition-all duration-300 ease-out focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10">
                           <SelectValue placeholder="Select Country" />
                         </SelectTrigger>
-                        <SelectContent className=" max-h-[300px]">
-                          {COUNTRIES.map((country) => (
+                        <SelectContent className="max-h-[300px]">
+                          {countries.map((country) => (
                             <SelectItem key={country} value={country}>
                               {country}
                             </SelectItem>
@@ -413,6 +471,49 @@ export function CartPage() {
                     </div>
                   </div>
                   
+                  {/* City, State, Zip Row */}
+                  <div className="grid gap-6 sm:grid-cols-3">
+                    <FormInput
+                      label="City"
+                      icon={Building}
+                      value={formData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      placeholder="New York"
+                    />
+                    <FormInput
+                      label="State / Province"
+                      icon={Navigation}
+                      value={formData.state}
+                      onChange={(e) => handleInputChange('state', e.target.value)}
+                      placeholder="NY"
+                    />
+                    <FormInput
+                      label="Zip Code"
+                      icon={LocateFixed}
+                      value={formData.zipCode}
+                      onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                      placeholder="10001"
+                    />
+                  </div>
+
+                  {/* Address Text Area */}
+                  <div className="space-y-2">
+                    <label className="ml-1 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Street Address
+                    </label>
+                    <div className="group relative transition-all duration-300">
+                        <div className="absolute left-3 top-4 text-gray-400 transition-colors duration-300 group-focus-within:text-blue-600">
+                            <MapPin size={18} strokeWidth={2} />
+                        </div>
+                        <Textarea 
+                          value={formData.address}
+                          onChange={(e) => handleInputChange('address', e.target.value)}
+                          placeholder="123 Main St, Apt 4B"
+                          className="min-h-[100px] w-full rounded-xl border border-gray-200 bg-gray-50/50 py-3 pl-10 pr-4 text-sm font-medium text-gray-900 shadow-sm transition-all duration-300 ease-out placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 resize-y"
+                        />
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>

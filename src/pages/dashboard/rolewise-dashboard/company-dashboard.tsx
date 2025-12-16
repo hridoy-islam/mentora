@@ -8,61 +8,51 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Book, BookOpen, Plus, Star } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import axiosInstance from '@/lib/axios';
 import { useToast } from '@/components/ui/use-toast';
 import { DataTablePagination } from '@/components/shared/data-table-pagination';
-
+import moment from 'moment';
 
 const companyStats = [
   { title: 'Purchase Amount', value: '$513.40' },
-  { title: 'Platform Fee', value: '$10.00' },
-  { title: 'Total Profit', value: '$503.4' },
-  { title: 'Available Balance', value: '$0.00' },
-  { title: 'Total Course', value: '11' },
-  { title: 'Total Bundles', value: '01' }
+  { title: 'Total Course', value: '11' }
 ];
 
-
-
-
 export function CompanyDashboard() {
- const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
-  const {toast} = useToast()
+  const { toast } = useToast();
+
   // Pagination & Search
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(5); // Default to 10 for courses
+  const [entriesPerPage, setEntriesPerPage] = useState(5);
   const [searchTerm, setSearchTerm] = useState('');
-      const { user } = useSelector((state: any) => state.auth);
- const fetchData = async (
+
+  // Get user from Redux
+  const { user } = useSelector((state: any) => state.auth);
+
+  const fetchData = async (
     page: number,
     limit: number,
     search: string = ''
   ) => {
     try {
       setInitialLoading(true);
-      
-      const response = await axiosInstance.get(
-        `/course-license`, 
-        {
-          params: {
-            companyId: user?._id, 
-            page,
-            limit,
-            ...(search ? { searchTerm: search } : {})
-          }
-        }
-      );
 
-      // Assuming standard response structure based on your previous file
-      // Adjust .data.data.result / .data.result based on your actual API wrapper
+      const response = await axiosInstance.get(`/course-license`, {
+        params: {
+          companyId: user?._id,
+          page,
+          limit,
+          ...(search ? { searchTerm: search } : {})
+        }
+      });
+
       setCourses(response.data.data.result);
       setTotalPages(response.data.data.meta.totalPage);
     } catch (error: any) {
@@ -79,50 +69,22 @@ export function CompanyDashboard() {
   };
 
   useEffect(() => {
-    fetchData(currentPage, entriesPerPage);
-  }, [currentPage, entriesPerPage]);
+    if (user?._id) {
+      fetchData(currentPage, entriesPerPage);
+    }
+  }, [currentPage, entriesPerPage, user?._id]);
 
   return (
-    <div className="flex-1 space-y-6 ">
+    <div className="flex-1 space-y-6">
+      {/* Welcome Header */}
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">
+          Welcome back, {user?.name || 'User'} 👋
+        </h2>
+      </div>
+
       {/* Section 1: Profile & Stats */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Profile Card */}
-        <div className="lg:col-span-4">
-          <Card className="overflow-hidden">
-            <div className="relative h-32 w-full">
-              <img
-                src={user.image}
-                alt="Banner"
-                className="h-full w-full object-cover"
-              />
-              <Avatar className="absolute -bottom-10 left-6 h-20 w-20 border-4 border-white">
-                <AvatarImage src={user?.image} />
-                <AvatarFallback>
-                  {user?.name.substring(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-            <CardContent className="mt-12">
-              <h2 className="text-xl font-bold">{user.name}</h2>
-              <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span>{user?.rating}</span>
-                <span>({user?.reviews}+ Positive)</span>
-              </div>
-
-              <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                <Book className="h-4 w-4" />
-                <span>{user?.totalCourses} Courses</span>
-              </div>
-
-              <Button className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700">
-                <Plus className="mr-2 h-4 w-4" />
-                New course
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Stats Grid */}
         <div className="lg:col-span-8">
           <div className="grid gap-6 sm:grid-cols-3">
@@ -143,10 +105,10 @@ export function CompanyDashboard() {
       </div>
 
       {/* Section 2: Course List */}
-     <Card>
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-             <BookOpen className="h-5 w-5" /> Enrolled Course List
+            <BookOpen className="h-5 w-5" /> Enrolled Course List
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -169,14 +131,15 @@ export function CompanyDashboard() {
                     colSpan={6}
                     className="py-8 text-center text-gray-500"
                   >
-                    No enrolled courses found.
+                    {initialLoading
+                      ? 'Loading...'
+                      : 'No enrolled courses found.'}
                   </TableCell>
                 </TableRow>
               ) : (
                 courses.map((license) => (
                   <TableRow key={license._id}>
                     <TableCell className="font-medium">
-                      {/* Using optional chaining as requested */}
                       {license.courseId?.title || 'Unknown Course'}
                     </TableCell>
                     <TableCell className="text-center">
@@ -189,12 +152,16 @@ export function CompanyDashboard() {
                       {license.totalSeats - license.usedSeats}
                     </TableCell>
                     <TableCell className="text-center">
-                       {new Date(license.createdAt).toLocaleDateString()}
+                      {moment(license.createdAt).format('L')}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge 
-                        variant={license.isActive ? "default" : "secondary"}
-                        className={license.isActive ? "bg-green-600 hover:bg-green-700" : "bg-gray-400"}
+                      <Badge
+                        variant={license.isActive ? 'default' : 'secondary'}
+                        className={
+                          license.isActive
+                            ? 'bg-green-600 hover:bg-green-700'
+                            : 'bg-gray-400'
+                        }
                       >
                         {license.isActive ? 'Active' : 'Inactive'}
                       </Badge>
@@ -205,7 +172,7 @@ export function CompanyDashboard() {
             </TableBody>
           </Table>
 
-          {courses.length > 6 && (
+          {courses.length > 0 && (
             <div className="mt-4">
               <DataTablePagination
                 pageSize={entriesPerPage}

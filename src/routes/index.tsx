@@ -27,17 +27,19 @@ import CreateLessonPage from '@/pages/courseLesson/createLesson';
 import EditLessonPage from '@/pages/courseLesson/editLesson';
 import CategoryPage from '@/pages/categoryPage';
 import EditCoursePage from '@/pages/adminCourse/editCourse';
-import StudentPage from '@/pages/studentPage';
-import OrganizationPage from '@/pages/orgnizationPage';
-import InstructorPage from '@/pages/InstructorPage';
+import StudentPage from '@/pages/userManagement/studentPage';
+import OrganizationPage from '@/pages/userManagement/orgnizationPage';
+import InstructorPage from '@/pages/userManagement/InstructorPage';
 import QuestionBankPage from '@/pages/questionPage';
 import PreviewCourseDetails from '@/pages/previewCourseWebsite';
-import OrganizationStaffPage from '@/pages/orgnizationPage/staffPage';
+import OrganizationStaffPage from '@/pages/userManagement/orgnizationPage/staffPage';
 import { PreviewStudentCourseDetailsPage } from '@/pages/previewCourseStudent';
 import PreviewLayout from '@/components/layout/preview-layout';
 import MyStaffPage from '@/pages/my-staff';
 import OrganizationCoursesPage from '@/pages/organizationCourse';
 import AboutPage from '@/pages/aboutPage';
+import StaffEnrollCoursePage from '@/pages/userManagement/orgnizationPage/staffPage/staffEnrollCourse';
+import ReportPage from '@/pages/reportPage';
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 const DashboardPage = lazy(() => import('@/pages/dashboard'));
 
@@ -107,6 +109,10 @@ export default function AppRouter() {
           element: <OrganizationStaffPage />
         },
          {
+          path: 'organizations/:id/staffs/:sid/enroll-courses',
+          element: <StaffEnrollCoursePage />
+        },
+         {
           path: 'instructors',
           element: <InstructorPage />
         },
@@ -121,6 +127,10 @@ export default function AppRouter() {
         {
           path: 'company/courses',
           element: <OrganizationCoursesPage />
+        },
+        {
+          path: 'report',
+          element: <ReportPage />
         },
       ]
     }

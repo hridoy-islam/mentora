@@ -42,7 +42,8 @@ import {
   Heart,
   Briefcase, 
   BarChart3, 
-  Building, 
+  Building,
+  Calculator, 
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import axiosInstance from '@/lib/axios';
@@ -75,10 +76,15 @@ const adminNav = [
     ],
   },
   {
+    title: 'Report',
+    url: '/dashboard/report',
+    icon: Calculator,
+  },
+  {
     title: 'Setting',
     icon: Settings,
     items: [
-      { title: 'Profile', url: '#' },
+      // { title: 'Profile', url: '#' },
       { title: 'Email', url: '#' },
     ],
   },

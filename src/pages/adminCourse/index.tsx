@@ -19,7 +19,7 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 import { useNavigate } from 'react-router-dom';
-import axiosInstance from "@/lib/axios"
+import axiosInstance from '@/lib/axios';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
 import { useToast } from '@/components/ui/use-toast';
 import { DataTablePagination } from '@/components/shared/data-table-pagination';
@@ -33,7 +33,7 @@ export default function AdminCoursesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(100);
   const [copiedId, setCopiedId] = useState(null);
-  const { toast } = useToast()
+  const { toast } = useToast();
   const fetchCourses = async (page, entriesPerPage, searchTerm = '') => {
     try {
       if (loading) setLoading(true);
@@ -60,7 +60,9 @@ export default function AdminCoursesPage() {
   const handleStatusChange = async (id: string, status: boolean) => {
     try {
       const newStatus = status ? 'active' : 'block';
-      const response = await axiosInstance.patch(`/courses/${id}`, { status: newStatus });
+      const response = await axiosInstance.patch(`/courses/${id}`, {
+        status: newStatus
+      });
 
       if (response.data && response.data.success === true) {
         toast({
@@ -68,25 +70,23 @@ export default function AdminCoursesPage() {
           className: 'bg-supperagent border-none text-white'
         });
 
-        setCourses(prev => prev.map(c =>
-          c._id === id
-            ? { ...c, status: newStatus }
-            : c
-        ));
+        setCourses((prev) =>
+          prev.map((c) => (c._id === id ? { ...c, status: newStatus } : c))
+        );
       } else {
         toast({
-          variant: "destructive",
-          title: 'Status update failed',
+          variant: 'destructive',
+          title: 'Status update failed'
         });
       }
-
     } catch (error) {
       console.error('Error updating course status:', error);
       toast({
-        variant: "destructive",
+        variant: 'destructive',
 
-        title: 'An error occurred while updating status. Please try again.',
-      }); fetchCourses(currentPage, entriesPerPage, searchTerm);
+        title: 'An error occurred while updating status. Please try again.'
+      });
+      fetchCourses(currentPage, entriesPerPage, searchTerm);
     }
   };
 
@@ -110,18 +110,14 @@ export default function AdminCoursesPage() {
             <Button
               onClick={handleSearch}
               size="default"
-              className="bg-supperagent hover:bg-supperagent/90 h-8 px-4"
+              className="h-8 bg-supperagent px-4 hover:bg-supperagent/90"
             >
               Search
             </Button>
           </div>
         </div>
         <div className="flex flex-row items-center gap-4">
-          <Button
-            size="default"
-            onClick={() => navigate(-1)}
-            variant="outline"
-          >
+          <Button size="default" onClick={() => navigate(-1)} variant="outline">
             <MoveLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -168,17 +164,30 @@ export default function AdminCoursesPage() {
               <TableBody>
                 {courses.map((course: any) => (
                   <TableRow key={course._id}>
-                    <TableCell className="font-medium">{course.title}</TableCell>
+                    <TableCell className="font-medium">
+                      {course.title}
+                    </TableCell>
                     <TableCell>{course.categoryId?.name}</TableCell>
                     <TableCell>{course.instructorId?.name}</TableCell>
                     <TableCell>${course.price}</TableCell>
                     <TableCell className="text-center">
-                      <Switch
-                        checked={course.status === 'active'}
-                        onCheckedChange={(checked) =>
-                          handleStatusChange(course._id, checked)
-                        }
-                      />
+                      <div className="flex flex-row items-center justify-center gap-2">
+                        <Switch
+                          checked={course.status === 'active'}
+                          onCheckedChange={(checked) =>
+                            handleStatusChange(course._id, checked)
+                          }
+                        />
+                        <span
+                          className={`text-sm font-medium ${
+                            course.status === 'active'
+                              ? 'text-green-600'
+                              : 'text-red-600'
+                          }`}
+                        >
+                          {course.status === 'active' ? 'Active' : 'Disable'}{' '}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-end gap-2">
@@ -187,13 +196,12 @@ export default function AdminCoursesPage() {
                             <TooltipTrigger asChild>
                               <Button
                                 variant="default"
-                                size="icon"
-                                className="h-8 w-8 "
+                                size="sm"
                                 onClick={() =>
                                   navigate(`${course._id}/course-modules`)
                                 }
                               >
-                                <FileText className="h-4 w-4" />
+                                <FileText className="h-4 w-4 mr-2" /> Modules
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -205,11 +213,11 @@ export default function AdminCoursesPage() {
                             <TooltipTrigger asChild>
                               <Button
                                 variant="default"
-                                size="icon"
-                                className="h-8 w-8 "
+                                size="sm"
+                               
                                 onClick={() => navigate(`edit/${course._id}`)}
                               >
-                                <Pen className="h-4 w-4" />
+                                <Pen className="h-4 w-4 mr-2" /> Edit
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -225,16 +233,15 @@ export default function AdminCoursesPage() {
             </Table>
           )}
 
-
-           {courses.length > 40 && (
-                      <DataTablePagination
-                        pageSize={entriesPerPage}
-                        setPageSize={setEntriesPerPage}
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={setCurrentPage}
-                      />
-                    )}
+          {courses.length > 40 && (
+            <DataTablePagination
+              pageSize={entriesPerPage}
+              setPageSize={setEntriesPerPage}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

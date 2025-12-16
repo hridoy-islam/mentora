@@ -176,73 +176,87 @@ export default function CourseModulesPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <div className="flex flex-row items-center gap-4">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Course Modules
-            </h1>
-            <div className="flex items-center space-x-4">
-              <Input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search modules..."
-                className="h-8 w-[200px]"
-              />
+        <div className="flex flex-col w-full">
+          <div className="flex flex-row items-center justify-between">
+            <div className="flex flex-row items-center gap-4">
+              <h1 className="text-3xl font-bold tracking-tight">
+                Course Modules
+              </h1>
+              <div className="flex items-center space-x-4">
+                <Input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search modules..."
+                  className="h-8 w-[200px]"
+                />
+                <Button
+                  onClick={handleSearch}
+                  size="default"
+                  className="h-8 bg-supperagent px-4 hover:bg-supperagent/90"
+                >
+                  <Search className="mr-2 h-4 w-4" />
+                  Search
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-row items-center gap-4 ">
               <Button
-                onClick={handleSearch}
                 size="default"
-                className="h-8 bg-supperagent px-4 hover:bg-supperagent/90"
+                onClick={() => navigate(-1)}
+                variant="outline"
               >
-                <Search className="mr-2 h-4 w-4" />
-                Search
+                <MoveLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                size="default"
+                variant="outline"
+                onClick={() =>
+                  window.open(
+                    `/dashboard/courses/${cid}/website-preview`,
+                    '_blank'
+                  )
+                }
+                disabled={!cid}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Website View
+              </Button>
+
+              <Button
+                size="default"
+                variant="outline"
+                onClick={() =>
+                  window.open(
+                    `/dashboard/courses/${cid}/student-preview`,
+                    '_blank'
+                  )
+                }
+                disabled={!cid}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Student View
+              </Button>
+
+              <Button
+                size="default"
+                onClick={openCreateDialog}
+                className="bg-supperagent hover:bg-supperagent/90"
+                disabled={!cid}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Module
               </Button>
             </div>
           </div>
+
           {courseName && (
             <p className="mt-2 text-sm text-gray-600">
               Course: <span className="font-semibold">{courseName}</span>
             </p>
           )}
-        </div>
-        <div className="flex flex-row items-center gap-4">
-          <Button size="default" onClick={() => navigate(-1)} variant="outline">
-            <MoveLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <Button
-            size="default"
-            variant="outline"
-            onClick={() =>
-              window.open(`/dashboard/courses/${cid}/website-preview`, '_blank')
-            }
-            disabled={!cid}
-          >
-            <Eye className="mr-2 h-4 w-4" />
-            Website View
-          </Button>
-
-          <Button
-            size="default"
-            variant="outline"
-            onClick={() =>
-              window.open(`/dashboard/courses/${cid}/student-preview`, '_blank')
-            }
-            disabled={!cid}
-          >
-            <Eye className="mr-2 h-4 w-4" />
-            Student View
-          </Button>
-
-          <Button
-            size="default"
-            onClick={openCreateDialog}
-            className="bg-supperagent hover:bg-supperagent/90"
-            disabled={!cid}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            New Module
-          </Button>
         </div>
       </div>
 
@@ -287,12 +301,11 @@ export default function CourseModulesPage() {
                               <Button
                                 variant="default"
                                 size="sm"
-                             
                                 onClick={() =>
                                   navigate(`${module._id}/lessons`)
                                 }
                               >
-                                <BookOpen className="h-4 w-4 mr-2" />
+                                <BookOpen className="mr-2 h-4 w-4" />
                                 View Lessons
                               </Button>
                             </TooltipTrigger>
@@ -306,7 +319,6 @@ export default function CourseModulesPage() {
                               <Button
                                 variant="default"
                                 size="sm"
-      
                                 onClick={() => openEditDialog(module)}
                               >
                                 <Pen className="mr-2 h-4 w-4" />
@@ -328,7 +340,7 @@ export default function CourseModulesPage() {
                                   setDeleteConfirmOpen(true);
                                 }}
                               >
-                                <Trash2 className="h-4 w-4 mr-2" />
+                                <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
                               </Button>
                             </TooltipTrigger>

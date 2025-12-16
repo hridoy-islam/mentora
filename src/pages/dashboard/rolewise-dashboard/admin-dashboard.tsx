@@ -50,26 +50,7 @@ const topRowStats = [
     ),
     color: 'bg-blue-100 text-blue-700',
   },
-  {
-    title: 'Total Platform Fee',
-    value: '$280.00',
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <line x1="19" y1="5" x2="5" y2="19" />
-        <circle cx="6.5" cy="6.5" r="2.5" />
-        <circle cx="17.5" cy="17.5" r="2.5" />
-      </svg>
-    ),
-    color: 'bg-green-100 text-green-700',
-  },
+ 
   {
     title: 'Total Enrollments',
     value: '54',
@@ -273,7 +254,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Stats Grid - Top Row */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {topRowStats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
