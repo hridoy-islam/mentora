@@ -32,7 +32,7 @@
 
     --border: 250 15% 88%;
     --input: 250 15% 88%;
-    --ring: 251 83% 59%;
+    --ring: 196 67 45;
 
     --radius: 0.75rem;
     --chart-1: 12 76% 61%;
@@ -40,20 +40,20 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --supperagent: 251.31 82.94% 58.63%;
+    --supperagent: 196 67 45;
     --supperagent-foreground: 0 0% 98%;
     --watney: 215 62.69% 26.27%;
     --theme: 193 100% 48.5%;
     /* Custom Design Tokens */
-    --gradient-primary: linear-gradient(
+       --gradient-primary: linear-gradient(
       135deg,
-      hsl(251 83% 59%) 0%,
-      hsl(280 80% 60%) 100%
+      hsl(196 67 45) 0%,
+      hsl(196, 64%, 31%) 100%
     );
     --gradient-accent: linear-gradient(
       135deg,
-      hsl(280 80% 55%) 0%,
-      hsl(320 80% 50%) 100%
+      hsl(196 67 45) 0%,
+      hsl(196, 64%, 31%) 100%
     );
     --gradient-card: linear-gradient(
       145deg,
@@ -66,7 +66,7 @@
       hsl(0 0% 100%) 100%
     );
 
-    --glow-primary: 0 0 60px hsl(251 83% 59% / 0.25);
+    --glow-primary: 0 0 60px hsl(196 67 45 / 0.25);
     --glow-accent: 0 0 60px hsl(280 80% 55% / 0.25);
     --glow-sm: 0 0 20px hsl(251 83% 59% / 0.15);
 
@@ -220,13 +220,13 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(251.31 82.94% 58.63%);
+  background: hsl(196 67 45);
   border-radius: 4px;
   transition: background 0.3s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(251.31 82.94% 58.63%);
+  background: hsl(196, 67, 45);
 }
 
 @keyframes scaleIn {

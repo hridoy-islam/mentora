@@ -32,8 +32,7 @@ function Logo({ onClick }) {
       }}
       className="flex cursor-pointer items-center space-x-2 transition-opacity hover:opacity-80"
     >
-      <GraduationCap className="h-9 w-9 text-supperagent" />
-      <span className="text-2xl font-bold text-supperagent">Mentora</span>
+      <img src="/logo.png" alt="medicare" width={120} />
     </div>
   );
 }
@@ -173,7 +172,7 @@ export function TopNav() {
 
   return (
     <div className="sticky top-0 z-[9999] border-b border-gray-100 bg-white/95 backdrop-blur-sm">
-      <div className="container mx-auto px-4 md:px-0">
+      <div className="container mx-auto">
         <div className="flex h-16 items-center justify-between">
           
           {/* 1. Left Side: Logo */}

@@ -101,7 +101,7 @@ const SectorsSection = () => {
                 Our Expertise
               </div>
               <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
-                Sectors We <span className="text-transparent bg-clip-text bg-gradient-to-r from-supperagent to-purple-600">Cover</span>
+                Sectors We <span className="text-gradient">Cover</span>
               </h2>
               <p className="text-gray-500 text-lg">
                 Specialised training solutions tailored to specific industry needs to ensure compliance and care excellence.

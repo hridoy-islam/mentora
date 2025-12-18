@@ -74,7 +74,7 @@ const HowItWorksSection = () => {
         >
           <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 text-sm font-medium text-supperagent bg-white rounded-full shadow-sm border border-gray-100">
             <Sparkles className="w-4 h-4 mr-2 text-yellow-500" />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-supperagent to-purple-600 font-bold">
+            <span className="bg-clip-text text-gradient font-bold">
               Simple Process
             </span>
           </div>

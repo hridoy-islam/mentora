@@ -212,7 +212,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <a href="#" className="flex items-center gap-2">
                 <GraduationCap className="!size-5 shrink-0 text-supperagent" />
-                <span className="text-base font-semibold ">Mentora</span>
+                <span className="text-base font-semibold ">Medicare Training</span>
               </a>
             </div>
           </SidebarMenuItem>

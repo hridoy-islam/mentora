@@ -188,7 +188,7 @@ export default function AppRouter() {
           element: <MyCourses />
         },
          {
-          path: 'courses/:id',
+          path: 'courses/:slug',
           element: <CourseDetails />
         },
          {
@@ -234,7 +234,7 @@ export default function AppRouter() {
         },
         
          {
-          path: '/courses/:id',
+          path: '/courses/:slug',
           element: <CourseDetailPage />,
           index: true
         },

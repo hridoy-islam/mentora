@@ -50,7 +50,7 @@ export function ContactPage() {
                 Contact Us
               </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-6">
-              Let's Start a <span className="text-transparent bg-clip-text bg-gradient-to-r from-supperagent to-purple-600">Conversation</span>
+              Let's Start a <span className="text-gradient">Conversation</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
               Have questions about our courses or enterprise solutions? We're here to help you achieve your learning goals.
@@ -69,7 +69,7 @@ export function ContactPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="lg:col-span-5 space-y-8"
-          >
+          >Fill out the form below and we'll get back to you shortly.
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Get in Touch</h3>
               <p className="text-gray-500 mb-8">
@@ -88,8 +88,8 @@ export function ContactPage() {
                 <div className="ml-5">
                   <h4 className="text-lg font-semibold text-gray-900 mb-1">Chat to support</h4>
                   <p className="text-sm text-gray-500 mb-2">We're here to help.</p>
-                  <a href="mailto:support@mentora.com" className="text-supperagent font-medium hover:underline">
-                    support@mentora.com
+                  <a href="mailto:support@medicare.com" className="text-supperagent font-medium hover:underline">
+                    support@medicare.com
                   </a>
                 </div>
               </div>
@@ -134,7 +134,7 @@ export function ContactPage() {
                 />
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-xs font-bold text-gray-800 flex items-center gap-2">
-                        <Building2 className="w-3 h-3 text-supperagent"/> Mentora HQ
+                        <Building2 className="w-3 h-3 text-supperagent"/> Medicare Training HQ
                     </div>
                 </div>
             </div>
@@ -149,7 +149,7 @@ export function ContactPage() {
           >
             <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8 md:p-10 relative overflow-hidden">
                 {/* Decorative top border */}
-                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-supperagent via-purple-500 to-pink-500" />
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-primary" />
                 
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Send us a Message</h3>
                 <p className="text-gray-500 mb-8">Fill out the form below and we'll get back to you shortly.</p>

@@ -121,7 +121,7 @@ const GetCertifiedSection = () => {
                 <div className="my-6">
                     <h2 className="text-4xl md:text-5xl font-cursive text-supperagent mb-4">Carl Randle</h2>
                     <p className="text-sm text-gray-500 max-w-sm mb-2">
-                        has successfully completed an in-house training with Mentora for a CPD certified course in
+                        has successfully completed an in-house training with Medicare Training for a CPD certified course in
                     </p>
                     <h4 className="text-lg font-bold text-gray-900 border-b border-gray-200 inline-block pb-1">
                         Advanced Dementia Care Level 3

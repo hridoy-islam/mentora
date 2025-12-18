@@ -34,16 +34,16 @@ export default function AboutPage() {
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center mb-16">
             {/* KEPT: Original Indigo Badge style */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-supperagent/10 text-supperagent text-xs font-bold uppercase tracking-wider mb-6">
               <Sparkles size={14} />
               <span>The Future of Care Education</span>
             </div>
             {/* KEPT: Original Headline styles and gradients */}
             <h1 className="text-4xl lg:text-6xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight">
-              A global marketplace for <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">learning and teaching.</span>
+              A global marketplace for <span className="text-gradient">learning and teaching.</span>
             </h1>
             <p className="text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
-              Mentora is the premier destination for online courses. We empower experts to sell their knowledge and help millions of students unlock their potential through affordable, high-quality education in the health and social care sectors.
+              Medicare Training is the premier destination for online courses. We empower experts to sell their knowledge and help millions of students unlock their potential through affordable, high-quality education in the health and social care sectors.
             </p>
           </div>
 
@@ -110,21 +110,21 @@ export default function AboutPage() {
               </h2>
               <div className="space-y-6 text-slate-600 leading-relaxed">
                 <p>
-                  Mentora isn't just a platform; it's a launchpad. We provide the tools for professionals to digitize their expertise and sell it to a global audience.
+                  Medicare Training isn't just a platform; it's a launchpad. We provide the tools for professionals to digitize their expertise and sell it to a global audience.
                 </p>
                 <p>
-                  For learners, we are the trusted source for career advancement. Whether you are looking to break into tech, master a craft, or learn a language, Mentora connects you with the right course at the right price.
+                  For learners, we are the trusted source for career advancement. Whether you are looking to break into tech, master a craft, or learn a language, Medicare Training connects you with the right course at the right price.
                 </p>
               </div>
 
               {/* KEPT: Original Indigo/Purple Stats boxes */}
               <div className="mt-10 grid grid-cols-2 gap-6">
-                <div className="p-5 rounded-xl bg-indigo-50 border border-indigo-100">
-                  <h3 className="text-3xl font-bold text-indigo-600 mb-1">85%</h3>
+                <div className="p-5 rounded-xl bg-supperagent/10 border border-indigo-100">
+                  <h3 className="text-3xl font-bold text-gradient mb-1">85%</h3>
                   <p className="text-sm text-slate-700 font-medium">Of graduates report career benefits</p>
                 </div>
-                <div className="p-5 rounded-xl bg-purple-50 border border-purple-100">
-                  <h3 className="text-3xl font-bold text-purple-600 mb-1">$15M+</h3>
+                <div className="p-5 rounded-xl bg-supperagent/10 border border-purple-100">
+                  <h3 className="text-3xl font-bold text-gradient mb-1">$15M+</h3>
                   <p className="text-sm text-slate-700 font-medium">Paid to instructors last year</p>
                 </div>
               </div>
@@ -148,7 +148,7 @@ export default function AboutPage() {
       <div className="py-24 relative">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Why the world chooses Mentora</h2>
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">Why the world chooses Medicare Training</h2>
             <p className="text-slate-600">
               We define our success by the success of our instructors and the growth of our students.
             </p>
@@ -160,7 +160,7 @@ export default function AboutPage() {
               {
                 icon: <ShieldCheck className="text-blue-600" size={24} />,
                 title: "Quality Vetted",
-                desc: "Every course on Mentora passes a strict quality review process to ensure high standards."
+                desc: "Every course on Medicare Training passes a strict quality review process to ensure high standards."
               },
               {
                 icon: <Target className="text-emerald-600" size={24} />,
@@ -195,8 +195,8 @@ export default function AboutPage() {
         {/* KEPT: Original Dark Indigo/Purple Background Aesthetic */}
         <div className="absolute inset-0 bg-slate-900">
            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/30 rounded-full blur-[100px]"></div>
-           <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/30 rounded-full blur-[100px]"></div>
+           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-supperagent/60 rounded-full blur-[100px]"></div>
+           <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-supperagent/30 rounded-full blur-[100px]"></div>
         </div>
 
         <div className="container mx-auto px-6 relative z-10 text-center">
@@ -204,7 +204,7 @@ export default function AboutPage() {
             Ready to start learning?
           </h2>
           <p className="text-slate-300 text-lg mb-10 max-w-2xl mx-auto">
-            Join millions of learners on Mentora today. Or sign up as an instructor and start selling your course to the world.
+            Join millions of learners on Medicare Training today. Or sign up as an instructor and start selling your course to the world.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button className="px-8 py-4 bg-white text-slate-900 font-bold rounded-full hover:bg-slate-100 transition-colors shadow-xl">

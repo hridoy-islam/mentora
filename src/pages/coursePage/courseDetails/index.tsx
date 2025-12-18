@@ -92,7 +92,7 @@ const CourseSkeleton = () => (
 );
 
 export default function CourseDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { toast } = useToast();
@@ -105,20 +105,22 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
+
   // --- Data Fetching Logic (Identical to yours) ---
   useEffect(() => {
     const fetchData = async () => {
-      if (!id) return;
+      if (!slug) return;
       try {
         setLoading(true);
         setError(null);
 
-        const courseRes = await axiosInstance.get(`/courses/${id}`);
-        const courseData: Course = courseRes.data.data;
+        const courseRes = await axiosInstance.get(`/courses/?slug=${slug}`);
+        const courseData: Course = courseRes.data.data.result[0];
         setCourse(courseData);
 
         const modulesRes = await axiosInstance.get('/course-modules', {
-          params: { courseId: id }
+          params: { courseId: course?._id }
         });
         const modules: CourseModule[] = modulesRes.data.data.result;
 
@@ -170,7 +172,7 @@ export default function CourseDetailPage() {
     };
 
     fetchData();
-  }, [id]);
+  }, [slug]);
 
   useEffect(() => {
     const fetchMoreCourses = async () => {
@@ -335,7 +337,7 @@ export default function CourseDetailPage() {
             <div className="group relative aspect-video select-none overflow-hidden rounded-2xl bg-slate-900 shadow-2xl ring-1 ring-slate-900/10">
               {/* The Image */}
               <img
-                src={course?.image || '/placeholder-course.jpg'}
+                src={course?.image || '/placeholder.jpg'}
                 alt={course.title}
                 className="h-full w-full transform object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
               />
@@ -343,19 +345,13 @@ export default function CourseDetailPage() {
               {/* Gradient Overlay for Depth (Makes it look premium) */}
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-slate-900/10 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-40"></div>
 
-              {/* Optional: Category Badge (Top Left) */}
-              <div className="absolute left-4 top-4">
-                <span className="inline-flex items-center rounded-md bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-sm ring-1 ring-white/30 backdrop-blur-md">
-                  {course.category || 'Course'}
-                </span>
-              </div>
-
+              
               {/* Optional: Watermark / Brand Logo (Center or Bottom Right) */}
               {/* This adds a professional 'brand' feel without looking like a play button */}
               <div className="absolute bottom-4 right-4 opacity-50 transition-opacity duration-300 group-hover:opacity-100">
                 <div className="flex items-center gap-2 rounded-lg bg-black/20 px-3 py-1.5 text-sm font-medium text-white/80 ring-1 ring-white/10 backdrop-blur-sm">
                   <Sparkles size={14} />
-                  <span>Mentora Verified</span>
+                  <span>Medicare Verified</span>
                 </div>
               </div>
             </div>

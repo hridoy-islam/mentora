@@ -17,7 +17,7 @@ const testimonials = [
     name: "David Ross",
     role: "NHS Administrator",
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=60",
-    content: "We used Mentora to train our administrative staff on Data Protection and Safeguarding. The platform is user-friendly, and the ability to track team progress made compliance management so much easier.",
+    content: "We used Medicare Training to train our administrative staff on Data Protection and Safeguarding. The platform is user-friendly, and the ability to track team progress made compliance management so much easier.",
     rating: 5,
     course: "Safeguarding Adults",
   },
@@ -62,7 +62,7 @@ const TestimonialsSection = () => {
             Student Success Stories
           </div>
           <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
-            Loved by <span className="text-transparent bg-clip-text bg-gradient-to-r from-supperagent to-purple-600">Care Professionals</span>
+            Loved by <span className="text-gradient">Care Professionals</span>
           </h2>
           <p className="text-gray-500 text-lg">
             Join thousands of successful graduates who have transformed their careers and improved care standards.

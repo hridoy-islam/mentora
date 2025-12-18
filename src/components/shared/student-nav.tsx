@@ -34,7 +34,7 @@ function Logo({ onClick }) {
       className="flex cursor-pointer items-center space-x-2 transition-opacity hover:opacity-80"
     >
       <GraduationCap className="h-9 w-9 text-supperagent" />
-      <span className="text-2xl font-bold text-supperagent">Mentora</span>
+      <span className="text-2xl font-bold text-supperagent">Medicare Training</span>
     </div>
   );
 }

@@ -150,7 +150,7 @@ const HeroSection = () => {
             </span>
           </motion.div>
 
-          {/* Heading - Updated with Mentora Tagline */}
+          {/* Heading - Updated with Medicare Training Tagline */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -158,8 +158,8 @@ const HeroSection = () => {
             className="text-5xl md:text-7xl lg:text-7xl font-extrabold tracking-tight mb-6 text-gray-900 leading-[1.1]"
           >
             Quality Health & Social Care <br />
-            <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-supperagent via-purple-600 to-supperagent animate-gradient-x pb-2">
-              Training with Mentora
+            <span className="relative inline-block text-gradient animate-gradient-x pb-2">
+              Training with Medicare Training
             </span>
           </motion.h1>
 
@@ -170,7 +170,7 @@ const HeroSection = () => {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            Gain expert skills with easy-to-access certified courses designed to 
+            Gain expert skills with easy to access certified courses designed to 
             advance your career in the healthcare and social sectors.
           </motion.p>
 

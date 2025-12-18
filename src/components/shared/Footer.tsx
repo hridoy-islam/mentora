@@ -90,11 +90,11 @@ export function Footer() {
                 <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-supperagent text-white shadow-lg shadow-supperagent/20">
                    <GraduationCap className="w-6 h-6" />
                 </div>
-                <span className="text-2xl font-bold text-gray-900 tracking-tight">Mentora</span>
+                <span className="text-2xl font-bold text-gray-900 tracking-tight">Medicare Training</span>
               </div>
               
               <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
-                Empowering learners worldwide with accessible, high-quality education. Join the revolution today.
+                Empowering learners worldwide with accessible, high quality education. Join the revolution today.
               </p>
 
               <ul className="space-y-4 text-sm text-gray-600">
@@ -108,7 +108,7 @@ export function Footer() {
                   <div className="p-2 bg-white rounded-full shadow-sm ring-1 ring-gray-100 group-hover:ring-supperagent/50 transition-all">
                      <Mail className="w-4 h-4 text-supperagent" />
                   </div>
-                  <span className="group-hover:text-supperagent transition-colors">support@mentora.com</span>
+                  <span className="group-hover:text-supperagent transition-colors">support@Medicare Training.com</span>
                 </li>
                 <li className="flex items-start gap-3 group">
                    <div className="p-2 bg-white rounded-full shadow-sm ring-1 ring-gray-100 group-hover:ring-supperagent/50 transition-all mt-[-2px]">
@@ -186,7 +186,7 @@ export function Footer() {
         <div className="relative z-10 mt-16 pt-8 border-t border-gray-200/60">
           <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-gray-500 text-center md:text-left">
-              © {new Date().getFullYear()} Mentora Inc. All Rights Reserved.
+              © {new Date().getFullYear()} Medicare Training Inc. All Rights Reserved.
             </p>
             
             {/* Social Icons */}
