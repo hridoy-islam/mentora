@@ -23,16 +23,16 @@ export default function CourseCard({ course, index = 0, onClick }) {
           <div className="absolute top-3 left-3 z-20">
             <span
               className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wide rounded-md shadow-sm text-white ${
-                course.color || 'bg-blue-500' // Fallback color if course.color is missing
+                course.color || 'bg-supperagent' // Fallback color if course.color is missing
               }`}
             >
-              {course.category}
+              {course.categoryId?.name}
             </span>
           </div>
 
           {/* Image */}
           <motion.img
-            src={course.image}
+            src={course.image||'/placeholder.jpg'}
             alt={course.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />

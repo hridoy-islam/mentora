@@ -52,7 +52,7 @@ export default function SignInPage() {
         Don’t have an account yet?{' '}
         <Link
           to="/signup"
-          className="font-medium text-purple-600 hover:underline"
+          className="font-medium text-supperagent hover:underline"
         >
           Sign up
         </Link>

@@ -59,6 +59,7 @@ export default function CourseModulesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(100);
   const [searchTerm, setSearchTerm] = useState('');
+  const [courseSlug, setCourseSlug] = useState('');
 
   useEffect(() => {
     if (cid) {
@@ -76,6 +77,7 @@ export default function CourseModulesPage() {
       // Fetch course name
       const courseResponse = await axiosInstance.get(`/courses/${cid}`);
       setCourseName(courseResponse.data.data?.title || 'Course');
+      setCourseSlug(courseResponse.data.data?.slug || '');
 
       const modulesResponse = await axiosInstance.get(
         `/course-modules?courseId=${cid}`,
@@ -215,7 +217,7 @@ export default function CourseModulesPage() {
                 variant="outline"
                 onClick={() =>
                   window.open(
-                    `/dashboard/courses/${cid}/website-preview`,
+                    `/courses/${courseSlug}`,
                     '_blank'
                   )
                 }
@@ -230,7 +232,7 @@ export default function CourseModulesPage() {
                 variant="outline"
                 onClick={() =>
                   window.open(
-                    `/dashboard/courses/${cid}/student-preview`,
+                    `/student/courses/${courseSlug}`,
                     '_blank'
                   )
                 }

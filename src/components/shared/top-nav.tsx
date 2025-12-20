@@ -194,9 +194,9 @@ export function TopNav() {
           <div className="flex flex-shrink-0 items-center space-x-2 sm:space-x-4">
             
             {/* Wishlist */}
-            <button className="hidden rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-supperagent sm:block">
+            {/* <button className="hidden rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-supperagent sm:block">
               <Heart className="h-5 w-5" />
-            </button>
+            </button> */}
 
             {/* Cart Section */}
             <div className="relative">
@@ -229,7 +229,7 @@ export function TopNav() {
                       <ul className="divide-y divide-gray-50">
                         {cartItems.map((item) => (
                           <li key={item.id} className="flex py-4">
-                            <img src={item.image || '/placeholder.svg'} alt={item.title} className="h-14 w-14 rounded-md object-cover border border-gray-100"/>
+                            <img src={item.image || '/placeholder.jpg'} alt={item.title} className="h-14 w-14 rounded-md object-cover border border-gray-100"/>
                             <div className="ml-3 flex flex-1 flex-col">
                               <div className="flex justify-between">
                                 <p className="text-sm font-medium text-gray-900 line-clamp-1">{item.title}</p>

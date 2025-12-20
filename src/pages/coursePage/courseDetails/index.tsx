@@ -15,7 +15,9 @@ import {
   AlertCircle,
   Globe,
   MonitorPlay,
-  Sparkles
+  Sparkles,
+  Calendar,
+  Check
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '@/lib/axios';
@@ -25,6 +27,7 @@ import CourseContentAccordion from '../components/CourseContentAccordion';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button'; // Assuming you have shadcn or similar, else standard buttons used below
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 // --- Types (Kept the same) ---
 interface Lesson {
@@ -104,10 +107,45 @@ export default function CourseDetailPage() {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    try {
+      // 1. Copy URL to clipboard
+      await navigator.clipboard.writeText(window.location.href);
+
+      // 2. Set copied state to true
+      setCopied(true);
+
+      // 3. Reset state after 2 seconds
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
 
 
 
-  // --- Data Fetching Logic (Identical to yours) ---
+  const handleBuyNow = () => {
+    if (!course) return;
+    
+    // 1. Add to Cart (Same payload as handleAddToCart)
+    dispatch(
+      addToCart({
+        id: course._id,
+        title: course.title,
+        price: course.price,
+        image: course.image,
+        quantity: 1
+      })
+    );
+
+    navigate('/cart');
+  };
+
+
   useEffect(() => {
     const fetchData = async () => {
       if (!slug) return;
@@ -126,9 +164,12 @@ export default function CourseDetailPage() {
 
         const modulesWithLessons = await Promise.all(
           modules.map(async (mod) => {
-            const lessonsRes = await axiosInstance.get('/course-lesson?fields=title,type,duration', {
-              params: { moduleId: mod._id }
-            });
+            const lessonsRes = await axiosInstance.get(
+              '/course-lesson?fields=title,type,duration',
+              {
+                params: { moduleId: mod._id }
+              }
+            );
             const lessons: Lesson[] = lessonsRes.data.data.result;
             return { module: mod, lessons };
           })
@@ -261,19 +302,7 @@ export default function CourseDetailPage() {
 
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
-              {/* Badges */}
-              <div className="flex flex-wrap gap-3">
-                <span className="inline-flex items-center rounded-md bg-yellow-400/10 px-3 py-1 text-xs font-semibold text-yellow-400 ring-1 ring-inset ring-yellow-400/20">
-                  Best Seller
-                </span>
-                <span className="inline-flex items-center rounded-md bg-blue-400/10 px-3 py-1 text-xs font-semibold text-blue-400 ring-1 ring-inset ring-blue-400/20">
-                  {course.title.includes('Advanced')
-                    ? 'Advanced'
-                    : 'Beginner Friendly'}
-                </span>
-              </div>
-
-              <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-white lg:text-5xl">
+              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white ">
                 {course.title}
               </h1>
 
@@ -310,18 +339,10 @@ export default function CourseDetailPage() {
                   <span>{course.students.toLocaleString()} Students</span>
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                {/* <div className="flex items-center gap-1.5">
                   <Globe size={16} className="text-slate-400" />
                   <span>English</span>
-                </div>
-              </div>
-
-              {/* Instructor Mini Profile (Hero) */}
-              <div className="flex items-center gap-3 pt-4 text-slate-300">
-                <span className="text-slate-400">Created by</span>
-                <span className="cursor-pointer font-medium text-white underline decoration-blue-500/50 underline-offset-4 transition-all hover:decoration-blue-500">
-                  {course.instructorId?.name}
-                </span>
+                </div> */}
               </div>
             </div>
           </div>
@@ -345,7 +366,6 @@ export default function CourseDetailPage() {
               {/* Gradient Overlay for Depth (Makes it look premium) */}
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-slate-900/10 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-40"></div>
 
-              
               {/* Optional: Watermark / Brand Logo (Center or Bottom Right) */}
               {/* This adds a professional 'brand' feel without looking like a play button */}
               <div className="absolute bottom-4 right-4 opacity-50 transition-opacity duration-300 group-hover:opacity-100">
@@ -358,7 +378,7 @@ export default function CourseDetailPage() {
 
             <div className="space-y-10">
               {/* What you'll learn - Designed as a highlighted section */}
-              <div className="rounded-2xl border border-slate-100 bg-slate-50 p-8">
+              <div className="rounded-2xl border-2 border-slate-200 bg-white p-8">
                 <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-slate-900">
                   <Zap className="fill-amber-500 text-amber-500" size={20} />
                   What you'll learn
@@ -396,7 +416,7 @@ export default function CourseDetailPage() {
                 <h2 className="mb-4 text-2xl font-bold text-slate-900">
                   Requirements
                 </h2>
-                <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
+                <div className="rounded-xl border-2 border-slate-200 bg-white p-6 shadow-sm">
                   <ul className="space-y-3">
                     {course.requirements.map((req, i) => (
                       <li
@@ -416,7 +436,7 @@ export default function CourseDetailPage() {
                 <h2 className="mb-4 text-2xl font-bold text-slate-900">
                   Description
                 </h2>
-                <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm md:p-8">
+                <div className="rounded-xl border-2 border-slate-200 bg-white p-6 shadow-sm">
                   <div
                     className="prose prose-sm prose-slate max-w-none md:prose-base prose-headings:font-bold prose-p:text-slate-600 prose-a:text-blue-600 prose-img:rounded-xl"
                     dangerouslySetInnerHTML={{ __html: course.description }}
@@ -429,7 +449,7 @@ export default function CourseDetailPage() {
                 <h2 className="mb-4 text-2xl font-bold text-slate-900">
                   Instructor
                 </h2>
-                <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm md:p-8">
+                <div className="rounded-xl border-2 border-slate-200 bg-white p-6 shadow-sm">
                   <div className="flex flex-col gap-6 sm:flex-row">
                     {/* Avatar */}
                     <div className="shrink-0">
@@ -546,9 +566,6 @@ export default function CourseDetailPage() {
                       <span className="inline-flex items-center rounded-md bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/10">
                         {discountPercent}% Off
                       </span>
-                      <span className="flex items-center gap-1 text-xs font-medium text-rose-600">
-                        <Clock size={12} /> 2 days left at this price!
-                      </span>
                     </div>
                   </div>
 
@@ -559,13 +576,9 @@ export default function CourseDetailPage() {
                     >
                       Add to Cart
                     </button>
-                    <button className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 font-bold text-slate-900 transition-all hover:border-slate-300">
+                    <button onClick={handleBuyNow} className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 font-bold text-slate-900 transition-all hover:border-slate-300">
                       Buy Now
                     </button>
-                  </div>
-
-                  <div className="mb-6 text-center text-xs text-slate-500">
-                    30-Day Money-Back Guarantee
                   </div>
 
                   <div className="space-y-4 border-t border-slate-100 pt-6">
@@ -575,50 +588,54 @@ export default function CourseDetailPage() {
                     <ul className="space-y-3 text-sm text-slate-600">
                       <li className="flex items-center gap-3">
                         <MonitorPlay size={16} className="text-slate-400" />
-                        <span>{course.duration} hours on-demand video</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <FileText size={16} className="text-slate-400" />
-                        <span>{course.resources} downloadable resources</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <Download size={16} className="text-slate-400" />
-                        <span>Full lifetime access</span>
-                      </li>
-                      <li className="flex items-center gap-3">
-                        <MonitorPlay size={16} className="text-slate-400" />
                         <span>Access on mobile and TV</span>
                       </li>
+
                       <li className="flex items-center gap-3">
                         <Award size={16} className="text-slate-400" />
                         <span>Certificate of completion</span>
+                      </li>
+
+                      {/* Course validity */}
+                      <li className="flex items-center gap-3">
+                        <Calendar size={16} className="text-slate-400" />
+                        <span>Course validity: 1 year</span>
                       </li>
                     </ul>
                   </div>
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex justify-between border-t border-slate-200 bg-slate-50 p-4">
-                  <button
-                    className="flex w-1/2 items-center justify-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-                    onClick={() => {
-                      /* share logic */
-                    }}
-                  >
-                    <Share2 size={16} /> Share
-                  </button>
-                  <div className="my-auto h-5 w-px bg-slate-200"></div>
-                  <button
-                    onClick={() => setIsWishlisted(!isWishlisted)}
-                    className={`flex w-1/2 items-center justify-center gap-2 text-sm font-medium transition-colors ${isWishlisted ? 'text-rose-500' : 'text-slate-600 hover:text-slate-900'}`}
-                  >
-                    <Heart
-                      size={16}
-                      fill={isWishlisted ? 'currentColor' : 'none'}
-                    />{' '}
-                    Wishlist
-                  </button>
-                </div>
+              <div className="border-t border-slate-100 bg-slate-50 p-4">
+  <button
+    onClick={handleShare}
+    disabled={copied}
+    className={cn(
+      "group flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-200",
+      copied
+        ? "bg-emerald-50 text-emerald-600 cursor-default" // Success state
+        : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm active:scale-95" // Default state
+    )}
+  >
+    {copied ? (
+      <>
+        <Check
+          size={16}
+          className="animate-in zoom-in spin-in-90 duration-300"
+        />
+        <span>Link Copied</span>
+      </>
+    ) : (
+      <>
+        <Share2
+          size={16}
+          className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:rotate-12"
+        />
+        <span>Share this course</span>
+      </>
+    )}
+  </button>
+</div>
               </div>
             </div>
           </div>

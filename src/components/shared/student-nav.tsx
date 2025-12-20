@@ -4,13 +4,14 @@ import {
   Heart,
   ShoppingCart,
   User,
-  BookOpen, // Icon for My Courses
+  BookOpen,
   Plus,
   Minus,
   Trash,
   LogOut,
   Menu,
-  X
+  X,
+  Building
 } from 'lucide-react';
 import { NavLink as RouterNavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -23,18 +24,22 @@ import {
 import { logout } from '@/redux/features/authSlice';
 
 // --- Logo ---
-function Logo({ onClick }) {
+function Logo({ onClick, disabled }) {
   const navigate = useNavigate();
   return (
     <div
       onClick={() => {
+        // If disabled (admin), do nothing
+        if (disabled) return;
+        
         navigate('/student');
         if (onClick) onClick();
       }}
-      className="flex cursor-pointer items-center space-x-2 transition-opacity hover:opacity-80"
+      className={`flex items-center space-x-2 ${
+        disabled ? '' : 'cursor-pointer transition-opacity hover:opacity-80'
+      }`}
     >
-      <GraduationCap className="h-9 w-9 text-supperagent" />
-      <span className="text-2xl font-bold text-supperagent">Medicare Training</span>
+      <img src="/logo.png" alt="medicare" width={120} />
     </div>
   );
 }
@@ -123,9 +128,14 @@ export function StudentNav() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  
+  // @ts-ignore
+  const { user } = useSelector((state) => state.auth);
+
   const cartButtonRef = useRef(null);
   const cartDropdownRef = useRef(null);
+
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin';
 
   // --- Actions ---
   const handleLogout = () => {
@@ -179,126 +189,135 @@ export function StudentNav() {
           
           {/* 1. Left: Logo */}
           <div className="flex flex-shrink-0 items-center">
-            <Logo onClick={undefined} />
+            {/* Pass disabled prop if user is admin */}
+            <Logo onClick={undefined} disabled={isAdmin} />
           </div>
 
-          {/* 2. Center: Navigation (Desktop) */}
-          <nav className="hidden md:flex flex-1 items-center justify-center">
-            <ul className="flex items-center space-x-10">
-              <NavLink to="/student" end>Home</NavLink>
-              <NavLink to="/student/courses">Courses</NavLink>
-              <NavLink to="/student/contact">Contact</NavLink>
-            </ul>
-          </nav>
+          {/* CONDITIONAL RENDERING: 
+            If user is admin, hide everything below (Nav and Right Actions)
+          */}
+          {!isAdmin && (
+            <>
+              {/* 2. Center: Navigation (Desktop) */}
+              <nav className="hidden md:flex flex-1 items-center justify-center">
+                <ul className="flex items-center space-x-10">
+                  <NavLink to="/student" end>Dashboard</NavLink>
+                  <NavLink to="/student/courses">Courses</NavLink>
+                  <NavLink to="/student/contact">Contact</NavLink>
+                </ul>
+              </nav>
 
-          {/* 3. Right: Actions */}
-          <div className="flex flex-shrink-0 items-center space-x-2 sm:space-x-4">
-            
-            {/* Wishlist */}
-            <button className="hidden rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-supperagent sm:block">
-              <Heart className="h-5 w-5" />
-            </button>
-
-            {/* Cart Section */}
-            <div className="relative">
-              <button
-                ref={cartButtonRef}
-                onClick={() => setIsCartOpen(!isCartOpen)}
-                className={`relative rounded-full p-2 hover:bg-gray-100 ${
-                  isCartOpen ? 'bg-gray-100 text-supperagent' : 'text-gray-500'
-                }`}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {totalQuantity > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-supperagent text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
-                    {totalQuantity}
-                  </span>
-                )}
-              </button>
-
-              {/* Cart Dropdown */}
-              {isCartOpen && (
-                <div
-                  ref={cartDropdownRef}
-                  className="absolute right-0 top-full mt-3 w-80 sm:w-96 transform rounded-xl border border-gray-100 bg-white shadow-2xl ring-1 ring-black ring-opacity-5 transition-all z-50"
-                >
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold text-gray-900">Shopping Cart</h3>
-                  </div>
-                  <div className="max-h-[60vh] overflow-y-auto border-t border-gray-50 px-4">
-                    {cartItems.length > 0 ? (
-                      <ul className="divide-y divide-gray-50">
-                        {cartItems.map((item) => (
-                          <li key={item.id} className="flex py-4">
-                            <img src={item.image || '/placeholder.svg'} alt={item.title} className="h-14 w-14 rounded-md object-cover border border-gray-100"/>
-                            <div className="ml-3 flex flex-1 flex-col">
-                              <div className="flex justify-between">
-                                <p className="text-sm font-medium text-gray-900 line-clamp-1">{item.title}</p>
-                                <button type="button" onClick={() => handleRemove(item.id)} className="ml-2 text-gray-400 hover:text-red-500"><Trash size={14} /></button>
-                              </div>
-                              <div className="mt-2 flex items-center justify-between">
-                                <div className="flex items-center space-x-2 rounded-md border border-gray-200 p-0.5">
-                                  <button onClick={() => handleDecrease(item.id)} className="p-1 text-gray-500 hover:text-supperagent"><Minus size={10} /></button>
-                                  <span className="text-xs font-medium w-4 text-center">{item.quantity}</span>
-                                  <button onClick={() => handleIncrease(item.id)} className="p-1 text-gray-500 hover:text-supperagent"><Plus size={10} /></button>
-                                </div>
-                                <span className="text-sm font-semibold text-supperagent">${(item.price * item.quantity).toFixed(2)}</span>
-                              </div>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-8 text-center">
-                        <ShoppingCart className="h-10 w-10 text-gray-300 mb-2" />
-                        <p className="text-sm text-gray-500">Your cart is empty.</p>
-                      </div>
+              {/* 3. Right: Actions */}
+              <div className="flex flex-shrink-0 items-center space-x-2 sm:space-x-4">
+                
+                {/* Cart Section */}
+                <div className="relative">
+                  <button
+                    ref={cartButtonRef}
+                    onClick={() => setIsCartOpen(!isCartOpen)}
+                    className={`relative rounded-full p-2 hover:bg-gray-100 ${
+                      isCartOpen ? 'bg-gray-100 text-supperagent' : 'text-gray-500'
+                    }`}
+                  >
+                    <ShoppingCart className="h-5 w-5" />
+                    {totalQuantity > 0 && (
+                      <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-supperagent text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+                        {totalQuantity}
+                      </span>
                     )}
-                  </div>
-                  {cartItems.length > 0 && (
-                    <div className="border-t border-gray-100 p-4 bg-gray-50/50 rounded-b-xl">
-                      <div className="mb-3 flex justify-between text-base font-medium text-gray-900">
-                        <span>Subtotal</span>
-                        <span>${cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</span>
+                  </button>
+
+                  {/* Cart Dropdown */}
+                  {isCartOpen && (
+                    <div
+                      ref={cartDropdownRef}
+                      className="absolute right-0 top-full mt-3 w-80 sm:w-96 transform rounded-xl border border-gray-100 bg-white shadow-2xl ring-1 ring-black ring-opacity-5 transition-all z-50"
+                    >
+                      <div className="p-4">
+                        <h3 className="text-sm font-semibold text-gray-900">Shopping Cart</h3>
                       </div>
-                      <button onClick={handleCart} className="w-full rounded-lg bg-supperagent px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-supperagent/90">Go to Cart</button>
+                      <div className="max-h-[60vh] overflow-y-auto border-t border-gray-50 px-4">
+                        {cartItems.length > 0 ? (
+                          <ul className="divide-y divide-gray-50">
+                            {cartItems.map((item) => (
+                              <li key={item.id} className="flex py-4">
+                                <img src={item.image || '/placeholder.jpg'} alt={item.title} className="h-14 w-14 rounded-md object-cover border border-gray-100"/>
+                                <div className="ml-3 flex flex-1 flex-col">
+                                  <div className="flex justify-between">
+                                    <p className="text-sm font-medium text-gray-900 line-clamp-1">{item.title}</p>
+                                    <button type="button" onClick={() => handleRemove(item.id)} className="ml-2 text-gray-400 hover:text-red-500"><Trash size={14} /></button>
+                                  </div>
+                                  <div className="mt-2 flex items-center justify-between">
+                                    <div className="flex items-center space-x-2 rounded-md border border-gray-200 p-0.5">
+                                      <button onClick={() => handleDecrease(item.id)} className="p-1 text-gray-500 hover:text-supperagent"><Minus size={10} /></button>
+                                      <span className="text-xs font-medium w-4 text-center">{item.quantity}</span>
+                                      <button onClick={() => handleIncrease(item.id)} className="p-1 text-gray-500 hover:text-supperagent"><Plus size={10} /></button>
+                                    </div>
+                                    <span className="text-sm font-semibold text-supperagent">${(item.price * item.quantity).toFixed(2)}</span>
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-8 text-center">
+                            <ShoppingCart className="h-10 w-10 text-gray-300 mb-2" />
+                            <p className="text-sm text-gray-500">Your cart is empty.</p>
+                          </div>
+                        )}
+                      </div>
+                      {cartItems.length > 0 && (
+                        <div className="border-t border-gray-100 p-4 bg-gray-50/50 rounded-b-xl">
+                          <div className="mb-3 flex justify-between text-base font-medium text-gray-900">
+                            <span>Subtotal</span>
+                            <span>${cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</span>
+                          </div>
+                          <button onClick={handleCart} className="w-full rounded-lg bg-supperagent px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-supperagent/90">Go to Cart</button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
 
-            {/* Desktop Student Actions */}
-            <div className="hidden sm:flex items-center space-x-3">
-              <div className="h-6 w-px bg-gray-200 mx-2"></div>
-              
-              {/* My Courses Button */}
-              <RouterNavLink
-                to="/student/my-courses"
-                className="flex items-center space-x-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <BookOpen className="h-4 w-4" />
-                <span>My Courses</span>
-              </RouterNavLink>
+                {/* Desktop Student Actions */}
+                <div className="hidden sm:flex items-center space-x-3">
+                  <div className="h-6 w-px bg-gray-200 mx-2"></div>
+                  <RouterNavLink
+                    to="/student/my-organization"
+                    className="flex items-center space-x-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Building className="h-4 w-4" />
+                    <span>My Organization</span>
+                  </RouterNavLink>
+                  {/* My Courses Button */}
+                  <RouterNavLink
+                    to="/student/my-courses"
+                    className="flex items-center space-x-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    <span>My Courses</span>
+                  </RouterNavLink>
 
-              {/* Logout Button */}
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Log Out</span>
-              </button>
-            </div>
+                  {/* Logout Button */}
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center space-x-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Log Out</span>
+                  </button>
+                </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="p-2 text-gray-500 md:hidden hover:bg-gray-100 rounded-full"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-          </div>
+                {/* Mobile Menu Button */}
+                <button
+                  onClick={() => setIsMobileMenuOpen(true)}
+                  className="p-2 text-gray-500 md:hidden hover:bg-gray-100 rounded-full"
+                >
+                  <Menu className="h-6 w-6" />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -306,7 +325,7 @@ export function StudentNav() {
       {/* ANIMATED MOBILE MENU OVERLAY                                           */}
       {/* ---------------------------------------------------------------------- */}
       <AnimatePresence>
-        {isMobileMenuOpen && (
+        {isMobileMenuOpen && !isAdmin && (
           <motion.div
             key="mobile-student-menu"
             variants={menuWrapperVariants}

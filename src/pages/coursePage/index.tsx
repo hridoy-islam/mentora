@@ -1,11 +1,28 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Sliders, X, Search, ChevronDown, Check, Filter } from 'lucide-react';
+import {
+  Sliders,
+  X,
+  Search,
+  Check,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CourseCard from './components/CourseCard';
 import axiosInstance from '@/lib/axios';
 import { Loader } from '@/components/shared/MedicareLoader';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 // --- Sub-Component: Filter Section Header ---
 const FilterSectionTitle = ({
@@ -23,6 +40,152 @@ const FilterSectionTitle = ({
   </div>
 );
 
+// --- EXTRACTED COMPONENT: This prevents the focus loss issue ---
+interface FilterSidebarProps {
+  categories: any[];
+  tempCategory: string;
+  setTempCategory: (id: string) => void;
+  tempMinPrice: number | '';
+  setTempMinPrice: (val: number | '') => void;
+  tempMaxPrice: number | '';
+  setTempMaxPrice: (val: number | '') => void;
+  handleApplyFilters: () => void;
+  resetFilters: () => void;
+}
+
+const FilterSidebar = ({
+  categories,
+  tempCategory,
+  setTempCategory,
+  tempMinPrice,
+  setTempMinPrice,
+  tempMaxPrice,
+  setTempMaxPrice,
+  handleApplyFilters,
+  resetFilters
+}: FilterSidebarProps) => {
+  // Safe handler for inputs to allow clearing the field
+  const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setTempMinPrice(val === '' ? '' : Number(val));
+  };
+
+  const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setTempMaxPrice(val === '' ? '' : Number(val));
+  };
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTempMaxPrice(Number(e.target.value));
+  };
+
+  return (
+    <div className="space-y-1">
+      <FilterSectionTitle title="Category">
+        <div className="custom-scrollbar max-h-60 space-y-2 overflow-y-auto pr-2">
+          {categories.map((cat) => (
+            <label
+              key={cat.id}
+              className="group flex cursor-pointer items-center gap-3"
+            >
+              <div
+                className={`flex h-5 w-5 items-center justify-center rounded border transition-all ${
+                  tempCategory === cat.id
+                    ? 'border-supperagent bg-supperagent'
+                    : 'border-gray-300 bg-white group-hover:border-supperagent'
+                }`}
+              >
+                {tempCategory === cat.id && (
+                  <Check size={12} className="text-white" />
+                )}
+              </div>
+              <input
+                type="radio"
+                name="category"
+                value={cat.id}
+                checked={tempCategory === cat.id}
+                onChange={() => setTempCategory(cat.id)}
+                className="hidden"
+              />
+              <span
+                className={`text-sm ${
+                  tempCategory === cat.id
+                    ? 'font-medium text-gray-900'
+                    : 'text-gray-600'
+                }`}
+              >
+                {cat.name}
+              </span>
+            </label>
+          ))}
+        </div>
+      </FilterSectionTitle>
+
+      <div className="my-6 border-t border-gray-100" />
+
+      <FilterSectionTitle title="Price Range ($)">
+        <div className="space-y-4 px-1">
+          {/* Manual Input Fields */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Input
+                type="number"
+                value={tempMinPrice}
+                onChange={handleMinChange}
+                className="h-9 px-2 text-center text-sm"
+                placeholder="Min"
+              />
+            </div>
+            <span className="text-gray-400">-</span>
+            <div className="relative flex-1">
+              <Input
+                type="number"
+                value={tempMaxPrice}
+                onChange={handleMaxChange}
+                className="h-9 px-2 text-center text-sm"
+                placeholder="Max"
+              />
+            </div>
+          </div>
+
+          {/* Range Slider for Max Price */}
+          <div className="pt-2">
+            <input
+              type="range"
+              min={0}
+              max={2000}
+              step={10}
+              value={Number(tempMaxPrice) || 0}
+              onChange={handleSliderChange}
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-supperagent transition-colors hover:bg-gray-300"
+            />
+            <div className="mt-2 flex justify-between text-[10px] font-medium text-gray-400">
+              <span>$0</span>
+              <span>$2000+</span>
+            </div>
+          </div>
+        </div>
+      </FilterSectionTitle>
+
+      <div className="mt-8 space-y-3 pt-4">
+        <button
+          onClick={handleApplyFilters}
+          className="w-full rounded-xl bg-supperagent py-3 text-sm font-bold text-white shadow-lg transition-all hover:bg-supperagent/90 active:scale-95"
+        >
+          Apply Filters
+        </button>
+        <button
+          onClick={resetFilters}
+          className="w-full rounded-xl border border-gray-200 bg-white py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-red-50 hover:text-red-500"
+        >
+          Reset All
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// --- MAIN PAGE COMPONENT ---
 export default function CoursePage() {
   const navigate = useNavigate();
 
@@ -34,30 +197,31 @@ export default function CoursePage() {
 
   // --- 2. Filter States ---
 
-  // UI States (Controlled inputs, does NOT trigger API)
+  // UI States (Allow empty string for inputs while typing)
   const [tempCategory, setTempCategory] = useState<string>('All');
-  const [tempPrice, setTempPrice] = useState<number>(1000);
+  const [tempMinPrice, setTempMinPrice] = useState<number | ''>(0);
+  const [tempMaxPrice, setTempMaxPrice] = useState<number | ''>(1000);
   const [tempSearchTerm, setTempSearchTerm] = useState('');
 
-  // Active States (Used for API calls)
+  // Active States (Used for API calls - strictly numbers)
   const [activeCategory, setActiveCategory] = useState<string>('All');
-  const [activePrice, setActivePrice] = useState<number>(1000);
+  const [activeMinPrice, setActiveMinPrice] = useState<number>(0);
+  const [activeMaxPrice, setActiveMaxPrice] = useState<number>(1000);
   const [activeSearchTerm, setActiveSearchTerm] = useState('');
-  
-  // Sort and Page (Trigger API immediately)
+
+  // Sort and Page
   const [sortBy, setSortBy] = useState<string>('default');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(12);
+  const [entriesPerPage] = useState(9);
 
-  // UI Toggles
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // --- 3. Initial Data Fetch (Categories) ---
+  // --- 3. Data Fetching ---
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axiosInstance.get('/category');
+        const res = await axiosInstance.get('/category?limit=all');
         setCategories(res.data.data.result || []);
       } catch (err) {
         console.error('Failed to load categories:', err);
@@ -66,17 +230,15 @@ export default function CoursePage() {
     fetchCategories();
   }, []);
 
-  // --- 4. Main Course Fetch Function ---
   const fetchCourses = async () => {
     setLoading(true);
     try {
       const apiParams: any = {
-      
         page: currentPage,
         limit: entriesPerPage,
         sort: sortBy,
-        minPrice: 0,
-        maxPrice: activePrice
+        minPrice: activeMinPrice,
+        maxPrice: activeMaxPrice
       };
 
       if (activeCategory !== 'All') {
@@ -89,12 +251,10 @@ export default function CoursePage() {
       const response = await axiosInstance.get('/courses', {
         params: apiParams
       });
-
       const result = response.data.data.result || [];
       setTotalPages(response.data.data.meta.totalPage);
       setMeta({ ...response.data.data.meta });
       setCourses(result);
-
     } catch (err) {
       console.error('Failed to fetch courses:', err);
       setCourses([]);
@@ -103,29 +263,24 @@ export default function CoursePage() {
     }
   };
 
-  // --- 5. Effect Hook ---
-  // Triggers when Active Filters, Page, or Sort changes
   useEffect(() => {
     fetchCourses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCategory, activePrice, activeSearchTerm, sortBy, currentPage]);
+  }, [
+    activeCategory,
+    activeMinPrice,
+    activeMaxPrice,
+    activeSearchTerm,
+    sortBy,
+    currentPage
+  ]);
 
-  // --- 6. Handlers ---
-
-  // Handle Input Changes (Updates UI state only)
-  const handleCategoryChange = (cat: string) => {
-    setTempCategory(cat);
-  };
-
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTempPrice(Number(e.target.value));
-  };
-
-  // Handle Actions (Updates Active state -> Triggers API)
+  // --- 4. Handlers ---
   const handleApplyFilters = () => {
     setActiveCategory(tempCategory);
-    setActivePrice(tempPrice);
-    setCurrentPage(1); // Reset to page 1 on filter apply
+    // Ensure we don't send empty string to API
+    setActiveMinPrice(tempMinPrice === '' ? 0 : tempMinPrice);
+    setActiveMaxPrice(tempMaxPrice === '' ? 0 : tempMaxPrice);
+    setCurrentPage(1);
     setShowMobileFilters(false);
   };
 
@@ -134,166 +289,78 @@ export default function CoursePage() {
     setCurrentPage(1);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearchClick();
-    }
-  };
-
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortBy(e.target.value);
-    setCurrentPage(1);
-  };
-
   const resetFilters = () => {
-    // Reset UI
     setTempCategory('All');
-    setTempPrice(1000);
+    setTempMinPrice(0);
+    setTempMaxPrice(1000);
     setTempSearchTerm('');
     setSortBy('default');
-    
-    // Reset Active
+
     setActiveCategory('All');
-    setActivePrice(1000);
+    setActiveMinPrice(0);
+    setActiveMaxPrice(1000);
     setActiveSearchTerm('');
     setCurrentPage(1);
   };
 
-  // --- Memoized Categories List ---
+  // Memoized categories
   const allCategories = useMemo(() => {
-    const cats = categories.map((c) => c.name).filter(Boolean);
-    return ['All', ...cats.sort()];
+    const formatted = categories.map((c) => ({ id: c._id, name: c.name }));
+    return [{ id: 'All', name: 'All' }, ...formatted];
   }, [categories]);
 
-  // --- Render Components ---
-
-  const FilterContent = () => (
-    <div className="space-y-1">
-      {/* Category Filter */}
-      <FilterSectionTitle title="Category">
-        <div className="custom-scrollbar max-h-60 space-y-2 overflow-y-auto pr-2">
-          {allCategories.map((cat) => (
-            <label
-              key={cat}
-              className="group flex cursor-pointer items-center gap-3"
-            >
-              <div
-                className={`flex h-5 w-5 items-center justify-center rounded border transition-all ${
-                  tempCategory === cat
-                    ? 'border-supperagent bg-supperagent'
-                    : 'border-gray-300 bg-white group-hover:border-supperagent'
-                }`}
-              >
-                {tempCategory === cat && (
-                  <Check size={12} className="text-white" />
-                )}
-              </div>
-              <input
-                type="radio"
-                name="category"
-                value={cat}
-                checked={tempCategory === cat}
-                onChange={() => handleCategoryChange(cat)}
-                className="hidden"
-              />
-              <span
-                className={`text-sm ${tempCategory === cat ? 'font-medium text-gray-900' : 'text-gray-600'}`}
-              >
-                {cat}
-              </span>
-            </label>
-          ))}
-        </div>
-      </FilterSectionTitle>
-
-      <div className="my-6 border-t border-gray-100" />
-
-      {/* Price Filter */}
-      <FilterSectionTitle title="Max Price">
-        <div className="px-1">
-          <input
-            type="range"
-            min={0}
-            max={1000}
-            step={10}
-            value={tempPrice}
-            onChange={handlePriceChange}
-            className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-supperagent"
-          />
-          <div className="mt-4 flex items-center justify-between">
-            <div className="rounded border border-gray-200 bg-gray-50 px-3 py-1 text-sm font-medium text-gray-700">
-              $0
-            </div>
-            <span className="text-gray-400">-</span>
-            <div className="rounded border border-supperagent bg-white px-3 py-1 text-sm font-bold text-supperagent">
-              ${tempPrice}
-            </div>
-          </div>
-        </div>
-      </FilterSectionTitle>
-
-      {/* Apply Button Section */}
-      <div className="mt-8 space-y-3 pt-4">
-        <button
-          onClick={handleApplyFilters}
-          className="w-full rounded-xl bg-supperagent py-3 text-sm font-bold text-white shadow-lg shadow-supperagent/20 transition-all hover:bg-supperagent/90 hover:shadow-xl active:scale-95"
-        >
-          Apply Filters
-        </button>
-        
-        <button
-          onClick={resetFilters}
-          className="w-full rounded-xl border border-gray-200 bg-white py-3 text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-colors"
-        >
-          Reset All
-        </button>
-      </div>
-    </div>
-  );
+  // Paste this helper function outside your component
+  const getPageNumbers = (total, current) => {
+    const delta = 1;
+    const range = [];
+    for (let i = 1; i <= total; i++) {
+      if (
+        i === 1 ||
+        i === total ||
+        (i >= current - delta && i <= current + delta)
+      ) {
+        range.push(i);
+      } else if (range[range.length - 1] !== '...') {
+        range.push('...');
+      }
+    }
+    return range;
+  };
 
   return (
-    <div className="relative overflow-x-hidden bg-slate-50">
-      {/* Background */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: 'radial-gradient(#4F46E5 1px, transparent 1px)',
-          backgroundSize: '24px 24px'
-        }}
-      ></div>
-      <div className="pointer-events-none absolute right-0 top-0 h-[600px] w-[600px] -translate-y-1/2 translate-x-1/4 rounded-full bg-blue-100/40 blur-3xl" />
-
+    <div className="relative  overflow-x-hidden bg-slate-50 pb-20">
       {/* Hero Header */}
-      <div className="relative z-10 border-b border-gray-200 bg-white">
-        <div className="container mx-auto py-12 md:py-16">
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-4xl font-bold tracking-tight text-gray-900 md:text-5xl">
-              Explore Our <span className="text-supperagent">Courses</span>
+      <div className="relative border-b border-slate-200 bg-white">
+        {/* Subtle geometric pattern overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] opacity-40"></div>
+
+        <div className="container relative z-10 mx-auto py-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <h1 className="mb-6 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+              Unlock Your Potential with{' '}
+              <span className="text-supperagent">Expert Courses</span>
             </h1>
-            <p className="mb-8 text-lg text-gray-500">
-              Discover a world of knowledge with our expert-led courses. Filter
-              by category, price, or instructor to find your perfect match.
+            <p className="mb-10 text-lg text-slate-600 md:text-xl">
+              Find the perfect course to upgrade your skills and advance your
+              career.
             </p>
 
-            {/* Search Bar with Button */}
-            <div className="relative flex max-w-lg items-center gap-2">
+            {/* Floating Search Bar */}
+            <div className="relative mx-auto flex max-w-2xl items-center gap-2 rounded-2xl bg-white p-2 shadow-2xl shadow-slate-200/50 ring-1 ring-slate-100">
               <div className="relative flex-1">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <Input
+                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <input
                   type="text"
-                  placeholder="Search courses..."
+                  placeholder="What do you want to learn?"
                   value={tempSearchTerm}
                   onChange={(e) => setTempSearchTerm(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 pl-11 pr-4 shadow-sm transition-all focus:border-supperagent focus:bg-white focus:ring-2 focus:ring-supperagent/20"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()}
+                  className="w-full border-none bg-transparent py-2 pl-12 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0"
                 />
               </div>
               <Button
-              size={'sm'}
                 onClick={handleSearchClick}
-                className="rounded-xl bg-supperagent px-6 h-9 font-bold text-white shadow-md shadow-supperagent/20 transition-all active:scale-95"
+                className="h-12 rounded-xl bg-supperagent px-8 text-base font-semibold transition-transform active:scale-95"
               >
                 Search
               </Button>
@@ -301,16 +368,14 @@ export default function CoursePage() {
           </div>
         </div>
       </div>
-
       <div className="container relative z-10 mx-auto py-8 md:py-12">
-        {/* Mobile Filter Toggle */}
+        {/* Mobile Filter Toggle Button */}
         <div className="mb-6 lg:hidden">
           <button
             onClick={() => setShowMobileFilters(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-3 font-medium text-gray-700 shadow-sm"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white py-3 font-medium text-gray-700 shadow-sm"
           >
-            <Filter size={18} />
-            Filters & Sort
+            <Filter size={18} /> Filters & Sort
           </button>
         </div>
 
@@ -318,132 +383,198 @@ export default function CoursePage() {
           {/* Desktop Sidebar */}
           <aside className="hidden w-72 flex-shrink-0 lg:block">
             <div className="sticky top-24 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-              <div className="mb-6 flex items-center gap-2 border-b border-gray-100 pb-4">
+              <div className="mb-6 flex items-center gap-2 border-b pb-4">
                 <Sliders size={18} className="text-supperagent" />
                 <span className="font-bold text-gray-900">Filters</span>
               </div>
-              <FilterContent />
+
+              {/* Passing props to the external component */}
+              <FilterSidebar
+                categories={allCategories}
+                tempCategory={tempCategory}
+                setTempCategory={setTempCategory}
+                tempMinPrice={tempMinPrice}
+                setTempMinPrice={setTempMinPrice}
+                tempMaxPrice={tempMaxPrice}
+                setTempMaxPrice={setTempMaxPrice}
+                handleApplyFilters={handleApplyFilters}
+                resetFilters={resetFilters}
+              />
             </div>
           </aside>
 
           {/* Results Area */}
           <main className="flex-1">
-            {/* Header: Count & Sort */}
             <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  {activeSearchTerm
-                    ? `Results for "${activeSearchTerm}"`
-                    : 'All Courses'}
-                </h2>
-               
-              </div>
-
+              <h2 className="text-xl font-bold text-gray-900">
+                {activeSearchTerm
+                  ? `Results for "${activeSearchTerm}"`
+                  : 'All Courses'}
+              </h2>
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-gray-500">
                   Sort by:
                 </span>
-                <div className="relative">
-                  <select
-                    value={sortBy}
-                    onChange={handleSortChange}
-                    className="min-w-[180px] cursor-pointer appearance-none rounded-lg border border-gray-200 bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-gray-900 shadow-sm focus:border-supperagent focus:outline-none focus:ring-2 focus:ring-supperagent/20"
-                  >
-                    <option value="default">Most Relevant</option>
-                    <option value="rating">Highest Rated</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                </div>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[180px] rounded-xl">
+                    <SelectValue placeholder="Sort" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Most Relevant</SelectItem>
+                    <SelectItem value="low-to-high">
+                      Price: Low to High
+                    </SelectItem>
+                    <SelectItem value="high-to-low">
+                      Price: High to Low
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            {/* Course Grid */}
             {loading ? (
-              <div className="flex justify-center py-20">
+              <div className="flex h-64 w-full items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white">
                 <Loader />
               </div>
             ) : (
-              <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {courses.length > 0 ? (
                   courses.map((course) => (
                     <CourseCard
-                      key={course._id || course.id}
+                      key={course._id}
                       course={course}
                       onClick={() => navigate(`/courses/${course?.slug}`)}
                     />
                   ))
                 ) : (
-                  <div className="col-span-full rounded-3xl border border-gray-100 bg-white py-20 text-center shadow-sm">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50">
-                      <Search className="h-8 w-8 text-gray-300" />
-                    </div>
-                    <h3 className="mb-2 text-lg font-bold text-gray-900">
-                      No courses found
-                    </h3>
-                    <p className="mx-auto mb-6 max-w-sm text-gray-500">
-                      We couldn't find any courses matching your filters.
+                  <div className="col-span-full py-20 text-center">
+                    <h3 className="text-lg font-bold">No courses found</h3>
+                    <p className="text-gray-500">
+                      Try adjusting your price range or category.
                     </p>
-                    <button
-                      onClick={resetFilters}
-                      className="font-bold text-supperagent hover:underline"
-                    >
-                      Clear all filters
-                    </button>
                   </div>
                 )}
               </div>
             )}
 
             {/* Pagination */}
-            {meta.total > meta.limit && (
-              <div className="flex items-center justify-center gap-2">
-                <button
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  &lsaquo;
-                </button>
+            {courses.length > 9 && (
+              <>
+                <div className="mt-12 flex w-full flex-col items-center gap-4 sm:flex-row sm:justify-between">
+                  {/* Mobile: Simple Text Info (Hidden on Desktop) */}
+                  <p className="text-sm text-muted-foreground sm:hidden">
+                    Page{' '}
+                    <span className="font-medium text-foreground">
+                      {currentPage}
+                    </span>{' '}
+                    of{' '}
+                    <span className="font-medium text-foreground">
+                      {totalPages}
+                    </span>
+                  </p>
 
-                <span className="px-4 font-medium text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </span>
+                  {/* The Navigation Pill */}
+                  <div className="mx-auto flex items-center gap-1 rounded-full border bg-background/95 p-1 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                    {/* Previous Button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-full"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage((p) => p - 1)}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="sr-only">Previous</span>
+                    </Button>
 
-                <button
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => p + 1)}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  &rsaquo;
-                </button>
-              </div>
+                    {/* Page Numbers (Desktop + Tablet) */}
+                    <div className="hidden items-center gap-1 sm:flex">
+                      {getPageNumbers(totalPages, currentPage).map((page, i) =>
+                        page === '...' ? (
+                          <div
+                            key={i}
+                            className="flex h-9 w-9 items-center justify-center"
+                          >
+                            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        ) : (
+                          <Button
+                            key={i}
+                            variant={currentPage === page ? 'default' : 'ghost'}
+                            size="icon"
+                            className={cn(
+                              'h-9 w-9 rounded-full transition-all',
+                              currentPage === page
+                                ? 'shadow-md hover:bg-supperagent/90'
+                                : 'text-muted-foreground hover:text-foreground'
+                            )}
+                            onClick={() => setCurrentPage(page)}
+                          >
+                            {page}
+                          </Button>
+                        )
+                      )}
+                    </div>
+
+                    {/* Mobile: Current Page Indicator (Hidden on Desktop) */}
+                    <div className="flex h-9 min-w-[3rem] items-center justify-center rounded-full bg-secondary px-3 text-sm font-medium sm:hidden">
+                      {currentPage} / {totalPages}
+                    </div>
+
+                    {/* Next Button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-full"
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage((p) => p + 1)}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                      <span className="sr-only">Next</span>
+                    </Button>
+                  </div>
+
+                  {/* Desktop: Results Context (Hidden on Mobile) */}
+                  {/* <p className="hidden text-sm text-muted-foreground sm:block">
+      Showing <strong>{meta.limit}</strong> results per page
+    </p> */}
+                </div>
+              </>
             )}
           </main>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer (Left Side) */}
       {showMobileFilters && (
-        <div className="fixed inset-0 z-50 overflow-hidden lg:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={() => setShowMobileFilters(false)}
           />
-          <div className="absolute inset-y-0 right-0 w-full max-w-xs transform overflow-y-auto bg-white shadow-2xl transition-transform">
-            <div className="p-6">
-              <div className="mb-8 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Filters</h2>
-                <button
-                  onClick={() => setShowMobileFilters(false)}
-                  className="rounded-full p-2 hover:bg-gray-100"
-                >
-                  <X size={20} className="text-gray-500" />
-                </button>
-              </div>
-              <FilterContent />
+          <div className="absolute inset-y-0 left-0 w-full max-w-xs bg-white p-6 shadow-2xl transition-transform animate-in slide-in-from-left">
+            <div className="mb-8 flex items-center justify-between">
+              <h2 className="text-xl font-bold">Filters</h2>
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                className="rounded-full p-1 hover:bg-gray-100"
+              >
+                <X size={24} className="text-gray-500" />
+              </button>
             </div>
+
+            {/* Reusing the same extracted component */}
+            <FilterSidebar
+              categories={allCategories}
+              tempCategory={tempCategory}
+              setTempCategory={setTempCategory}
+              tempMinPrice={tempMinPrice}
+              setTempMinPrice={setTempMinPrice}
+              tempMaxPrice={tempMaxPrice}
+              setTempMaxPrice={setTempMaxPrice}
+              handleApplyFilters={handleApplyFilters}
+              resetFilters={resetFilters}
+            />
           </div>
         </div>
       )}

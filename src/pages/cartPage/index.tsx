@@ -86,7 +86,7 @@ function CartItemCompact({ item }) {
     <div className="group -mx-2 flex gap-4 rounded-lg border-b border-dashed border-gray-200 px-2 py-5 transition-colors last:border-0 hover:bg-gray-50/50">
       <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
         <img
-          src={item.image || '/placeholder.svg'}
+          src={item.image || '/placeholder.jpg'}
           alt={item.title}
           className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-110"
         />
@@ -522,7 +522,7 @@ export function CartPage() {
             <div className="mt-8 lg:col-span-5 lg:mt-0">
               <div className="sticky top-6 overflow-hidden rounded-2xl bg-white shadow-xl shadow-gray-200/50 ring-1 ring-gray-100">
                 {/* Header */}
-                <div className="bg-primary px-8 py-6 text-white">
+                <div className="bg-supperagent px-8 py-6 text-white">
                   <h2 className="text-lg font-bold">Order Summary</h2>
                   <p className="mt-1 text-xs text-gray-100">
                     Review your items before payment
