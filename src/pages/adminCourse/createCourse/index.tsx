@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoveLeft, Save, Upload } from 'lucide-react';
+import { MoveLeft, Save, Trash2, Loader2, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import axiosInstance from '@/lib/axios';
@@ -27,6 +26,16 @@ interface Option {
   label: string;
 }
 
+interface FormErrors {
+  title?: string;
+  categoryId?: string;
+  instructorId?: string;
+  price?: string;
+  originalPrice?: string;
+  description?: string;
+  image?: string;
+}
+
 export default function CreateCoursePage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -34,10 +43,11 @@ export default function CreateCoursePage() {
     description: '',
     price: '',
     originalPrice: '',
-    duration: '',
-    aboutDescription: '',
     image: ''
   });
+
+  // Validation State
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const [learningPoints, setLearningPoints] = useState<string[]>([]);
   const [requirements, setRequirements] = useState<string[]>([]);
@@ -45,9 +55,9 @@ export default function CreateCoursePage() {
   const [categories, setCategories] = useState<Option[]>([]);
   const [instructors, setInstructors] = useState<Option[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Option | null>(null);
-  const [selectedInstructor, setSelectedInstructor] = useState<Option | null>(
-    null
-  );
+  const [selectedInstructor, setSelectedInstructor] = useState<Option | null>(null);
+  
+  // Image Upload State
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -82,6 +92,52 @@ export default function CreateCoursePage() {
     fetchData();
   }, []);
 
+  // --- Validation Logic ---
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    let isValid = true;
+
+    if (!formData.title.trim()) {
+      newErrors.title = 'Course title is required.';
+      isValid = false;
+    }
+
+    if (!selectedCategory) {
+      newErrors.categoryId = 'Please select a category.';
+      isValid = false;
+    }
+
+    // if (!selectedInstructor) {
+    //   newErrors.instructorId = 'Please select an instructor.';
+    //   isValid = false;
+    // }
+
+    if (!formData.price) {
+      newErrors.price = 'Price is required.';
+      isValid = false;
+    } else if (Number(formData.price) < 0) {
+      newErrors.price = 'Price cannot be negative.';
+      isValid = false;
+    }
+
+    // Basic check to see if description is empty or just has empty HTML tags
+    const strippedDescription = formData.description.replace(/<[^>]+>/g, '').trim();
+    // if (!strippedDescription) {
+    //   newErrors.description = 'Course description is required.';
+    //   isValid = false;
+    // }
+
+    if (!formData.image) {
+      newErrors.image = 'Course banner image is required.';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  // --- Image Handlers ---
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -96,6 +152,7 @@ export default function CreateCoursePage() {
       return;
     }
 
+    // Local Preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreview(e.target?.result as string);
@@ -108,6 +165,8 @@ export default function CreateCoursePage() {
   const uploadFile = async (file: File) => {
     setUploading(true);
     setUploadProgress(0);
+    // Clear image error if upload starts
+    setErrors(prev => ({ ...prev, image: undefined }));
 
     try {
       const formDataUpload = new FormData();
@@ -118,7 +177,7 @@ export default function CreateCoursePage() {
       const response = await axiosInstance.post('/documents', formDataUpload, {
         onUploadProgress: (progressEvent) => {
           const percent = Math.round(
-            (progressEvent.loaded / progressEvent.total) * 100
+            (progressEvent.loaded / (progressEvent.total || 100)) * 100
           );
           setUploadProgress(percent);
         }
@@ -132,22 +191,56 @@ export default function CreateCoursePage() {
     } catch (error) {
       console.error('Error uploading image:', error);
       alert('Error uploading the image. Try again.');
+      setImagePreview(null);
     } finally {
       setUploading(false);
       setUploadProgress(0);
     }
   };
 
+  const handleRemoveImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setImagePreview(null);
+    setFormData((prev) => ({ ...prev, image: '' }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const triggerFileInput = () => {
+    if (!uploading) {
+      fileInputRef.current?.click();
+    }
+  };
+
+  // --- Form Handlers ---
+
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error for this field when user types
+    if (errors[field as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [field as keyof FormErrors]: undefined }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCategory || !selectedInstructor) return;
+    
+    if (!validateForm()) {
+      // Ideally scroll to top or first error here
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+   
+    
     setLoading(true);
 
     try {
       const data = {
         ...formData,
-        categoryId: selectedCategory.value,
-        instructorId: selectedInstructor.value,
+        categoryId: selectedCategory?.value,
+        instructorId: selectedInstructor?.value,
         learningPoints,
         requirements,
         totalLessons: 0,
@@ -197,14 +290,7 @@ export default function CreateCoursePage() {
   };
 
   const quillFormats = [
-    'header',
-    'bold',
-    'italic',
-    'underline',
-    'strike',
-    'list',
-    'bullet',
-    'link'
+    'header', 'bold', 'italic', 'underline', 'strike', 'list', 'bullet', 'link'
   ];
 
   return (
@@ -227,118 +313,163 @@ export default function CreateCoursePage() {
           <CardContent className="space-y-6">
             {/* Title & Category */}
             <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <Label>Course Title</Label>
+              <div className="space-y-2">
+                <Label className={errors.title ? "text-red-500" : ""}>Course Title <span className="text-red-500">*</span></Label>
                 <Input
                   value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
+                  onChange={(e) => handleInputChange('title', e.target.value)}
                   placeholder="e.g. Mastering React"
-                  required
+                  className={errors.title ? "border-red-500 focus-visible:ring-red-500" : ""}
                 />
+                {errors.title && <p className="text-xs text-red-500 font-medium">{errors.title}</p>}
               </div>
-              <div>
-                <Label>Category</Label>
+
+              <div className="space-y-2">
+                <Label className={errors.categoryId ? "text-red-500" : ""}>Category <span className="text-red-500">*</span></Label>
                 <Select
                   options={categories}
                   value={selectedCategory}
-                  onChange={setSelectedCategory}
+                  onChange={(val) => {
+                    setSelectedCategory(val);
+                    setErrors(prev => ({ ...prev, categoryId: undefined }));
+                  }}
                   placeholder="Select category"
-                  required
+                  classNames={{
+                    control: () => `text-sm border ${errors.categoryId ? 'border-red-500' : 'border-input'} hover:border-ring shadow-sm rounded-md`,
+                    placeholder: () => "text-muted-foreground"
+                  }}
                 />
+                {errors.categoryId && <p className="text-xs text-red-500 font-medium">{errors.categoryId}</p>}
               </div>
             </div>
 
             {/* Price & Original Price */}
             <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <Label>Price</Label>
+              <div className="space-y-2">
+                <Label className={errors.price ? "text-red-500" : ""}>Price <span className="text-red-500">*</span></Label>
                 <Input
                   type="number"
                   value={formData.price}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price: e.target.value })
-                  }
+                  onChange={(e) => handleInputChange('price', e.target.value)}
                   placeholder="99.99"
+                  className={errors.price ? "border-red-500 focus-visible:ring-red-500" : ""}
                 />
+                {errors.price && <p className="text-xs text-red-500 font-medium">{errors.price}</p>}
               </div>
-              <div>
-                <Label>Original Price</Label>
+              
+              <div className="space-y-2">
+                <Label>Original Price <span className="text-gray-400 text-xs">(Optional)</span></Label>
                 <Input
                   type="number"
                   value={formData.originalPrice}
-                  onChange={(e) =>
-                    setFormData({ ...formData, originalPrice: e.target.value })
-                  }
+                  onChange={(e) => handleInputChange('originalPrice', e.target.value)}
                   placeholder="149.99"
                 />
               </div>
-              <div>
-                <Label>Instructor</Label>
+
+              <div className="space-y-2">
+                <Label className={errors.instructorId ? "text-red-500" : ""}>Instructor </Label>
                 <Select
                   options={instructors}
                   value={selectedInstructor}
-                  onChange={setSelectedInstructor}
+                  onChange={(val) => {
+                    setSelectedInstructor(val);
+                    setErrors(prev => ({ ...prev, instructorId: undefined }));
+                  }}
                   placeholder="Select instructor"
-                  required
+                  classNames={{
+                    control: () => `text-sm border ${errors.instructorId ? 'border-red-500' : 'border-input'} hover:border-ring shadow-sm rounded-md`,
+                    placeholder: () => "text-muted-foreground"
+                  }}
                 />
+                 {errors.instructorId && <p className="text-xs text-red-500 font-medium">{errors.instructorId}</p>}
               </div>
             </div>
 
             {/* Image Upload */}
-            <div>
-              <Label>Course Banner Image</Label>
+            <div className="space-y-2">
+              <Label className={`mb-2 block ${errors.image ? "text-red-500" : ""}`}>
+                Course Banner Image <span className="text-red-500">*</span>
+              </Label>
               <div
-                className="flex cursor-pointer flex-col items-center justify-center rounded-lg  border  border-gray-300 p-4 hover:border-supperagent md:max-w-[400px]"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={triggerFileInput}
+                className={`relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg transition-all md:w-[400px] 
+                  ${errors.image ? 'border-red-500 bg-red-50' : imagePreview ? 'border-transparent' : 'border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer'}
+                `}
               >
-                {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full max-w-[300px] rounded-lg object-cover"
-                  />
+                {uploading ? (
+                  <div className="flex flex-col items-center justify-center text-gray-500">
+                    <Loader2 className="h-10 w-10 animate-spin text-supperagent mb-2" />
+                    <p className="text-sm font-medium">Uploading... {uploadProgress}%</p>
+                  </div>
+                ) : imagePreview ? (
+                  <div className="relative w-full h-full group">
+                    <img
+                      src={imagePreview}
+                      alt="Course Preview"
+                      className="w-full h-full object-cover rounded-lg shadow-sm"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={handleRemoveImage}
+                        className="h-8 w-8 shadow-sm transition-opacity"
+                        title="Remove Image"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
-                  <div className="flex flex-col  items-center text-gray-500">
-                    <Upload className="mb-2 h-8 w-8" />
-                    Click to upload
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6 text-gray-500">
+                    <div className={`p-3 rounded-full mb-3 ${errors.image ? 'bg-red-100' : 'bg-gray-100'}`}>
+                      <ImageIcon className={`w-6 h-6 ${errors.image ? 'text-red-500' : 'text-gray-400'}`} />
+                    </div>
+                    <p className={`mb-1 text-sm font-semibold ${errors.image ? 'text-red-500' : ''}`}>
+                      Click to upload course image
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      SVG, PNG, JPG or GIF (max. 5MB)
+                    </p>
                   </div>
                 )}
-
-                {uploading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                    <div>{uploadProgress}%</div>
-                  </div>
-                )}
+                
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                />
               </div>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handleImageUpload}
-              />
+              {errors.image && <p className="text-xs text-red-500 font-medium">{errors.image}</p>}
             </div>
 
             {/* Description */}
-            <div>
-              <Label>About This Course</Label>
-              <ReactQuill
-                value={formData.description}
-                onChange={(value) =>
-                  setFormData({ ...formData, description: value })
-                }
-                placeholder="Write a detailed course description..."
-                className="mt-2 h-[250px] pb-8"
-                modules={quillModules}
-                formats={quillFormats}
-              />
+            <div className="space-y-2">
+              <Label className={errors.description ? "text-red-500" : ""}>About This Course </Label>
+              <div className={errors.description ? "border border-red-500 " : ""}>
+                <ReactQuill
+                  value={formData.description}
+                  onChange={(value) => {
+                    handleInputChange('description', value);
+                  }}
+                  placeholder="Write a detailed course description..."
+                  className="h-[250px] pb-10"
+                  modules={quillModules}
+                  formats={quillFormats}
+                />
+              </div>
+              {errors.description && <p className="text-xs text-red-500 font-medium mt-1">{errors.description}</p>}
             </div>
 
             {/* Learning Outcomes */}
             <div>
               <Label className="mb-3 block text-lg font-medium">
-              What you'll learn
+                What you'll learn
               </Label>
               <p className="mb-3 text-sm text-gray-500">
                 What will students be able to do after completing this course?
@@ -353,16 +484,16 @@ export default function CreateCoursePage() {
                         updateLearningPoint(index, e.target.value)
                       }
                       placeholder={`Learning outcome ${index + 1}`}
-                      className="border border-gray-300 bg-transparent focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+                      className="border border-gray-300 bg-transparent"
                     />
                     <Button
-                      variant="default"
-                      size="sm"
+                      variant="ghost"
+                      size="icon"
                       type="button"
                       onClick={() => removeLearningPoint(index)}
-                      className="h-9 w-9 p-0"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
                     >
-                      <span className="sr-only">Remove</span>×
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}
@@ -370,9 +501,9 @@ export default function CreateCoursePage() {
 
               <Button
                 type="button"
-                variant="default"
+                variant="outline"
                 size="sm"
-                className="mt-3"
+                className="mt-3 border-dashed"
                 onClick={addLearningPoint}
               >
                 + Add Outcome
@@ -385,8 +516,7 @@ export default function CreateCoursePage() {
                 Requirements
               </Label>
               <p className="mb-3 text-sm text-gray-500">
-                What knowledge or skills should students have before starting
-                this course?
+                What knowledge or skills should students have before starting?
               </p>
 
               <div className="space-y-3">
@@ -396,16 +526,16 @@ export default function CreateCoursePage() {
                       value={req}
                       onChange={(e) => updateRequirement(index, e.target.value)}
                       placeholder={`Prerequisite ${index + 1}`}
-                      className="border border-gray-300 bg-transparent focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+                      className="border border-gray-300 bg-transparent"
                     />
                     <Button
-                      variant="default"
-                      size="sm"
+                      variant="ghost"
+                      size="icon"
                       type="button"
                       onClick={() => removeRequirement(index)}
-                      className="h-9 w-9 p-0"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
                     >
-                      <span className="sr-only">Remove</span>×
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}
@@ -413,9 +543,9 @@ export default function CreateCoursePage() {
 
               <Button
                 type="button"
-                variant="default"
+                variant="outline"
                 size="sm"
-                className="mt-3"
+                className="mt-3 border-dashed"
                 onClick={addRequirement}
               >
                 + Add Requirement
@@ -431,9 +561,11 @@ export default function CreateCoursePage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading} variant="default">
+              <Button type="submit" disabled={loading} >
                 {loading ? (
-                  'Creating...'
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...
+                  </>
                 ) : (
                   <>
                     <Save className="mr-2 h-4 w-4" />

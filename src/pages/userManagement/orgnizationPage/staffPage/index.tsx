@@ -387,7 +387,7 @@ export default function OrganizationStaffPage() {
                           variant="ghost"
                           size="sm"
                           className="bg-supperagent text-white hover:bg-supperagent/90"
-                          onClick={() => navigate(`${student._id}/enroll-courses`)}
+                          onClick={() => navigate(`/dashboard/enroll-courses/${student._id}`)}
                         >
                           <Eye className="h-4 w-4 mr-2" /> View
                         </Button>

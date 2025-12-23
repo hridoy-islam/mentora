@@ -40,6 +40,8 @@ import OrganizationCoursesPage from '@/pages/organizationCourse';
 import AboutPage from '@/pages/aboutPage';
 import StaffEnrollCoursePage from '@/pages/userManagement/orgnizationPage/staffPage/staffEnrollCourse';
 import ReportPage from '@/pages/reportPage';
+import MyOrganizationPage from '@/pages/myOrganization';
+import OrganizationAvailableCoursesPage from '@/pages/myOrganization/availableCourses';
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 const DashboardPage = lazy(() => import('@/pages/dashboard'));
 
@@ -109,7 +111,7 @@ export default function AppRouter() {
           element: <OrganizationStaffPage />
         },
          {
-          path: 'organizations/:id/staffs/:sid/enroll-courses',
+          path: 'enroll-courses/:sid',
           element: <StaffEnrollCoursePage />
         },
          {
@@ -136,30 +138,7 @@ export default function AppRouter() {
     }
   ];
 
-    const PreviewRoutes = [
-    {
-      path: '/dashboard',
-      element: (
-        <PreviewLayout>
-          <ProtectedRoute>
-            <Suspense>
-              <Outlet />
-            </Suspense>
-          </ProtectedRoute>
-        </PreviewLayout>
-      ),
-      children: [
-         {
-          path: 'courses/:cid/website-preview',
-          element: <PreviewCourseDetails />
-        },
-         {
-          path: 'courses/:cid/student-preview',
-          element: <PreviewStudentCourseDetailsPage />
-        },
-      ]
-    }
-  ];
+    
 
 
    const StudentRoutes = [
@@ -194,6 +173,14 @@ export default function AppRouter() {
          {
           path: 'contact',
           element: <ContactPage />
+        },
+         {
+          path: 'my-organization',
+          element: <MyOrganizationPage />
+        },
+        {
+          path: 'my-organization/:id/available-course',
+          element: <OrganizationAvailableCoursesPage />
         },
         {
           path: 'cart',
@@ -281,7 +268,7 @@ export default function AppRouter() {
     }
   ];
 
-  const routes = useRoutes([...StudentRoutes,...publicRoutes, ...adminRoutes,...PreviewRoutes]);
+  const routes = useRoutes([...StudentRoutes,...publicRoutes, ...adminRoutes]);
 
   return routes;
 }

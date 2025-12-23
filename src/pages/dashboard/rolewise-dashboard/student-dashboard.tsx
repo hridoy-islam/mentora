@@ -91,9 +91,7 @@ export function StudentDashboard() {
   };
 
   const getCourseImage = (img?: string) => {
-    return img && img.trim() !== ''
-      ? img
-      : '/placeholder.jpg';
+    return img && img.trim() !== '' ? img : '/placeholder.jpg';
   };
 
   // --- Data Fetching ---
@@ -104,7 +102,9 @@ export function StudentDashboard() {
         setError(null);
 
         // 1. Fetch Enrolled Courses
-        const response = await axiosInstance.get('/enrolled-courses');
+        const response = await axiosInstance.get(
+          `/enrolled-courses?studentId=${user?._id}`
+        );
         const rawEnrollments: EnrolledCourseData[] = response.data.data.result;
 
         // 2. Deep Fetch for Lesson Counts & Duration
@@ -120,9 +120,12 @@ export function StudentDashboard() {
 
               const modulesWithLessons = await Promise.all(
                 modules.map(async (mod: any) => {
-                  const lessonsRes = await axiosInstance.get('/course-lesson?fields=moduleId,title type', {
-                    params: { moduleId: mod._id }
-                  });
+                  const lessonsRes = await axiosInstance.get(
+                    '/course-lesson?fields=moduleId,title type',
+                    {
+                      params: { moduleId: mod._id }
+                    }
+                  );
                   return lessonsRes.data.data.result as Lesson[];
                 })
               );
@@ -276,12 +279,15 @@ export function StudentDashboard() {
                     {/* Content Section */}
                     <div className="flex flex-1 flex-col justify-center p-6 md:p-8">
                       <div className="mb-6">
-                        <div className="mb-2 flex items-center gap-2 text-sm text-slate-500">
-                          <GraduationCap className="h-4 w-4" />
-                          <span>
-                            By {activeCourse.courseId?.instructorId?.name}
-                          </span>
-                        </div>
+                        {activeCourse.courseId?.instructorId && (
+                          <div className="mb-2 flex items-center gap-2 text-sm text-slate-500">
+                            <GraduationCap className="h-4 w-4" />
+                            <span>
+                              By {activeCourse.courseId?.instructorId?.name}
+                            </span>
+                          </div>
+                        )}
+
                         <h3 className="mb-2 text-2xl font-bold text-slate-900">
                           {activeCourse.courseId.title}
                         </h3>
@@ -478,9 +484,12 @@ function CourseCard({
         <h3 className="mb-1 line-clamp-2 min-h-[3.5rem] text-lg font-bold leading-snug text-slate-900">
           {courseId.title}
         </h3>
-        <p className="mb-4 text-sm text-slate-500">
-          By {courseId.instructorId?.name}
-        </p>
+
+        {courseId.instructorId && (
+          <p className="mb-4 text-sm text-slate-500">
+            By {courseId.instructorId?.name}
+          </p>
+        )}
 
         <div className="mt-auto space-y-4">
           {/* Progress Bar */}

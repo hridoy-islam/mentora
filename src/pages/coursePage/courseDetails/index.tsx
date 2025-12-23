@@ -2,18 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   Star,
-  Clock,
   Download,
   Award,
-  BarChart3,
   Share2,
-  Heart,
   Zap,
   CheckCircle2,
-  PlayCircle,
-  FileText,
   AlertCircle,
-  Globe,
   MonitorPlay,
   Sparkles,
   Calendar,
@@ -25,11 +19,9 @@ import { useDispatch } from 'react-redux';
 import { addToCart } from '@/redux/features/cartSlice';
 import CourseContentAccordion from '../components/CourseContentAccordion';
 import { useToast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button'; // Assuming you have shadcn or similar, else standard buttons used below
-import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
-// --- Types (Kept the same) ---
+// --- Types ---
 interface Lesson {
   _id: string;
   title: string;
@@ -49,7 +41,7 @@ interface Instructor {
   bio?: string;
   rating?: number;
   students?: number;
-  image?: string; // Added image field if available
+  image?: string;
 }
 
 interface Course {
@@ -68,11 +60,11 @@ interface Course {
   requirements: string[];
   aboutDescription: string;
   instructorId: Instructor;
-  updatedAt?: string; // Added for "Last updated"
-  language?: string; // Added for language display
+  updatedAt?: string;
+  language?: string;
 }
 
-// --- Skeleton Component for Loading ---
+// --- Skeleton Component ---
 const CourseSkeleton = () => (
   <div className="min-h-screen animate-pulse bg-gray-50">
     <div className="h-96 bg-slate-900/10"></div>
@@ -101,23 +93,17 @@ export default function CourseDetailPage() {
   const { toast } = useToast();
 
   const [moreCourses, setMoreCourses] = useState<Course[]>([]);
-  const [moreLoading, setMoreLoading] = useState(true);
+  const [moreLoading, setMoreLoading] = useState(true); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [course, setCourse] = useState<Course | null>(null);
   const [sections, setSections] = useState<any[]>([]);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const handleShare = async () => {
     try {
-      // 1. Copy URL to clipboard
       await navigator.clipboard.writeText(window.location.href);
-
-      // 2. Set copied state to true
       setCopied(true);
-
-      // 3. Reset state after 2 seconds
       setTimeout(() => {
         setCopied(false);
       }, 2000);
@@ -126,12 +112,8 @@ export default function CourseDetailPage() {
     }
   };
 
-
-
   const handleBuyNow = () => {
     if (!course) return;
-    
-    // 1. Add to Cart (Same payload as handleAddToCart)
     dispatch(
       addToCart({
         id: course._id,
@@ -141,10 +123,8 @@ export default function CourseDetailPage() {
         quantity: 1
       })
     );
-
     navigate('/cart');
   };
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -153,12 +133,12 @@ export default function CourseDetailPage() {
         setLoading(true);
         setError(null);
 
-        const courseRes = await axiosInstance.get(`/courses/?slug=${slug}`);
-        const courseData: Course = courseRes.data.data.result[0];
+        const courseRes = await axiosInstance.get(`/courses/slug/${slug}`);
+        const courseData: Course = courseRes.data.data;
         setCourse(courseData);
 
         const modulesRes = await axiosInstance.get('/course-modules', {
-          params: { courseId: course?._id }
+          params: { courseId: courseData?._id } // Use courseData here to avoid closure staleness
         });
         const modules: CourseModule[] = modulesRes.data.data.result;
 
@@ -233,7 +213,7 @@ export default function CourseDetailPage() {
       }
     };
     fetchMoreCourses();
-  }, [course?.instructorId?._id]);
+  }, [course?.instructorId?._id, course?._id]);
 
   const handleBackToCourses = () => navigate('/courses');
 
@@ -275,21 +255,23 @@ export default function CourseDetailPage() {
       </div>
     );
 
-  // Calculate discount percentage
-  const discountPercent = Math.round(
-    ((course.originalPrice - course.price) / course.originalPrice) * 100
-  );
+  // Calculate discount percentage (Only if original price exists and is greater than price)
+  const hasDiscount =
+    course.originalPrice && course.originalPrice > course.price;
+  const discountPercent = hasDiscount
+    ? Math.round(
+        ((course.originalPrice - course.price) / course.originalPrice) * 100
+      )
+    : 0;
 
   return (
     <div className="min-h-screen bg-slate-50  selection:bg-blue-100">
       {/* --- HERO SECTION --- */}
       <div className="relative overflow-hidden bg-slate-900 pb-32 pt-10 lg:pb-40">
-        {/* Abstract Background pattern */}
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
         <div className="absolute right-0 top-0 h-[500px] w-[500px] -translate-y-1/2 translate-x-1/2 rounded-full bg-blue-600/20 blur-[100px]"></div>
 
         <div className="container relative z-10 mx-auto px-6">
-          {/* Breadcrumb / Back */}
           <button
             onClick={handleBackToCourses}
             className="group mb-8 flex items-center gap-2 text-sm font-medium text-slate-400 transition-colors hover:text-white"
@@ -306,43 +288,50 @@ export default function CourseDetailPage() {
                 {course.title}
               </h1>
 
-              <p className="line-clamp-2 max-w-2xl text-lg leading-relaxed text-slate-300">
-                {/* Strip HTML tags for the short description in hero if necessary */}
-                {course.description.replace(/<[^>]*>?/gm, '').substring(0, 150)}
-                ...
-              </p>
+              {/* Description - Strip HTML and truncate */}
+              {course.description && (
+                <p className="line-clamp-2 max-w-2xl text-lg leading-relaxed text-slate-300">
+                  {course.description
+                    .replace(/<[^>]*>?/gm, '')
+                    .substring(0, 150)}
+                  ...
+                </p>
+              )}
 
               {/* Stats Row */}
               <div className="flex flex-wrap items-center gap-6 pt-2 text-sm text-slate-300">
-                <div className="flex items-center gap-1.5 text-yellow-400">
-                  <span className="text-base font-bold">{course.rating}</span>
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        size={14}
-                        className={
-                          i < Math.floor(course.rating)
-                            ? 'fill-current'
-                            : 'text-slate-600'
-                        }
-                      />
-                    ))}
+                {/* Rating - Only show if valid rating exists */}
+                {course.rating > 0 && (
+                  <div className="flex items-center gap-1.5 text-yellow-400">
+                    <span className="text-base font-bold">{course.rating}</span>
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          size={14}
+                          className={
+                            i < Math.floor(course.rating)
+                              ? 'fill-current'
+                              : 'text-slate-600'
+                          }
+                        />
+                      ))}
+                    </div>
+                    {course.reviews > 0 && (
+                      <span className="ml-1 text-slate-400 underline decoration-slate-600 underline-offset-4">
+                        ({course.reviews} reviews)
+                      </span>
+                    )}
                   </div>
-                  <span className="ml-1 text-slate-400 underline decoration-slate-600 underline-offset-4">
-                    ({course.reviews} reviews)
-                  </span>
-                </div>
+                )}
 
-                <div className="flex items-center gap-1.5">
-                  <MonitorPlay size={16} className="text-slate-400" />
-                  <span>{course.students.toLocaleString()} Students</span>
-                </div>
-
-                {/* <div className="flex items-center gap-1.5">
-                  <Globe size={16} className="text-slate-400" />
-                  <span>English</span>
-                </div> */}
+                {/* Students - Only show if > 0 */}
+                {course.students > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <MonitorPlay size={16} className="text-slate-400" />
+                    <span>{course.students.toLocaleString()} Students</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -354,156 +343,148 @@ export default function CourseDetailPage() {
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
           {/* LEFT COLUMN (Content) */}
           <div className="space-y-10 lg:col-span-2">
-            {/* Course Cover Image (Static) */}
-            <div className="group relative aspect-video select-none overflow-hidden rounded-2xl bg-slate-900 shadow-2xl ring-1 ring-slate-900/10">
-              {/* The Image */}
-              <img
-                src={course?.image || '/placeholder.jpg'}
-                alt={course.title}
-                className="h-full w-full transform object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
-              />
-
-              {/* Gradient Overlay for Depth (Makes it look premium) */}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-slate-900/10 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-40"></div>
-
-              {/* Optional: Watermark / Brand Logo (Center or Bottom Right) */}
-              {/* This adds a professional 'brand' feel without looking like a play button */}
-              <div className="absolute bottom-4 right-4 opacity-50 transition-opacity duration-300 group-hover:opacity-100">
-                <div className="flex items-center gap-2 rounded-lg bg-black/20 px-3 py-1.5 text-sm font-medium text-white/80 ring-1 ring-white/10 backdrop-blur-sm">
-                  <Sparkles size={14} />
-                  <span>Medicare Verified</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-10">
-              {/* What you'll learn - Designed as a highlighted section */}
-              <div className="rounded-2xl border-2 border-slate-200 bg-white p-8">
-                <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-slate-900">
-                  <Zap className="fill-amber-500 text-amber-500" size={20} />
-                  What you'll learn
-                </h2>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
-                  {course.learningPoints.map((point, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <CheckCircle2
-                        size={18}
-                        className="mt-1 shrink-0 text-emerald-600"
-                      />
-                      <span className="text-sm font-medium leading-relaxed text-slate-700">
-                        {point}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Course Content */}
-              <div>
-                <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    Course Content
-                  </h2>
-                  <div className="flex items-center gap-4 text-sm font-medium"></div>
-                </div>
-                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                  <CourseContentAccordion sections={sections} />
-                </div>
-              </div>
-
-              {/* Requirements */}
-              <div>
-                <h2 className="mb-4 text-2xl font-bold text-slate-900">
-                  Requirements
-                </h2>
-                <div className="rounded-xl border-2 border-slate-200 bg-white p-6 shadow-sm">
-                  <ul className="space-y-3">
-                    {course.requirements.map((req, i) => (
-                      <li
-                        key={i}
-                        className="flex gap-3 text-sm leading-relaxed text-slate-700"
-                      >
-                        <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400"></div>
-                        <span>{req}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <h2 className="mb-4 text-2xl font-bold text-slate-900">
-                  Description
-                </h2>
-                <div className="rounded-xl border-2 border-slate-200 bg-white p-6 shadow-sm">
-                  <div
-                    className="prose prose-sm prose-slate max-w-none md:prose-base prose-headings:font-bold prose-p:text-slate-600 prose-a:text-blue-600 prose-img:rounded-xl"
-                    dangerouslySetInnerHTML={{ __html: course.description }}
-                  />
-                </div>
-              </div>
-
-              {/* Instructor */}
-              <div>
-                <h2 className="mb-4 text-2xl font-bold text-slate-900">
-                  Instructor
-                </h2>
-                <div className="rounded-xl border-2 border-slate-200 bg-white p-6 shadow-sm">
-                  <div className="flex flex-col gap-6 sm:flex-row">
-                    {/* Avatar */}
-                    <div className="shrink-0">
-                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-2xl font-bold text-slate-500 ring-2 ring-slate-100">
-                        {course.instructorId?.image ? (
-                          <img
-                            src={course.instructorId.image}
-                            alt={course.instructorId.name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          course.instructorId?.name?.charAt(0)
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-slate-900">
-                        {course.instructorId?.name}
-                      </h3>
-                      <p className="mb-4 text-sm font-medium text-blue-600">
-                        {course.instructorId?.title}
-                      </p>
-
-                      {/* Stats Row */}
-                      {/* <div className="flex flex-wrap gap-4 md:gap-8 text-sm text-slate-600 mb-4 border-b border-slate-100 pb-4">
-                       <div className="flex items-center gap-1.5">
-                         <Star size={14} className="fill-amber-400 text-amber-400" />
-                         <span className="font-semibold text-slate-900">{course.instructorId?.rating}</span>
-                         <span className="text-slate-500">Rating</span>
-                       </div>
-                       <div className="flex items-center gap-1.5">
-                         <Award size={14} className="text-slate-400" />
-                         <span className="font-semibold text-slate-900">{course.instructorId?.reviews?.toLocaleString()}</span>
-                         <span className="text-slate-500">Reviews</span>
-                       </div>
-                       <div className="flex items-center gap-1.5">
-                         <BarChart3 size={14} className="text-slate-400" />
-                         <span className="font-semibold text-slate-900">{course.instructorId?.students?.toLocaleString()}</span>
-                         <span className="text-slate-500">Students</span>
-                       </div>
-                    </div> */}
-
-                      <p className="line-clamp-4 text-sm leading-relaxed text-slate-600 transition-all duration-300 hover:line-clamp-none">
-                        {course.instructorId?.bio}
-                      </p>
-                    </div>
+            {/* Course Cover Image */}
+            {course.image && (
+              <div className="group relative aspect-video select-none overflow-hidden rounded-2xl bg-slate-900 shadow-2xl ring-1 ring-slate-900/10">
+                <img
+                  src={course.image}
+                  alt={course.title}
+                  className="h-full w-full transform object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-slate-900/10 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-40"></div>
+                <div className="absolute bottom-4 right-4 opacity-50 transition-opacity duration-300 group-hover:opacity-100">
+                  <div className="flex items-center gap-2 rounded-lg bg-black/20 px-3 py-1.5 text-sm font-medium text-white/80 ring-1 ring-white/10 backdrop-blur-sm">
+                    <Sparkles size={14} />
+                    <span>Verified Course</span>
                   </div>
                 </div>
               </div>
+            )}
+
+            <div className="space-y-10">
+              {/* What you'll learn - CONDITIONAL RENDER */}
+              {course.learningPoints && course.learningPoints.length > 0 && (
+                <div className="rounded-2xl border-2 border-slate-200 bg-white p-8">
+                  <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-slate-900">
+                    <Zap
+                      className="fill-amber-500 text-amber-500"
+                      size={20}
+                    />
+                    What you'll learn
+                  </h2>
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
+                    {course.learningPoints.map((point, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <CheckCircle2
+                          size={18}
+                          className="mt-1 shrink-0 text-emerald-600"
+                        />
+                        <span className="text-sm font-medium leading-relaxed text-slate-700">
+                          {point}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Course Content - CONDITIONAL RENDER */}
+              {sections && sections.length > 0 && (
+                <div>
+                  <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+                    <h2 className="text-2xl font-bold text-slate-900">
+                      Course Content
+                    </h2>
+                  </div>
+                  <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                    <CourseContentAccordion sections={sections} />
+                  </div>
+                </div>
+              )}
+
+              {/* Requirements - CONDITIONAL RENDER */}
+              {course.requirements && course.requirements.length > 0 && (
+                <div>
+                  <h2 className="mb-4 text-2xl font-bold text-slate-900">
+                    Requirements
+                  </h2>
+                  <div className="rounded-xl border-2 border-slate-200 bg-white p-6 shadow-sm">
+                    <ul className="space-y-3">
+                      {course.requirements.map((req, i) => (
+                        <li
+                          key={i}
+                          className="flex gap-3 text-sm leading-relaxed text-slate-700"
+                        >
+                          <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400"></div>
+                          <span>{req}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* Description - CONDITIONAL RENDER */}
+              {course.description && (
+                <div>
+                  <h2 className="mb-4 text-2xl font-bold text-slate-900">
+                    Description
+                  </h2>
+                  <div className="rounded-xl border-2 border-slate-200 bg-white p-6 shadow-sm">
+                    <div
+                      className="prose prose-sm prose-slate max-w-none md:prose-base prose-headings:font-bold prose-p:text-slate-600 prose-a:text-blue-600 prose-img:rounded-xl"
+                      dangerouslySetInnerHTML={{ __html: course.description }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Instructor - CONDITIONAL RENDER */}
+              {course.instructorId && (
+                <div>
+                  <h2 className="mb-4 text-2xl font-bold text-slate-900">
+                    Instructor
+                  </h2>
+                  <div className="rounded-xl border-2 border-slate-200 bg-white p-6 shadow-sm">
+                    <div className="flex flex-col gap-6 sm:flex-row">
+                      {/* Avatar */}
+                      <div className="shrink-0">
+                        <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-2xl font-bold text-slate-500 ring-2 ring-slate-100">
+                          {course.instructorId.image ? (
+                            <img
+                              src={course.instructorId.image}
+                              alt={course.instructorId.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            course.instructorId.name?.charAt(0)
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-slate-900">
+                          {course.instructorId.name}
+                        </h3>
+                        {course.instructorId.title && (
+                          <p className="mb-4 text-sm font-medium text-blue-600">
+                            {course.instructorId.title}
+                          </p>
+                        )}
+                        {course.instructorId.bio && (
+                          <p className="line-clamp-4 text-sm leading-relaxed text-slate-600 transition-all duration-300 hover:line-clamp-none">
+                            {course.instructorId.bio}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* More Courses */}
+            {/* More Courses - CONDITIONAL RENDER (Already present, kept safe) */}
             {moreCourses.length > 0 && (
               <div className="border-t border-slate-200 pt-8">
                 <h3 className="mb-6 text-xl font-bold text-slate-900">
@@ -531,13 +512,18 @@ export default function CourseDetailPage() {
                           <span className="font-bold text-slate-900">
                             ${c.price}
                           </span>
-                          <span className="text-slate-400 line-through">
-                            ${c.originalPrice}
-                          </span>
-                          <span className="flex items-center gap-0.5 text-amber-500">
-                            <Star size={10} fill="currentColor" />
-                            {c.rating}
-                          </span>
+                          {/* Inner Loop Conditional for More Courses discount */}
+                          {c.originalPrice > c.price && (
+                            <span className="text-slate-400 line-through">
+                              ${c.originalPrice}
+                            </span>
+                          )}
+                          {c.rating > 0 && (
+                            <span className="flex items-center gap-0.5 text-amber-500">
+                              <Star size={10} fill="currentColor" />
+                              {c.rating}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -558,15 +544,21 @@ export default function CourseDetailPage() {
                       <span className="text-4xl font-extrabold text-slate-900">
                         ${course.price}
                       </span>
-                      <span className="mb-1.5 text-lg text-slate-400 line-through">
-                        ${course.originalPrice}
-                      </span>
+                      {/* Conditional Original Price */}
+                      {hasDiscount && (
+                        <span className="mb-1.5 text-lg text-slate-400 line-through">
+                          ${course.originalPrice}
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center rounded-md bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/10">
-                        {discountPercent}% Off
-                      </span>
-                    </div>
+                    {/* Conditional Discount Badge */}
+                    {hasDiscount && (
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center rounded-md bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/10">
+                          {discountPercent}% Off
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mb-6 space-y-3">
@@ -576,7 +568,10 @@ export default function CourseDetailPage() {
                     >
                       Add to Cart
                     </button>
-                    <button onClick={handleBuyNow} className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 font-bold text-slate-900 transition-all hover:border-slate-300">
+                    <button
+                      onClick={handleBuyNow}
+                      className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 font-bold text-slate-900 transition-all hover:border-slate-300"
+                    >
                       Buy Now
                     </button>
                   </div>
@@ -590,13 +585,10 @@ export default function CourseDetailPage() {
                         <MonitorPlay size={16} className="text-slate-400" />
                         <span>Access on mobile and TV</span>
                       </li>
-
                       <li className="flex items-center gap-3">
                         <Award size={16} className="text-slate-400" />
                         <span>Certificate of completion</span>
                       </li>
-
-                      {/* Course validity */}
                       <li className="flex items-center gap-3">
                         <Calendar size={16} className="text-slate-400" />
                         <span>Course validity: 1 year</span>
@@ -606,36 +598,36 @@ export default function CourseDetailPage() {
                 </div>
 
                 {/* Footer Actions */}
-              <div className="border-t border-slate-100 bg-slate-50 p-4">
-  <button
-    onClick={handleShare}
-    disabled={copied}
-    className={cn(
-      "group flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-200",
-      copied
-        ? "bg-emerald-50 text-emerald-600 cursor-default" // Success state
-        : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm active:scale-95" // Default state
-    )}
-  >
-    {copied ? (
-      <>
-        <Check
-          size={16}
-          className="animate-in zoom-in spin-in-90 duration-300"
-        />
-        <span>Link Copied</span>
-      </>
-    ) : (
-      <>
-        <Share2
-          size={16}
-          className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:rotate-12"
-        />
-        <span>Share this course</span>
-      </>
-    )}
-  </button>
-</div>
+                <div className="border-t border-slate-100 bg-slate-50 p-4">
+                  <button
+                    onClick={handleShare}
+                    disabled={copied}
+                    className={cn(
+                      'group flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-200',
+                      copied
+                        ? 'cursor-default bg-emerald-50 text-emerald-600'
+                        : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm active:scale-95'
+                    )}
+                  >
+                    {copied ? (
+                      <>
+                        <Check
+                          size={16}
+                          className="duration-300 animate-in zoom-in spin-in-90"
+                        />
+                        <span>Link Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Share2
+                          size={16}
+                          className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:rotate-12"
+                        />
+                        <span>Share this course</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

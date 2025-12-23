@@ -282,13 +282,14 @@ export function StudentNav() {
                 {/* Desktop Student Actions */}
                 <div className="hidden sm:flex items-center space-x-3">
                   <div className="h-6 w-px bg-gray-200 mx-2"></div>
-                  <RouterNavLink
+                  {user.organizationId && <RouterNavLink
                     to="/student/my-organization"
                     className="flex items-center space-x-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     <Building className="h-4 w-4" />
                     <span>My Organization</span>
-                  </RouterNavLink>
+                  </RouterNavLink>}
+                  
                   {/* My Courses Button */}
                   <RouterNavLink
                     to="/student/my-courses"

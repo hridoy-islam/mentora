@@ -58,7 +58,7 @@ export function CategoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-white ">
         <DialogHeader>
           <DialogTitle>
             {initialData ? 'Edit Category' : 'Add New Category'}

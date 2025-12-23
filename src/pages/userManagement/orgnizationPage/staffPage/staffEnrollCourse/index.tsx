@@ -47,7 +47,7 @@ export default function StaffEnrollCoursesPage() {
 
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { id, sid: studentId } = useParams();
+  const {sid: studentId } = useParams();
 
   const fetchEnrollments = async (
     page: number,

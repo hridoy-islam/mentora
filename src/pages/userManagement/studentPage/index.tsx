@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pen, Settings, MoveLeft, Loader2 } from 'lucide-react';
+import { Plus, Pen, Settings, MoveLeft, Loader2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -8,14 +8,14 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogFooter
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -23,14 +23,14 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from '@/components/ui/form';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import axiosInstance from '@/lib/axios';
@@ -45,6 +45,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { countries } from '@/types';
 
 // --- 1. Define Zod Schema ---
 const formSchema = z.object({
@@ -56,15 +57,14 @@ const formSchema = z.object({
   state: z.string().optional(),
   city: z.string().optional(),
   zipCode: z.string().optional(),
-  address: z.string().optional(),
+  address: z.string().optional()
 });
 
 // Mock countries list
-const countries = ["USA", "UK", "Canada", "Australia", "India", "Bangladesh"];
 
 export default function StudentPage() {
   const [students, setStudents] = useState<any[]>([]);
-  
+
   // Dialog & Form States
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
@@ -76,7 +76,7 @@ export default function StudentPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(100);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -92,8 +92,8 @@ export default function StudentPage() {
       state: '',
       city: '',
       zipCode: '',
-      address: '',
-    },
+      address: ''
+    }
   });
 
   const fetchData = async (
@@ -108,8 +108,8 @@ export default function StudentPage() {
           role: 'student',
           page,
           limit,
-          ...(search ? { searchTerm: search } : {}),
-        },
+          ...(search ? { searchTerm: search } : {})
+        }
       });
       setStudents(response.data.data.result);
       setTotalPages(response.data.data.meta.totalPage);
@@ -117,8 +117,9 @@ export default function StudentPage() {
       console.error('Error fetching students:', error);
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to fetch students.',
-        variant: 'destructive',
+        description:
+          error?.response?.data?.message || 'Failed to fetch students.',
+        variant: 'destructive'
       });
     } finally {
       setInitialLoading(false);
@@ -141,8 +142,9 @@ export default function StudentPage() {
       console.error('Error updating status:', error);
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to update status.',
-        variant: 'destructive',
+        description:
+          error?.response?.data?.message || 'Failed to update status.',
+        variant: 'destructive'
       });
     }
   };
@@ -160,7 +162,7 @@ export default function StudentPage() {
       state: student.state || '',
       city: student.city || '',
       zipCode: student.zipCode || '',
-      address: student.address || '',
+      address: student.address || ''
     });
     setDialogOpen(true);
   };
@@ -179,7 +181,10 @@ export default function StudentPage() {
         delete payload.password;
       }
 
-      const response = await axiosInstance.patch(`/users/${editingStudent._id}`, payload);
+      const response = await axiosInstance.patch(
+        `/users/${editingStudent._id}`,
+        payload
+      );
 
       // Update local state
       setStudents((prev) =>
@@ -190,7 +195,7 @@ export default function StudentPage() {
 
       toast({
         title: 'Success',
-        description: 'Student details updated successfully.',
+        description: 'Student details updated successfully.'
       });
 
       setDialogOpen(false);
@@ -198,8 +203,9 @@ export default function StudentPage() {
       console.error('Error updating student:', error);
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to update student.',
-        variant: 'destructive',
+        description:
+          error?.response?.data?.message || 'Failed to update student.',
+        variant: 'destructive'
       });
     } finally {
       setSubmitLoading(false);
@@ -273,6 +279,9 @@ export default function StudentPage() {
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead className="w-32 text-center">Status</TableHead>
+                <TableHead className="w-32 text-center">
+                  Enroll Courses
+                </TableHead>
                 <TableHead className="w-32 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -312,18 +321,32 @@ export default function StudentPage() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="space-x-1 text-center">
-                      <div className='flex justify-end'>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="bg-supperagent text-white hover:bg-supperagent/90"
-                        onClick={() => handleEdit(student)}
+                    <TableCell>
+                      {' '}
+                      <div className="flex flex-row items-center justify-center ">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="bg-supperagent text-white hover:bg-supperagent/90"
+                          onClick={() =>
+                            navigate(`/dashboard/enroll-courses/${student._id}`)
+                          }
                         >
-                        <Pen className="h-4 w-4" />
-                      </Button>
-                        </div>
+                          <Eye className="mr-2 h-4 w-4" /> View
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell className="space-x-1 text-center">
+                      <div className="flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="bg-supperagent text-white hover:bg-supperagent/90"
+                          onClick={() => handleEdit(student)}
+                        >
+                          <Pen className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -347,7 +370,7 @@ export default function StudentPage() {
 
       {/* --- EDIT STUDENT DIALOG --- */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Student Details</DialogTitle>
           </DialogHeader>
@@ -380,7 +403,12 @@ export default function StudentPage() {
                         Email <span className="text-red-500">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="john@example.com" type="email" disabled {...field} />
+                        <Input
+                          placeholder="john@example.com"
+                          type="email"
+                          disabled
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -402,10 +430,10 @@ export default function StudentPage() {
                         </span>
                       </FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="******" 
-                          type="password" 
-                          {...field} 
+                        <Input
+                          placeholder="******"
+                          type="password"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />

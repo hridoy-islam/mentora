@@ -168,7 +168,7 @@ export default function AdminCoursesPage() {
                       {course.title}
                     </TableCell>
                     <TableCell>{course.categoryId?.name}</TableCell>
-                    <TableCell>{course.instructorId?.name}</TableCell>
+                    <TableCell>{course.instructorId?.name }</TableCell>
                     <TableCell>${course.price}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex flex-row items-center justify-center gap-2">

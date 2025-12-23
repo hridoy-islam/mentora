@@ -213,6 +213,7 @@ export default function CoursePage() {
   const [sortBy, setSortBy] = useState<string>('default');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [entriesPerPage] = useState(9);
 
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -253,6 +254,7 @@ export default function CoursePage() {
       });
       const result = response.data.data.result || [];
       setTotalPages(response.data.data.meta.totalPage);
+      setTotal(response.data.data.meta.total);
       setMeta({ ...response.data.data.meta });
       setCourses(result);
     } catch (err) {
@@ -458,7 +460,7 @@ export default function CoursePage() {
             )}
 
             {/* Pagination */}
-            {courses.length > 9 && (
+            {total > 9 && (
               <>
                 <div className="mt-12 flex w-full flex-col items-center gap-4 sm:flex-row sm:justify-between">
                   {/* Mobile: Simple Text Info (Hidden on Desktop) */}
@@ -506,7 +508,7 @@ export default function CoursePage() {
                               'h-9 w-9 rounded-full transition-all',
                               currentPage === page
                                 ? 'shadow-md hover:bg-supperagent/90'
-                                : 'text-muted-foreground hover:text-foreground'
+                                : 'text-muted-foreground hover:text-white'
                             )}
                             onClick={() => setCurrentPage(page)}
                           >
