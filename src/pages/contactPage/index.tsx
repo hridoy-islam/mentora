@@ -49,7 +49,7 @@ export function ContactPage() {
                 <MessageSquare className="w-3 h-3" />
                 Contact Us
               </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight mb-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-mentora tracking-tight mb-6">
               Let's Start a <span className="text-gradient">Conversation</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
@@ -71,7 +71,7 @@ export function ContactPage() {
             className="lg:col-span-5 space-y-8"
           >Fill out the form below and we'll get back to you shortly.
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Get in Touch</h3>
+              <h3 className="text-2xl font-bold text-mentora mb-6">Get in Touch</h3>
               <p className="text-gray-500 mb-8">
                 Our support team is always ready to answer your questions. 
                 We usually respond within 24 hours on business days.
@@ -86,7 +86,7 @@ export function ContactPage() {
                   <Mail className="w-6 h-6" />
                 </div>
                 <div className="ml-5">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-1">Chat to support</h4>
+                  <h4 className="text-lg font-semibold text-mentora mb-1">Chat to support</h4>
                   <p className="text-sm text-gray-500 mb-2">We're here to help.</p>
                   <a href="mailto:support@medicare.com" className="text-supperagent font-medium hover:underline">
                     support@medicare.com
@@ -100,7 +100,7 @@ export function ContactPage() {
                   <MapPin className="w-6 h-6" />
                 </div>
                 <div className="ml-5">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-1">Visit us</h4>
+                  <h4 className="text-lg font-semibold text-mentora mb-1">Visit us</h4>
                   <p className="text-sm text-gray-500 mb-2">Visit our office HQ.</p>
                   <p className="text-gray-700 font-medium leading-tight">
                     123 Knowledge City,<br />
@@ -115,7 +115,7 @@ export function ContactPage() {
                   <Phone className="w-6 h-6" />
                 </div>
                 <div className="ml-5">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-1">Call us</h4>
+                  <h4 className="text-lg font-semibold text-mentora mb-1">Call us</h4>
                   <p className="text-sm text-gray-500 mb-2">Mon-Fri from 8am to 5pm.</p>
                   <a href="tel:+15550000000" className="text-supperagent font-medium hover:underline">
                     +1 (555) 000-0000
@@ -124,20 +124,7 @@ export function ContactPage() {
               </div>
             </div>
 
-            {/* Map Placeholder or Decorative Element */}
-            <div className="relative h-48 w-full rounded-2xl overflow-hidden shadow-sm border border-gray-200 mt-6 group">
-                {/* Replace src with a real map image or embed */}
-                <img 
-                    src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=600" 
-                    alt="Map Location" 
-                    className="w-full h-full object-cover filter grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
-                />
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-xs font-bold text-gray-800 flex items-center gap-2">
-                        <Building2 className="w-3 h-3 text-supperagent"/> Medicare Training HQ
-                    </div>
-                </div>
-            </div>
+           
           </motion.div>
 
           {/* --- Right Column: Form --- */}
@@ -151,7 +138,7 @@ export function ContactPage() {
                 {/* Decorative top border */}
                 <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-primary" />
                 
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Send us a Message</h3>
+                <h3 className="text-2xl font-bold text-mentora mb-2">Send us a Message</h3>
                 <p className="text-gray-500 mb-8">Fill out the form below and we'll get back to you shortly.</p>
 
                 <form onSubmit={handleSubmit} className="space-y-6">

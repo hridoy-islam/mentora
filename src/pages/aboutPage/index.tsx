@@ -39,7 +39,7 @@ export default function AboutPage() {
               <span>The Future of Care Education</span>
             </div>
             {/* KEPT: Original Headline styles and gradients */}
-            <h1 className="text-4xl lg:text-6xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight">
+            <h1 className="text-4xl lg:text-6xl font-extrabold text-mentora tracking-tight mb-6 leading-tight">
               A global marketplace for <span className="text-gradient">learning and teaching.</span>
             </h1>
             <p className="text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
@@ -85,7 +85,7 @@ export default function AboutPage() {
                 className="w-full h-64 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-500"
               />
               {/* Stat Card - KEPT Original Indigo/Dark Theme */}
-              <div className="h-80 bg-slate-900 rounded-2xl p-8 flex flex-col justify-center text-white shadow-lg relative overflow-hidden">
+              <div className="h-80 bg-mentora rounded-2xl p-8 flex flex-col justify-center text-white shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                    <TrendingUp size={100} />
                 </div>
@@ -105,7 +105,7 @@ export default function AboutPage() {
             
             {/* Content */}
             <div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-6">
+              <h2 className="text-3xl font-bold text-mentora mb-6">
                 We're building the infrastructure for the knowledge economy.
               </h2>
               <div className="space-y-6 text-slate-600 leading-relaxed">
@@ -148,7 +148,7 @@ export default function AboutPage() {
       <div className="py-24 relative">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Why the world chooses Medicare Training</h2>
+            <h2 className="text-3xl font-bold text-mentora mb-4">Why the world chooses Medicare Training</h2>
             <p className="text-slate-600">
               We define our success by the success of our instructors and the growth of our students.
             </p>
@@ -182,7 +182,7 @@ export default function AboutPage() {
                 <div className="w-12 h-12 rounded-lg bg-slate-50 flex items-center justify-center mb-6">
                   {value.icon}
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-3">{value.title}</h3>
+                <h3 className="text-lg font-bold text-mentora mb-3">{value.title}</h3>
                 <p className="text-slate-600 text-sm leading-relaxed">{value.desc}</p>
               </div>
             ))}

@@ -10,7 +10,7 @@ import {
   IconSchool,
   IconUser,
   IconHelp,
-  IconSearch,
+  IconSearch
 } from '@tabler/icons-react'; // Kept your original imports
 
 import { NavMain } from './nav-main';
@@ -22,13 +22,12 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
+  SidebarMenuItem
 } from '@/components/ui/sidebar';
 import {
-  
   LayoutDashboard,
-  Users, 
-  Box, 
+  Users,
+  Box,
   Settings,
   UserRoundSearch,
   GraduationCap,
@@ -40,10 +39,12 @@ import {
   Headset,
   Bell,
   Heart,
-  Briefcase, 
-  BarChart3, 
+  Briefcase,
+  BarChart3,
   Building,
-  Calculator, 
+  Calculator,
+  Archive,
+  DollarSign
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import axiosInstance from '@/lib/axios';
@@ -55,7 +56,7 @@ const adminNav = [
   {
     title: 'Dashboard',
     url: '/dashboard',
-    icon: LayoutDashboard,
+    icon: LayoutDashboard
   },
   {
     title: 'User Management',
@@ -63,48 +64,45 @@ const adminNav = [
     items: [
       { title: 'Organization', url: '/dashboard/organizations' },
       { title: 'Instructor', url: '/dashboard/instructors' },
-      { title: 'Student', url: '/dashboard/students' },
-    ],
+      { title: 'Student', url: '/dashboard/students' }
+    ]
   },
   {
     title: 'Course Manage',
     icon: Box,
     items: [
-     
       { title: 'Category', url: '/dashboard/categories' },
-      { title: 'Course', url: '/dashboard/courses' },
-    ],
+      { title: 'Course', url: '/dashboard/courses' }
+    ]
   },
   {
     title: 'Report',
     url: '/dashboard/report',
-    icon: Calculator,
+    icon: Calculator
   },
   {
     title: 'Setting',
     icon: Settings,
     items: [
       // { title: 'Profile', url: '#' },
-      { title: 'Email', url: '#' },
-    ],
-  },
+      { title: 'Email', url: '#' }
+    ]
+  }
 ];
-
-
 
 const instructorNav = [
   {
     title: 'Dashboard',
     url: '/dashboard',
-    icon: LayoutDashboard,
+    icon: LayoutDashboard
   },
   {
     title: 'My Courses',
     icon: Box,
     items: [
       { title: 'All Courses', url: '/dashboard/instructor/courses' },
-      { title: 'Create Course', url: '/dashboard/instructor/create-course' },
-    ],
+      { title: 'Create Course', url: '/dashboard/instructor/create-course' }
+    ]
   },
   {
     title: 'Student Management',
@@ -112,50 +110,54 @@ const instructorNav = [
     items: [
       { title: 'Enrolled Students', url: '/dashboard/instructor/students' },
       { title: 'Reviews', url: '/dashboard/instructor/reviews' },
-      { title: 'Q&A', url: '/dashboard/instructor/q-and-a' },
-    ],
+      { title: 'Q&A', url: '/dashboard/instructor/q-and-a' }
+    ]
   },
   {
     title: 'Payouts',
     url: '/dashboard/instructor/payouts',
-    icon: CreditCard,
+    icon: CreditCard
   },
   {
     title: 'Support',
     url: '/dashboard/support',
-    icon: Headset,
+    icon: Headset
   },
   {
     title: 'Settings',
     url: '/dashboard/settings/profile',
-    icon: Settings,
-  },
+    icon: Settings
+  }
 ];
 
 const companyNav = [
   {
     title: 'Dashboard',
     url: '/dashboard',
-    icon: LayoutDashboard,
+    icon: LayoutDashboard
   },
   {
     title: 'My Staff',
     url: '/dashboard/my-staff',
-    icon: Users,
+    icon: Users
   },
- 
+
   {
     title: 'Courses',
     url: '/dashboard/company/courses',
-    icon: Box,
+    icon: Box
   },
- 
+
   {
-    title: 'Company Profile',
-    url: '/dashboard/company/profile',
-    icon: Building,
-  },
- 
+    title: 'Transactions',
+    url: '/dashboard/transactions',
+    icon: DollarSign
+  }
+  // {
+  //   title: 'Company Profile',
+  //   url: '/dashboard/profile',
+  //   icon: Building,
+  // },
 ];
 
 // --- 2. Helper function to get nav items ---
@@ -163,7 +165,7 @@ const getNavItemsByRole = (role: string) => {
   switch (role) {
     case 'admin':
       return adminNav;
-    
+
     case 'instructor':
       return instructorNav;
     case 'company':
@@ -194,7 +196,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [user]);
 
   // --- 4. Use useMemo to dynamically select nav items based on role ---
-  const navItems = React.useMemo(() => getNavItemsByRole(user?.role), [user?.role]);
+  const navItems = React.useMemo(
+    () => getNavItemsByRole(user?.role),
+    [user?.role]
+  );
 
   return (
     <Sidebar
@@ -206,14 +211,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="flex h-14 items-center justify-center border-b border-gray-300">
         <SidebarMenu>
           <SidebarMenuItem>
-            <div
-              // asChild
-              className="data-[slot=sidebar-menu-button]:!p-2"
-            >
-              <a href="#" className="flex items-center gap-2">
-                <GraduationCap className="!size-5 shrink-0 text-supperagent" />
-                <span className="text-base font-semibold ">Medicare Training</span>
-              </a>
+            <div className="data-[slot=sidebar-menu-button]:!p-2">
+              <div className="flex items-center justify-center gap-2">
+                <img
+                  src="/logo.png"
+                  alt="Medicare Training"
+                  className="h-auto w-28 shrink-0"
+                />
+              </div>
             </div>
           </SidebarMenuItem>
         </SidebarMenu>

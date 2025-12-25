@@ -13,7 +13,6 @@ import HomePage from '@/pages/homePage';
 import  CoursePage  from '@/pages/coursePage';
 import CourseDetailPage from '@/pages/coursePage/courseDetails';
 import { ContactPage } from '@/pages/contactPage';
-import { CartPage } from '@/pages/cartPage';
 import StudentLayout from '@/components/layout/student-layout';
 import { StudentDashboard } from '@/pages/dashboard/rolewise-dashboard/student-dashboard';
 import { CourseDetails } from '@/pages/enrollCourse/courseDetail';
@@ -42,6 +41,9 @@ import StaffEnrollCoursePage from '@/pages/userManagement/orgnizationPage/staffP
 import ReportPage from '@/pages/reportPage';
 import MyOrganizationPage from '@/pages/myOrganization';
 import OrganizationAvailableCoursesPage from '@/pages/myOrganization/availableCourses';
+import TransactionHistoryPage from '@/pages/transactionHistoryPage';
+import { CartPage } from '@/pages/cartPage';
+import { CheckoutPage } from '@/pages/checkoutPage';
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 const DashboardPage = lazy(() => import('@/pages/dashboard'));
 
@@ -134,6 +136,11 @@ export default function AppRouter() {
           path: 'report',
           element: <ReportPage />
         },
+         {
+          path: 'transactions',
+          element: <TransactionHistoryPage />,
+          index: true
+        },
       ]
     }
   ];
@@ -187,6 +194,16 @@ export default function AppRouter() {
           element: <CartPage />,
           index: true
         },
+        {
+          path: 'checkout',
+          element: <CheckoutPage />,
+          index: true
+        },
+        {
+          path: 'transactions',
+          element: <TransactionHistoryPage />,
+          index: true
+        },
       ]
     }
   ];
@@ -233,6 +250,11 @@ export default function AppRouter() {
         {
           path: 'cart',
           element: <CartPage />,
+          index: true
+        },
+        {
+          path: 'checkout',
+          element: <CheckoutPage />,
           index: true
         },
         {

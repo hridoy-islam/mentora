@@ -9,9 +9,9 @@ import {
   FileText,
   HelpCircle,
   AlertCircle,
-  Newspaper,
   ChevronRight,
-  Search
+  Search,
+  FileQuestion // Added icon for no data
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -93,11 +93,20 @@ export function CourseDetails() {
 
         // 1. Fetch Course Info
         const courseRes = await axiosInstance.get(`/courses?slug=${slug}`);
-        setCourse(courseRes.data.data.result[0]);
+        
+        const courseData = courseRes.data.data.result[0];
+        
+        // If no course found, stop here (loading will be set to false in finally)
+        if (!courseData) {
+            setCourse(null);
+            return; 
+        }
+
+        setCourse(courseData);
 
         // 2. Fetch Modules
         const modulesRes = await axiosInstance.get('/course-modules', {
-          params: { courseId: courseRes.data.data.result[0]?._id }
+          params: { courseId: courseData._id }
         });
         const modules: CourseModule[] = modulesRes.data.data.result;
 
@@ -162,19 +171,15 @@ export function CourseDetails() {
   }, [currentLesson, allLessons]);
 
   // --- NEW: Module-Wise Progress Logic ---
-
-  // 1. Find the current active module object based on the current lesson
   const currentModule = useMemo(() => {
     if (!currentLesson) return null;
     return sections.find((section) => section._id === currentLesson.moduleId);
   }, [sections, currentLesson]);
 
-  // 2. Calculate stats for THAT specific module
   const moduleStats = useMemo(() => {
     if (!currentModule) return { total: 0, unlocked: 0, percentage: 0 };
 
     const total = currentModule.lessonsList.length;
-    // Count lessons that are NOT locked
     const unlocked = currentModule.lessonsList.filter((l) => !l.lock).length;
 
     const percentage = total === 0 ? 0 : Math.round((unlocked / total) * 100);
@@ -472,6 +477,7 @@ export function CourseDetails() {
     }
   };
 
+  // --- Loading State ---
   if (loading)
     return (
       <div className="container mx-auto space-y-6 py-8">
@@ -483,6 +489,7 @@ export function CourseDetails() {
       </div>
     );
 
+  // --- Error State ---
   if (error)
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 bg-slate-50">
@@ -499,6 +506,26 @@ export function CourseDetails() {
       </div>
     );
 
+  // --- NEW: No Data State ---
+  if (!course)
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-slate-50">
+        <div className="rounded-full bg-slate-200 p-4">
+          <FileQuestion className="h-10 w-10 text-slate-500" />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-800">
+          No Course Data Available
+        </h2>
+        <p className="text-slate-500">
+          We couldn't find the course you are looking for.
+        </p>
+        <Button onClick={() => navigate(-1)} variant="outline">
+          Go Back
+        </Button>
+      </div>
+    );
+
+  // --- Main Content ---
   return (
     <div className="min-h-screen bg-slate-50/80  text-slate-900">
       {/* Top Header */}
@@ -562,197 +589,220 @@ export function CourseDetails() {
           </div>
 
           {/* RIGHT: Sidebar / Curriculum (4 cols) */}
-         <div className="order-1 h-fit lg:order-2 lg:col-span-4">
-  <div className="sticky top-24 space-y-6">
-    {/* --- Course Modules List Container --- */}
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
-      
-      {/* --- HEADER SECTION: Bold & Dark --- */}
-      <div className="relative bg-slate-900 p-6 text-white">
-        {/* Decorative background glow using supperagent color */}
-        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-supperagent/20 blur-3xl"></div>
-        <div className="absolute -left-10 bottom-0 h-32 w-32 rounded-full bg-supperagent/10 blur-3xl"></div>
+          <div className="order-1 h-fit lg:order-2 lg:col-span-4">
+            <div className="sticky top-24 space-y-6">
+              {/* --- Course Modules List Container --- */}
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
+                {/* --- HEADER SECTION: Bold & Dark --- */}
+                <div className="relative bg-slate-900 p-6 text-white">
+                  {/* Decorative background glow using supperagent color */}
+                  <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-supperagent/20 blur-3xl"></div>
+                  <div className="absolute -left-10 bottom-0 h-32 w-32 rounded-full bg-supperagent/10 blur-3xl"></div>
 
-        <div className="relative z-10">
-          <div className="mb-4 flex flex-row items-end justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Current Progress
-              </span>
-              <h3 className="line-clamp-1 text-base font-bold tracking-wide text-white">
-                {currentModule ? currentModule.title : 'Loading...'}
-              </h3>
-            </div>
-            
-            <div className="flex items-center gap-1 rounded-md bg-slate-800 px-2 py-1">
-               <span className="text-xs font-bold text-supperagent">
-                {moduleStats.unlocked}
-              </span>
-              <span className="text-[10px] text-slate-500">/</span>
-              <span className="text-xs font-bold text-slate-400">
-                {moduleStats.total}
-              </span>
-            </div>
-          </div>
+                  <div className="relative z-10">
+                    <div className="mb-4 flex flex-row items-end justify-between gap-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Current Progress
+                        </span>
+                        <h3 className="line-clamp-1 text-base font-bold tracking-wide text-white">
+                          {currentModule ? currentModule.title : ''}
+                        </h3>
+                      </div>
 
-          {/* Progress Bar with Glow */}
-          <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-800">
-            <div
-              className="absolute h-full rounded-full bg-supperagent shadow-[0_0_15px_currentColor] text-supperagent transition-all duration-700 ease-out"
-              style={{ width: `${moduleStats.percentage}%` }}
-            />
-          </div>
-
-          {/* Integrated Search Bar */}
-          <div className="group relative mt-6">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <Search className="h-4 w-4 text-slate-500 group-focus-within:text-supperagent transition-colors" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search specific lesson..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 py-2.5 pl-10 pr-4 text-sm text-slate-200 placeholder-slate-500 transition-all
-              focus:border-supperagent/50 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-supperagent/20"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* --- CONTENT LIST --- */}
-      <div className="custom-scrollbar max-h-[calc(100vh-28rem)] overflow-y-auto bg-slate-50">
-        {filteredSections.length > 0 ? (
-          filteredSections.map((section) => {
-            const isExpanded = expandedModules.has(section._id);
-            const isActiveModule = section.lessonsList.some(
-              (l) => l._id === currentLesson?._id
-            );
-
-            return (
-              <div
-                key={section._id}
-                className="group/module border-b border-slate-200 bg-white last:border-0"
-              >
-                {/* Module Header (Accordion) */}
-                <button
-                  onClick={() => toggleModule(section._id)}
-                  className={`w-full px-5 py-4 text-left transition-colors duration-200 
-                    ${isActiveModule ? 'bg-slate-50' : 'hover:bg-slate-50'}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded transition-colors ${isActiveModule ? 'bg-supperagent/10 text-supperagent' : 'bg-slate-100 text-slate-500'}`}>
-                        <ChevronDown
-                        className={`h-3.5 w-3.5 transition-transform duration-300 ${
-                            isExpanded ? 'rotate-180' : ''
-                        }`}
-                        />
+                      <div className="flex items-center gap-1 rounded-md bg-slate-800 px-2 py-1">
+                        <span className="text-xs font-bold text-supperagent">
+                          {moduleStats.unlocked}
+                        </span>
+                        <span className="text-[10px] text-slate-500">/</span>
+                        <span className="text-xs font-bold text-slate-400">
+                          {moduleStats.total}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h4
-                        className={`text-sm font-bold leading-tight ${
-                          isActiveModule
-                            ? 'text-slate-900'
-                            : 'text-slate-600 group-hover/module:text-slate-900'
-                        }`}
-                      >
-                        {section.title}
-                      </h4>
-                      <p className="mt-1.5 flex items-center gap-2 text-[11px] font-medium text-slate-400">
-                        <span>{section.lessonsList.length} Lessons</span>
-                        <span className="h-1 w-1 rounded-full bg-slate-300"></span>
-                        <span>{formatDuration(section.totalDurationMinutes)}</span>
-                      </p>
+
+                    {/* Progress Bar with Glow */}
+                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                      <div
+                        className="absolute h-full rounded-full bg-supperagent shadow-[0_0_15px_currentColor] text-supperagent transition-all duration-700 ease-out"
+                        style={{ width: `${moduleStats.percentage}%` }}
+                      />
                     </div>
-                  </div>
-                </button>
 
-                {/* Lessons List (Dropdown) */}
-                <div
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    isExpanded
-                      ? 'max-h-[1000px] opacity-100'
-                      : 'max-h-0 opacity-0'
-                  }`}
-                >
-                  <div className="flex flex-col bg-slate-50/50 pb-2 pt-1">
-                    {section.lessonsList.map((lesson, idx) => {
-                      const isActive = currentLesson?._id === lesson._id;
-
-                      return (
-                        <button
-                          key={lesson._id}
-                          onClick={() => handleLessonClick(lesson)}
-                          disabled={lesson.lock}
-                          className={`relative mx-2 my-0.5 flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all duration-200
-                              ${
-                                isActive
-                                  ? 'bg-white shadow-sm ring-1 ring-slate-200'
-                                  : 'hover:bg-slate-200/50'
-                              }
-                              ${lesson.lock ? 'cursor-not-allowed opacity-60 grayscale' : ''}
-                          `}
-                        >
-                          {/* Active Indicator Strip */}
-                          {isActive && (
-                            <div className="absolute left-0 top-1/2 h-1/2 w-1 -translate-y-1/2 rounded-r bg-supperagent"></div>
-                          )}
-
-                          {/* Icon Container */}
-                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold shadow-sm transition-colors
-                            ${isActive 
-                                ? 'border-supperagent/30 bg-supperagent/10 text-supperagent' 
-                                : 'border-slate-200 bg-white text-slate-400'
-                            }`}>
-                             {lesson.lock ? (
-                                <Lock className="h-3.5 w-3.5" />
-                              ) : (
-                                <span>{idx + 1}</span>
-                              )}
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <p
-                              className={`truncate text-xs ${
-                                isActive ? 'font-bold text-slate-900' : 'font-medium text-slate-600'
-                              }`}
-                            >
-                              {lesson.title}
-                            </p>
-                            <div className="mt-0.5 flex items-center gap-2">
-                                <span className="text-[10px] text-slate-400">
-                                {lesson.type === 'video' ? 'Video' : lesson.type === 'quiz' ? 'Quiz' : 'Reading'}
-                                </span>
-                                <span className="text-[10px] text-slate-300">•</span>
-                                <span className="text-[10px] text-slate-400">
-                                {formatDuration(Number(lesson.duration))}
-                                </span>
-                            </div>
-                          </div>
-                          
-                          {/* Playing Icon if Active */}
-                          {isActive && !lesson.lock && (
-                            <Play className="h-3 w-3 fill-supperagent text-supperagent" />
-                          )}
-                        </button>
-                      );
-                    })}
+                    {/* Integrated Search Bar */}
+                    <div className="group relative mt-6">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <Search className="h-4 w-4 text-slate-500 group-focus-within:text-supperagent transition-colors" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Search specific lesson..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full rounded-xl border border-slate-700 bg-slate-800/50 py-2.5 pl-10 pr-4 text-sm text-slate-200 placeholder-slate-500 transition-all
+                          focus:border-supperagent/50 focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-supperagent/20"
+                      />
+                    </div>
                   </div>
                 </div>
+
+                {/* --- CONTENT LIST --- */}
+                <div className="custom-scrollbar max-h-[calc(100vh-28rem)] overflow-y-auto bg-slate-50">
+                  {filteredSections.length > 0 ? (
+                    filteredSections.map((section) => {
+                      const isExpanded = expandedModules.has(section._id);
+                      const isActiveModule = section.lessonsList.some(
+                        (l) => l._id === currentLesson?._id
+                      );
+
+                      return (
+                        <div
+                          key={section._id}
+                          className="group/module border-b border-slate-200 bg-white last:border-0"
+                        >
+                          {/* Module Header (Accordion) */}
+                          <button
+                            onClick={() => toggleModule(section._id)}
+                            className={`w-full px-5 py-4 text-left transition-colors duration-200 
+                              ${isActiveModule ? 'bg-slate-50' : 'hover:bg-slate-50'}`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div
+                                className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded transition-colors ${isActiveModule ? 'bg-supperagent/10 text-supperagent' : 'bg-slate-100 text-slate-500'}`}
+                              >
+                                <ChevronDown
+                                  className={`h-3.5 w-3.5 transition-transform duration-300 ${
+                                    isExpanded ? 'rotate-180' : ''
+                                  }`}
+                                />
+                              </div>
+                              <div className="flex-1">
+                                <h4
+                                  className={`text-sm font-bold leading-tight ${
+                                    isActiveModule
+                                      ? 'text-slate-900'
+                                      : 'text-slate-600 group-hover/module:text-slate-900'
+                                  }`}
+                                >
+                                  {section.title}
+                                </h4>
+                                <p className="mt-1.5 flex items-center gap-2 text-[11px] font-medium text-slate-400">
+                                  <span>{section.lessonsList.length} Lessons</span>
+                                  <span className="h-1 w-1 rounded-full bg-slate-300"></span>
+                                  <span>
+                                    {formatDuration(
+                                      section.totalDurationMinutes
+                                    )}
+                                  </span>
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+
+                          {/* Lessons List (Dropdown) */}
+                          <div
+                            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                              isExpanded
+                                ? 'max-h-[1000px] opacity-100'
+                                : 'max-h-0 opacity-0'
+                            }`}
+                          >
+                            <div className="flex flex-col bg-slate-50/50 pb-2 pt-1">
+                              {section.lessonsList.map((lesson, idx) => {
+                                const isActive =
+                                  currentLesson?._id === lesson._id;
+
+                                return (
+                                  <button
+                                    key={lesson._id}
+                                    onClick={() => handleLessonClick(lesson)}
+                                    disabled={lesson.lock}
+                                    className={`relative mx-2 my-0.5 flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all duration-200
+                                      ${
+                                        isActive
+                                          ? 'bg-white shadow-sm ring-1 ring-slate-200'
+                                          : 'hover:bg-slate-200/50'
+                                      }
+                                      ${lesson.lock ? 'cursor-not-allowed opacity-60 grayscale' : ''}
+                                    `}
+                                  >
+                                    {/* Active Indicator Strip */}
+                                    {isActive && (
+                                      <div className="absolute left-0 top-1/2 h-1/2 w-1 -translate-y-1/2 rounded-r bg-supperagent"></div>
+                                    )}
+
+                                    {/* Icon Container */}
+                                    <div
+                                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold shadow-sm transition-colors
+                                      ${
+                                        isActive
+                                          ? 'border-supperagent/30 bg-supperagent/10 text-supperagent'
+                                          : 'border-slate-200 bg-white text-slate-400'
+                                      }`}
+                                    >
+                                      {lesson.lock ? (
+                                        <Lock className="h-3.5 w-3.5" />
+                                      ) : (
+                                        <span>{idx + 1}</span>
+                                      )}
+                                    </div>
+
+                                    <div className="min-w-0 flex-1">
+                                      <p
+                                        className={`truncate text-xs ${
+                                          isActive
+                                            ? 'font-bold text-slate-900'
+                                            : 'font-medium text-slate-600'
+                                        }`}
+                                      >
+                                        {lesson.title}
+                                      </p>
+                                      <div className="mt-0.5 flex items-center gap-2">
+                                        <span className="text-[10px] text-slate-400">
+                                          {lesson.type === 'video'
+                                            ? 'Video'
+                                            : lesson.type === 'quiz'
+                                              ? 'Quiz'
+                                              : 'Reading'}
+                                        </span>
+                                        <span className="text-[10px] text-slate-300">
+                                          •
+                                        </span>
+                                        <span className="text-[10px] text-slate-400">
+                                          {formatDuration(
+                                            Number(lesson.duration)
+                                          )}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Playing Icon if Active */}
+                                    {isActive && !lesson.lock && (
+                                      <Play className="h-3 w-3 fill-supperagent text-supperagent" />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <Search className="mb-2 h-8 w-8 text-slate-300" />
+                      <p className="text-sm font-medium text-slate-500">
+                        No lessons found
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        Try searching for something else
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-            );
-          })
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Search className="mb-2 h-8 w-8 text-slate-300" />
-            <p className="text-sm font-medium text-slate-500">No lessons found</p>
-            <p className="text-xs text-slate-400">Try searching for something else</p>
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  </div>
-</div>
         </div>
       </div>
     </div>

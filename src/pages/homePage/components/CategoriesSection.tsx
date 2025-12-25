@@ -13,6 +13,7 @@ import {
   LayoutGrid
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 // --- Updated Sectors Data for Health/Care ---
 const sectors = [
@@ -75,6 +76,8 @@ const sectors = [
 ];
 
 const SectorsSection = () => {
+
+  const navigate = useNavigate()
   return (
     <section className="py-24 relative overflow-hidden bg-white">
       
@@ -100,7 +103,7 @@ const SectorsSection = () => {
                 <LayoutGrid className="w-3 h-3" />
                 Our Expertise
               </div>
-              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
+              <h2 className="text-3xl md:text-5xl font-bold text-mentora mb-4 tracking-tight">
                 Sectors We <span className="text-gradient">Cover</span>
               </h2>
               <p className="text-gray-500 text-lg">
@@ -113,8 +116,9 @@ const SectorsSection = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.2 }}
+
             >
-                <Button variant="outline" className="hidden md:flex gap-2 rounded-full border-gray-300 hover:border-supperagent hover:text-supperagent transition-all">
+                <Button className="hidden md:flex gap-2 rounded-full border-gray-300 hover:border-supperagent  transition-all" onClick={()=> navigate('/courses')}>
                     View All Sectors <ArrowUpRight className="w-4 h-4" />
                 </Button>
             </motion.div>

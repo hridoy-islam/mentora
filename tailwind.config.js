@@ -26,6 +26,7 @@ module.exports = {
         primary: 'hsl(var(--primary))',
         watney: 'hsl(var(--watney))',
          theme:'hsl(var(--theme))',
+         mentora:'hsl(var(--mentora-secondary))',
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))'

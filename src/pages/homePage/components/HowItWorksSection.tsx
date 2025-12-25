@@ -78,7 +78,7 @@ const HowItWorksSection = () => {
               Simple Process
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900 tracking-tight">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-mentora tracking-tight">
             Your Journey to <span className="text-supperagent relative inline-block">
               Success
               {/* Underline Object */}

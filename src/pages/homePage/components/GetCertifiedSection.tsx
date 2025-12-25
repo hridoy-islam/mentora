@@ -7,6 +7,7 @@ import {
   FileCheck 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const features = [
   {
@@ -24,6 +25,7 @@ const features = [
 ];
 
 const GetCertifiedSection = () => {
+   const navigate = useNavigate()
   return (
     <section className="py-24 bg-white relative overflow-hidden">
       
@@ -49,7 +51,7 @@ const GetCertifiedSection = () => {
             transition={{ duration: 0.6 }}
           >
             {/* Main Heading */}
-            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-mentora mb-4 tracking-tight">
               Get <span className="text-supperagent">Certified</span>
             </h2>
             <p className="text-lg text-gray-500 mb-10 max-w-lg">
@@ -89,6 +91,7 @@ const GetCertifiedSection = () => {
             <Button 
                 size="lg" 
                 className="bg-supperagent hover:bg-supperagent/90 text-white font-semibold rounded-lg px-8 h-12 shadow-lg shadow-supperagent/20 transition-all hover:scale-105"
+            onClick={()=> navigate('/courses')}
             >
               Explore Courses <ArrowRight className="ml-2 w-5 h-5" />
             </Button>

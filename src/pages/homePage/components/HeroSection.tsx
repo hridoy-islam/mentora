@@ -11,6 +11,7 @@ import {
   ShieldCheck 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 // --- Sub-Component: Floating UI Card (Left - Reviews) ---
 const ReviewCard = () => (
@@ -101,6 +102,7 @@ const AvatarStack = () => (
 );
 
 const HeroSection = () => {
+  const navigate = useNavigate()
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-slate-50">
       
@@ -155,7 +157,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-5xl md:text-7xl lg:text-7xl font-extrabold tracking-tight mb-6 text-gray-900 leading-[1.1]"
+            className="text-5xl md:text-7xl lg:text-7xl font-extrabold tracking-tight mb-6 text-mentora leading-[1.1]"
           >
             Quality Health & Social Care <br />
             <span className="relative inline-block text-gradient animate-gradient-x pb-2">
@@ -184,6 +186,7 @@ const HeroSection = () => {
             <Button
               size="lg"
               className="bg-supperagent text-white font-semibold h-14 px-8 text-lg shadow-lg shadow-supperagent/30 hover:bg-supperagent/90 hover:scale-105 transition-all duration-300 rounded-full"
+              onClick={()=>navigate('/courses')}
             >
               Explore Courses
               <ArrowRight className="ml-2 w-5 h-5" />

@@ -1,16 +1,23 @@
-import { Mail, Phone } from "lucide-react";
-import { Footer } from "../shared/Footer";
-import { StudentNav } from "../shared/student-nav";
+import { Mail, Phone } from 'lucide-react';
+import { Footer } from '../shared/Footer';
+import { StudentNav } from '../shared/student-nav';
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 export default function StudentLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
+  const location = useLocation();
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      window.scrollTo(0, 0);
+    }
+  }, [location.pathname]);
 
- return (
+  return (
     <div className="flex min-h-screen flex-col overflow-hidden bg-white">
-      
       {/* Top contact bar */}
       {/* <div className="bg-supperagent h-12 p-4 text-white">
         <div className="container mx-auto flex h-full items-center justify-start  gap-8">
@@ -31,12 +38,10 @@ export default function StudentLayout({
           
         </div>
       </div> */}
-      
+
       <StudentNav />
-      
-      <main className="overflow-hidden "> 
-        {children}
-      </main>
+
+      <main className="overflow-hidden ">{children}</main>
     </div>
   );
 }

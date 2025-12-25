@@ -2,7 +2,7 @@ import { Mail, Phone } from "lucide-react";
 import { Footer } from "../shared/Footer";
 import { TopNav } from "../shared/top-nav";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 export default function PublicLayout({
@@ -11,15 +11,20 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   const user = useSelector((state: any) => state.auth.user); // Get user from Redux state
+  const location = useLocation();
 
   const navigate = useNavigate()
 
-  //   useEffect(() => {
-  //   if (user?.role) {
-  //     if (user.role === 'student') navigate('/student');
-  //     else if (['admin', 'instructor', 'company'].includes(user.role)) navigate('/dashboard');
-  //   }
-  // }, [user]);
+ useEffect(() => {
+    
+      if (location.pathname !== "/") {
+        window.scrollTo(0, 0);
+      }
+    
+  }, [location.pathname]);
+
+
+
  return (
     <div className="flex min-h-screen flex-col overflow-hidden bg-white">
       

@@ -582,7 +582,7 @@ function EmptyState({ navigate }: { navigate: any }) {
         catalog to start your learning journey.
       </p>
       <Button
-        onClick={() => navigate('/courses')}
+        onClick={() => navigate('/student/courses')}
         size="lg"
         className="bg-supperagent hover:bg-supperagent/90"
       >

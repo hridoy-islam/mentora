@@ -338,7 +338,7 @@ export default function CoursePage() {
 
         <div className="container relative z-10 mx-auto py-8">
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="mb-6 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+            <h1 className="mb-6 text-3xl font-extrabold tracking-tight text-mentora sm:text-5xl md:text-6xl">
               Unlock Your Potential with{' '}
               <span className="text-supperagent">Expert Courses</span>
             </h1>
