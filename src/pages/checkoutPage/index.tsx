@@ -18,7 +18,9 @@ import {
   Building,
   Navigation,
   LocateFixed,
-  MapPin
+  MapPin,
+  Calendar,
+  AlertCircle
 } from 'lucide-react';
 
 // Redux & Utils
@@ -35,12 +37,16 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { countries } from '@/types'; // Assuming this exists, or fallback provided
+import { countries } from '@/types'; 
 
 // Components
 import { OrderSuccess } from './components/order-success';
 import { AuthDialog } from './components/auth-dialog';
 import { Loader } from '@/components/shared/MedicareLoader';
+
+// --- WORLDPAY CONSTANTS ---
+const WORLDPAY_CHECKOUT_ID = 'your-checkout-id'; // <--- REPLACE WITH YOUR ID
+const WORLDPAY_SCRIPT_URL = 'https://try.access.worldpay.com/access-checkout/v2/checkout.js';
 
 // --- Helper Component: FormInput ---
 const FormInput = ({
@@ -120,7 +126,7 @@ export function CheckoutPage() {
   const dispatch = useDispatch();
   const { toast } = useToast();
 
-  // Form State including Address fields
+  // Form State
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -138,16 +144,104 @@ export function CheckoutPage() {
   const [showPartyEffect, setShowPartyEffect] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  
+  // Payment Logic States
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
+  const [isSdkReady, setIsSdkReady] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
 
-  // To handle loading state if user data is being fetched (optional)
+  // Worldpay Ref
+  const checkoutRef = useRef(null);
+
   const [loadingUserData, setLoadingUserData] = useState(false);
-
   const couponRef = useRef(null);
   const [couponBoxSize, setCouponBoxSize] = useState({ width: 0, height: 0 });
 
-  // Prefill form data when user logs in
+  // --- Worldpay Integration Logic ---
+  useEffect(() => {
+    // 1. Helper to load script dynamically
+    const loadCheckoutScript = (src) => {
+      return new Promise<void>((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) {
+          resolve();
+          return;
+        }
+        const script = document.createElement("script");
+        script.src = src;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+        document.head.appendChild(script);
+      });
+    };
+
+    // 2. Initialize Worldpay SDK
+    const initWorldpay = () => {
+      return new Promise((resolve, reject) => {
+        if (!window.Worldpay) {
+            reject("Worldpay SDK not found.");
+            return;
+        }
+
+        window.Worldpay.checkout.init({
+            id: WORLDPAY_CHECKOUT_ID,
+            form: '#payment-section-container', // Must match the container ID in JSX
+            fields: {
+                pan: {
+                    selector: '#card-pan',
+                },
+                expiry: {
+                    selector: '#card-expiry',
+                },
+                cvv: {
+                    selector: '#card-cvc', 
+                },
+            },
+            styles: {
+                // Style the iframes to match the site look
+                'input': { 
+                    'color': '#111827', 
+                    'font-size': '14px', 
+                    'font-family': 'ui-sans-serif, system-ui, sans-serif',
+                    'letter-spacing': '0.025em'
+                },
+                'input.is-valid': { 'color': '#10B981' },
+                'input.is-invalid': { 'color': '#EF4444' },
+                'input.is-focus': { 'color': '#111827' }
+            },
+            enablePanFormatting: true,
+        }, (error, checkoutInstance) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(checkoutInstance);
+            }
+        });
+      });
+    };
+
+    // 3. Execution Flow
+    loadCheckoutScript(WORLDPAY_SCRIPT_URL)
+        .then(() => initWorldpay())
+        .then((instance) => {
+            checkoutRef.current = instance;
+            setIsSdkReady(true);
+            console.log("Worldpay SDK Ready");
+        })
+        .catch((err) => {
+            console.error("Worldpay init failed:", err);
+            setPaymentError("Payment system failed to load. Please refresh.");
+        });
+
+    // 4. Cleanup
+    return () => {
+        if (checkoutRef.current) {
+            checkoutRef.current.remove(); // Uncomment if SDK supports remove() to clean DOM
+        }
+    };
+  }, []);
+
+  // Prefill form data
   useEffect(() => {
     if (user) {
       setFormData((prev) => ({
@@ -203,13 +297,38 @@ export function CheckoutPage() {
   const totalAmount = cartSubtotal * (1 - discount);
   const accentColorClass = 'bg-supperagent bg-supperagent';
 
+  // --- Payment Execution ---
   const handleCheckout = async () => {
     if (!user) return;
 
+    setPaymentError('');
     setIsProcessingOrder(true);
 
+    // 1. Validate Worldpay is loaded
+    if (!checkoutRef.current) {
+        setPaymentError("Payment system not initialized. Please refresh page.");
+        setIsProcessingOrder(false);
+        return;
+    }
+
+    // 2. Generate Session (Tokenization)
+    checkoutRef.current.generateSessionState(async (error, session) => {
+        if (error) {
+            console.warn(`Failed to generate session: ${error}`);
+            setPaymentError('Please check your card details and try again.');
+            setIsProcessingOrder(false);
+            return;
+        }
+
+        // 3. Send Session + Order Data to Backend
+        await processBackendOrder(session);
+    });
+  };
+
+  const processBackendOrder = async (sessionId) => {
     try {
       const orderData = {
+        paymentSessionId: sessionId, // <--- Token sent to backend
         items: cartItems.map((item) => ({
           courseId: item?.id,
           quantity: item.quantity,
@@ -245,9 +364,11 @@ export function CheckoutPage() {
       }
     } catch (error) {
       console.error(error);
+      const msg = error.response?.data?.message || 'Transaction failed. Please try again.';
+      setPaymentError(msg);
       toast({
         title: 'Order Failed',
-        description: 'Something went wrong. Please try again.',
+        description: msg,
         variant: 'destructive'
       });
     } finally {
@@ -306,19 +427,19 @@ export function CheckoutPage() {
               {/* 1. Contact Information */}
               <div className="rounded-2xl bg-white p-6 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] sm:p-8">
                 {!user && (
-  <div className="mb-8 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-    <p className="flex items-center gap-2 text-sm text-gray-900">
-      <Lock size={16} className="text-supperagent" />
-      <span>Already have an account?</span>
-      <span
-        onClick={() => setAuthDialogOpen(true)}
-        className="cursor-pointer font-bold text-supperagent hover:underline"
-      >
-        Login
-      </span>
-    </p>
-  </div>
-)}
+                  <div className="mb-8 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                    <p className="flex items-center gap-2 text-sm text-gray-900">
+                      <Lock size={16} className="text-supperagent" />
+                      <span>Already have an account?</span>
+                      <span
+                        onClick={() => setAuthDialogOpen(true)}
+                        className="cursor-pointer font-bold text-supperagent hover:underline"
+                      >
+                        Login
+                      </span>
+                    </p>
+                  </div>
+                )}
 
                 {loadingUserData && <Loader />}
 
@@ -383,7 +504,6 @@ export function CheckoutPage() {
                           <SelectValue placeholder="Select Country" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px]">
-                          {/* Fallback if countries array is empty */}
                           {(
                             countries || [
                               'United States',
@@ -571,24 +691,70 @@ export function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Payment Method */}
-                  <div className="mb-4 flex items-center gap-4">
-                    <h2 className="text-lg font-bold text-gray-900">
+                  {/* --- WORLDPAY SECURE PAYMENT FIELDS --- */}
+                  <div className="mb-4">
+                    <h2 className="mb-4 text-lg font-bold text-gray-900">
                       Payment Method
                     </h2>
-                  </div>
-                  <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-md bg-white p-2 shadow-sm">
-                        <CreditCard size={20} className="text-supperagent" />
-                      </div>
-                      <span className="text-sm font-semibold text-gray-900">
-                        Credit/Debit Card
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="h-4 w-6 rounded-sm bg-red-500 opacity-80"></div>
-                      <div className="h-4 w-6 rounded-sm bg-yellow-500 opacity-80"></div>
+                    
+                    {/* Container ID must match init config 'form' */}
+                    <div id="payment-section-container" className="space-y-4">
+                        
+                        {/* 1. Card Number */}
+                        <div>
+                           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                             Card Number
+                           </label>
+                           <div className="relative">
+                               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none">
+                                   <CreditCard size={18} />
+                               </div>
+                               {/* Worldpay iframe injects here */}
+                               <div id="card-pan" className="h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-3 flex items-center shadow-sm"></div>
+                           </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* 2. Expiry */}
+                            <div>
+                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                  Expiry
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none">
+                                        <Calendar size={18} />
+                                    </div>
+                                    <div id="card-expiry" className="h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-3 flex items-center shadow-sm"></div>
+                                </div>
+                            </div>
+
+                            {/* 3. CVC */}
+                            <div>
+                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                  CVC
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none">
+                                        <ShieldCheck size={18} />
+                                    </div>
+                                    <div id="card-cvc" className="h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-3 flex items-center shadow-sm"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Error Message Display */}
+                        {paymentError && (
+                            <div className="rounded-lg border border-red-100 bg-red-50 p-3 flex items-start gap-2 text-sm text-red-600">
+                                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                                <span>{paymentError}</span>
+                            </div>
+                        )}
+                        
+                        {!isSdkReady && (
+                           <div className="text-center text-xs text-gray-400 flex justify-center items-center gap-2">
+                              <Loader2 className="h-3 w-3 animate-spin" /> Loading secure payment fields...
+                           </div>
+                        )}
                     </div>
                   </div>
 
@@ -596,7 +762,7 @@ export function CheckoutPage() {
                   <button
                     onClick={handleCheckout}
                     disabled={
-                      !user || cartItems.length === 0 || isProcessingOrder
+                      !user || cartItems.length === 0 || isProcessingOrder || !isSdkReady
                     }
                     className={`group relative mt-8 w-full overflow-hidden rounded-xl ${accentColorClass} py-4 text-center text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:shadow-xl hover:shadow-blue-500/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none`}
                   >
@@ -634,7 +800,7 @@ export function CheckoutPage() {
                     <div className="flex items-center gap-2 rounded-full border border-green-100 bg-green-50 px-3 py-1.5 text-green-700">
                       <ShieldCheck size={14} />
                       <span className="text-[10px] font-bold uppercase tracking-wide">
-                        SSL Secure Payment
+                        SSL Secure Payment via Worldpay
                       </span>
                     </div>
                   </div>
