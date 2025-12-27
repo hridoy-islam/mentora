@@ -1,5 +1,4 @@
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -17,7 +16,7 @@ import {
 import { AppDispatch } from '@/redux/store';
 import { useRouter } from '@/routes/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react'; // <-- Import useState
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -27,69 +26,56 @@ import {
   useSignInWithGoogle
 } from 'react-firebase-hooks/auth';
 import { firebaseAuth } from '@/firebaseConfig';
+import { Eye, EyeOff, Loader2, Facebook, Chrome } from 'lucide-react'; 
 import { motion } from 'framer-motion';
-import { Eye, EyeOff } from 'lucide-react'; // <-- Import icons
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Enter a valid email address' }),
-  password: z.string()
+  password: z.string().min(1, { message: 'Password is required' })
 });
 
-// Updated type to match the data object being created
 type socialUserSchema = {
   name: string | null;
   email: string | null;
   googleUid: string;
   image: string | undefined;
   phone: string | undefined;
-  password?: string; // <-- Added password as optional
+  password?: string;
 };
 
 type UserFormValue = z.infer<typeof formSchema>;
 
 export default function UserAuthForm() {
-  const [signInWithGoogle, googleUser, gLoading, gError] =
-    useSignInWithGoogle(firebaseAuth);
-  const [signInWithFacebook, facebookUser, fLoading, fError] =
-    useSignInWithFacebook(firebaseAuth);
+  const [signInWithGoogle, googleUser, gLoading] = useSignInWithGoogle(firebaseAuth);
+  const [signInWithFacebook, facebookUser, fLoading] = useSignInWithFacebook(firebaseAuth);
+  
   const router = useRouter();
   const { loading, error } = useSelector((state: any) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: any) => state.auth);
 
-  // State for password visibility
-  const [showPassword, setShowPassword] = useState(false); // <-- Added state
+  const [showPassword, setShowPassword] = useState(false);
 
   const defaultValues = {
     email: '',
     password: ''
   };
+  
   const form = useForm<UserFormValue>({
     resolver: zodResolver(formSchema),
     defaultValues
   });
 
   const onSubmit = async (data: UserFormValue) => {
-    const result: any = await dispatch(loginUser(data));
-    console.log(result)
-   
-  
+    await dispatch(loginUser(data));
   };
 
   useEffect(() => {
-  if (user?.role) {
-    if (user.role === 'student') router.push('/student');
-    else if (['admin', 'instructor', 'company'].includes(user.role)) router.push('/dashboard');
-  }
-}, [user]);
-
-  const handleGoogleLogin = async () => {
-    await signInWithGoogle();
-  };
-
-  const handleFacebookLogin = async () => {
-    await signInWithFacebook();
-  };
+    if (user?.role) {
+      if (user.role === 'student') router.push('/student');
+      else if (['admin', 'instructor', 'company'].includes(user.role)) router.push('/dashboard');
+    }
+  }, [user, router]);
 
   const loginWithFbOrGoogle = async (data: socialUserSchema) => {
     const result: any = await dispatch(authWithFbORGoogle(data));
@@ -98,138 +84,156 @@ export default function UserAuthForm() {
     }
   };
 
-  useEffect(() => {
-    if (googleUser) {
-      const { email, displayName, uid, photoURL, phoneNumber } =
-        googleUser?.user;
-      const data: socialUserSchema = { // <-- Use updated type
-        name: displayName,
-        email,
-        password: '123456', // This is still hardcoded, but now matches the type
-        googleUid: uid,
-        image: photoURL ? photoURL : undefined,
-        phone: phoneNumber ? phoneNumber : undefined
-      };
-      loginWithFbOrGoogle(data);
-    }
-  }, [googleUser]);
+  // Google/FB Effects
+  // useEffect(() => {
+  //   if (googleUser) {
+  //     const { email, displayName, uid, photoURL, phoneNumber } = googleUser.user;
+  //     loginWithFbOrGoogle({
+  //       name: displayName,
+  //       email,
+  //       password: '123456', 
+  //       googleUid: uid,
+  //       image: photoURL || undefined,
+  //       phone: phoneNumber || undefined
+  //     });
+  //   }
+  // }, [googleUser]);
+
+  // useEffect(() => {
+  //   if (facebookUser) {
+  //     const { email, displayName, uid, photoURL, phoneNumber } = facebookUser.user;
+  //     loginWithFbOrGoogle({
+  //       name: displayName,
+  //       email,
+  //       password: '123456',
+  //       googleUid: uid,
+  //       image: photoURL || undefined,
+  //       phone: phoneNumber || undefined
+  //     });
+  //   }
+  // }, [facebookUser]);
 
   useEffect(() => {
-    if (facebookUser) {
-      const { email, displayName, uid, photoURL, phoneNumber } =
-        facebookUser?.user;
-      const data: socialUserSchema = { // <-- Use updated type
-        name: displayName,
-        email,
-        password: '123456', // This is still hardcoded, but now matches the type
-        googleUid: uid,
-        image: photoURL ? photoURL : undefined,
-        phone: phoneNumber ? phoneNumber : undefined
-      };
-      loginWithFbOrGoogle(data);
-    }
-  }, [facebookUser]);
-
-  useEffect(() => {
-    // Reset the error when the component mounts
     dispatch(resetError());
   }, [dispatch]);
 
+  const isSocialLoading = gLoading || fLoading;
+
   return (
     <>
-      {/* Correct shadcn/ui Form implementation:
-        1. Pass the form object to the <Form> component.
-        2. Use a native <form> tag inside with the `onSubmit` handler.
-      */}
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="w-full space-y-4"
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          
+          {/* Email Field */}
           <FormField
-            control={form.control} // <-- Corrected: was control={form}
+            control={form.control}
             name="email"
-            render={({ field, fieldState }) => (
-              <FormItem>
-                <FormLabel>
-                  Email <span className="text-red-500">*</span>
-                </FormLabel>
+            render={({ field }) => (
+              <FormItem className="space-y-1">
+                <FormLabel className="text-xs font-semibold text-gray-700">Email Address</FormLabel>
                 <FormControl>
                   <Input
                     type="email"
-                    placeholder="example@gmail.com"
-                    disabled={loading}
+                    placeholder="name@example.com"
+                    disabled={loading || isSocialLoading}
                     {...field}
-                    className="h-12 w-full"
+                    className="h-10 text-sm border-gray-300 focus:border-supperagent focus:ring-supperagent rounded-lg"
                   />
                 </FormControl>
-                {fieldState.error && (
-                  <FormMessage>{fieldState.error.message}</FormMessage>
-                )}
+                <FormMessage className="text-xs" />
               </FormItem>
             )}
           />
 
+          {/* Password Field */}
           <FormField
-            control={form.control} // <-- Corrected: was control={form}
+            control={form.control}
             name="password"
-            render={({ field, fieldState }) => (
-              <FormItem>
-                <FormLabel>
-                  Password <span className="text-red-500">*</span>
-                </FormLabel>
+            render={({ field }) => (
+              <FormItem className="space-y-1">
+                <div className="flex items-center justify-between">
+                    <FormLabel className="text-xs font-semibold text-gray-700">Password</FormLabel>
+                    <Link to="/forgot-password" className="text-xs font-medium text-supperagent hover:text-mentora hover:underline">
+                        Forgot?
+                    </Link>
+                </div>
                 <FormControl>
                   <div className="relative">
                     <Input
-                      type={showPassword ? 'text' : 'password'} // <-- Use state
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="••••••••"
-                      disabled={loading}
+                      disabled={loading || isSocialLoading}
                       {...field}
-                      className="h-12 w-full pr-10"
+                      className="h-10 text-sm border-gray-300 pr-9 focus:border-supperagent focus:ring-supperagent rounded-lg"
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)} // <-- Toggle state
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2 top-2.5 text-gray-400 hover:text-supperagent transition-colors"
                     >
-                      {showPassword ? ( // <-- Use state
-                        <EyeOff className="h-5 w-5" />
-                      ) : (
-                        <Eye className="h-5 w-5" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </FormControl>
-                {fieldState.error && (
-                  <FormMessage>{fieldState.error.message}</FormMessage>
-                )}
+                <FormMessage className="text-xs" />
               </FormItem>
             )}
           />
 
-          <Button
+          {/* Submit Button */}
+          <motion.button
+            whileTap={{ scale: 0.98 }}
             type="submit"
-            disabled={loading}
-            className="h-12 w-full bg-supperagent text-base font-semibold text-white hover:bg-supperagent/90"
+            disabled={loading || isSocialLoading}
+            className="w-full h-10 bg-supperagent text-white font-semibold text-sm rounded-lg shadow-md hover:bg-supperagent/90 disabled:opacity-70 flex items-center justify-center gap-2 transition-all mt-2"
           >
-            {loading ? 'Logging in...' : 'Log in'}
-          </Button>
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign In'}
+          </motion.button>
         </form>
       </Form>
+
+      {/* Social Login Section */}
+      {/* <div className="mt-6">
+        <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+            </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+            <button
+                type="button"
+                onClick={() => signInWithGoogle()}
+                disabled={loading || isSocialLoading}
+                className="flex items-center justify-center gap-2 h-10 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:bg-gray-50 hover:text-supperagent transition-colors"
+            >
+                {gLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Chrome className="w-4 h-4" />}
+                Google
+            </button>
+            <button
+                type="button"
+                onClick={() => signInWithFacebook()}
+                disabled={loading || isSocialLoading}
+                className="flex items-center justify-center gap-2 h-10 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:bg-gray-50 hover:text-blue-600 transition-colors"
+            >
+                {fLoading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Facebook className="w-4 h-4" />}
+                Facebook
+            </button>
+        </div>
+      </div> */}
+
+      {/* Error Message */}
       {error && (
         <Badge
           variant="outline"
-          className="mt-4 w-full justify-center border-red-500 py-2 text-red-500"
+          className="mt-4 w-full justify-center border-red-200 bg-red-50 py-2 text-red-600"
         >
           {error}
         </Badge>
       )}
-      <p className="mt-4 text-right text-sm hover:underline">
-        {/* Changed to Link for better SPA navigation */}
-        <Link to="/forgot-password" className="text-supperagent">
-          Forgot Password?
-        </Link>
-      </p>
     </>
   );
 }

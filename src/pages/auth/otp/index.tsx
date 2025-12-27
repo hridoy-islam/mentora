@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom'; // Added useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import { useRouter } from '@/routes/hooks';
 import { jwtDecode } from 'jwt-decode';
+import { motion } from 'framer-motion';
+import { Loader2, ArrowLeft, Timer } from 'lucide-react';
 
 // --- UI Components ---
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 // --- End UI Components ---
 
 // --- Redux Imports ---
@@ -14,18 +15,17 @@ import {
   resendOtp,
   validateRequestOtp,
   resetError
-} from '@/redux/features/authSlice'; // Added resetError
+} from '@/redux/features/authSlice';
 import { AppDispatch } from '@/redux/store';
 // --- End Redux Imports ---
 
 export default function OtpPage() {
   // --- State and Refs ---
   const [otp, setOtp] = useState(Array(4).fill(''));
-  // Use Redux error state for consistency
   const { loading, error: reduxError } = useSelector(
     (state: any) => state.auth
   );
-  const [localError, setLocalError] = useState(''); // For client-side messages
+  const [localError, setLocalError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(30);
   const [isCooldownActive, setIsCooldownActive] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -37,26 +37,21 @@ export default function OtpPage() {
   const navigate = useNavigate();
   const email = localStorage.getItem('tp_otp_email');
   const { user } = useSelector((state: any) => state.auth);
-  // --- End Hooks ---
 
   // --- Effects ---
-  // Redirect if user is already logged in
   useEffect(() => {
     if (user) {
       navigate('/dashboard');
     }
   }, [user, navigate]);
 
-  // Redirect if email is missing
   useEffect(() => {
     if (!email) {
       router.push('/forgot-password');
     }
-    // Clear Redux errors on mount
     dispatch(resetError());
   }, [email, router, dispatch]);
 
-  // Resend OTP cooldown timer
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (isCooldownActive && resendCooldown > 0) {
@@ -68,7 +63,6 @@ export default function OtpPage() {
     }
     return () => clearTimeout(timer);
   }, [isCooldownActive, resendCooldown]);
-  // --- End Effects ---
 
   // --- Event Handlers ---
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -125,14 +119,13 @@ export default function OtpPage() {
     }
     const digits = text.split('');
     setOtp(digits);
-    // Focus on the last input after paste
     inputRefs.current[otp.length - 1]?.focus();
   };
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLocalError(''); // Clear local error
-    dispatch(resetError()); // Clear any previous Redux error
+    setLocalError('');
+    dispatch(resetError());
 
     const otpCode = otp.join('');
     if (otpCode.length !== 4) {
@@ -160,7 +153,6 @@ export default function OtpPage() {
         );
         router.push('/new-password');
       } else {
-        // ✅ Properly show backend error
         const backendMessage =
           result?.payload?.message ||
           result?.payload?.errorSources?.[0]?.message ||
@@ -168,7 +160,6 @@ export default function OtpPage() {
         setLocalError(backendMessage);
       }
     } catch (error: any) {
-      // ✅ Catch unexpected network errors
       setLocalError(
         error?.response?.data?.message ||
           'Something went wrong. Please try again.'
@@ -185,114 +176,134 @@ export default function OtpPage() {
       await dispatch(resendOtp({ email }));
       setResendCooldown(30);
       setIsCooldownActive(true);
-      setLocalError(''); // Clear errors
-      dispatch(resetError()); // Clear Redux error
+      setLocalError('');
+      dispatch(resetError());
     } catch (err) {
       setLocalError('Failed to resend OTP. Please try again.');
     }
   };
-  // --- End Event Handlers ---
 
-  // Combine local and Redux errors for display
   const displayError = localError || reduxError;
 
   return (
-    <div className="container mx-auto flex py-16">
-      {/* Left Column - Fixed Image */}
-      <div className="relative hidden items-center justify-center overflow-hidden  lg:flex lg:w-1/2">
-        <img
-          src="/auth.png"
-          alt="Sign In Illustration"
-          className="z-10  w-full rounded-lg"
-        />
+    <div className="flex w-full min-h-screen bg-white overflow-hidden ">
+      
+      {/* Left Column - Brand & Visuals */}
+      <div className="hidden lg:flex w-[45%] flex-col items-center justify-center p-8 text-white bg-gradient-to-tr from-supperagent to-supperagent/70 relative">
+        <div className="absolute inset-0 opacity-10 bg-[url('/grid-pattern.svg')]"></div>
+        
+        <div className="relative z-10 max-w-md text-center">
+          <motion.img
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            src="/auth.png"
+            alt="OTP Illustration"
+            className="w-full max-w-sm mx-auto drop-shadow-2xl mb-8 rounded-xl"
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h1 className="text-3xl font-bold mb-3">Verification</h1>
+            <p className="text-white/80 text-lg leading-relaxed">
+              Security is our priority. Verify your identity to proceed.
+            </p>
+          </motion.div>
+        </div>
       </div>
 
-      {/* Right Column - Form */}
-      <div className="flex w-full items-center justify-center lg:w-1/2">
+      {/* Right Column - Content */}
+      <div className="flex-1 flex items-center justify-center p-4 lg:p-8 bg-white">
         <div className="w-full max-w-md">
-          {/* Header Text */}
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">
-            Check your email!
-          </h1>
-          <p className="mb-8 text-gray-600">
-            We've sent a 4-digit code to{' '}
-            <strong className="text-gray-800">{email || 'your email'}</strong>.
-            Please enter it below.
-          </p>
+          
+          <div className="mb-8 text-center lg:text-left">
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+              Check your email
+            </h2>
+            <p className="text-sm text-gray-500 mt-2">
+              We've sent a 4-digit code to <span className="font-semibold text-gray-900">{email}</span>.
+            </p>
+          </div>
 
-          {/* --- Inlined OTP Form --- */}
           <form
             id="otp-form"
-            className="flex justify-between gap-3 sm:gap-4"
             onSubmit={handleOtpSubmit}
             onPaste={handlePaste}
+            className="space-y-6"
           >
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]{1}"
-                maxLength={1}
-                value={digit}
-                onChange={handleInput}
-                onKeyDown={handleKeyDown}
-                onFocus={handleFocus}
-                ref={(el) => (inputRefs.current[index] = el)}
-                className="flex h-14 w-14 items-center justify-center rounded-lg border border-gray-300 bg-white text-center text-2xl font-medium shadow-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-50 sm:h-16 sm:w-16"
-                disabled={loading}
-              />
-            ))}
+            <div className="flex justify-between gap-3 sm:gap-4">
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{1}"
+                  maxLength={1}
+                  value={digit}
+                  onChange={handleInput}
+                  onKeyDown={handleKeyDown}
+                  onFocus={handleFocus}
+                  ref={(el) => (inputRefs.current[index] = el)}
+                  disabled={loading}
+                  className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-lg border border-gray-300 bg-white text-center text-xl font-semibold shadow-sm outline-none transition-all focus:border-supperagent focus:ring-1 focus:ring-supperagent disabled:opacity-50"
+                />
+              ))}
+            </div>
+
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={otp.some((digit) => digit === '') || loading}
+              className="w-full h-10 bg-supperagent text-white font-semibold text-sm rounded-lg shadow-md hover:bg-supperagent/90 disabled:opacity-70 flex items-center justify-center gap-2 transition-all"
+            >
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loading ? 'Verifying...' : 'Verify Code'}
+            </motion.button>
           </form>
 
-          {/* Verify Button */}
-          <Button
-            disabled={otp.some((digit) => digit === '') || loading}
-            onClick={handleOtpSubmit}
-            className="mt-6 h-12 w-full bg-supperagent text-base font-semibold hover:bg-supperagent/90 disabled:opacity-70"
-          >
-            {loading ? 'Verifying...' : 'Verify OTP'}
-          </Button>
-
-          {/* Error Display */}
           {displayError && (
             <Badge
               variant="outline"
-              className="mt-4 w-full justify-center border-red-500 py-2 text-red-500"
+              className="mt-4 w-full justify-center border-red-200 bg-red-50 py-2 text-red-600"
             >
               {displayError}
             </Badge>
           )}
 
-          {/* Resend OTP */}
-          <div className="mt-6 flex items-center justify-center space-x-1 text-sm">
-            <span className="text-gray-600">Didn't receive the code?</span>
-            <button
-              type="button"
-              className={`font-medium ${
-                isCooldownActive
-                  ? 'cursor-not-allowed text-gray-400'
-                  : 'text-purple-600 hover:underline'
-              }`}
-              onClick={handleResendOtp}
-              disabled={isCooldownActive}
-            >
-              {isCooldownActive
-                ? `Resend in ${resendCooldown}s`
-                : 'Resend code'}
-            </button>
+          {/* Resend and Back Links */}
+          <div className="mt-8 space-y-4">
+            <div className="flex items-center justify-center text-sm">
+              <span className="text-gray-500 mr-2">Didn't receive code?</span>
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={isCooldownActive}
+                className={`font-semibold inline-flex items-center gap-1 transition-colors ${
+                  isCooldownActive
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-supperagent hover:text-mentora hover:underline'
+                }`}
+              >
+                {isCooldownActive && <Timer className="w-3 h-3" />}
+                {isCooldownActive
+                  ? `Resend in ${resendCooldown}s`
+                  : 'Resend'}
+              </button>
+            </div>
+
+            <div className="text-center">
+              <Link
+                to="/login"
+                className="inline-flex items-center justify-center gap-2 text-xs font-semibold text-gray-600 hover:text-supperagent transition-colors"
+              >
+                <ArrowLeft className="w-3 h-3" />
+                Back to Sign In
+              </Link>
+            </div>
           </div>
 
-          {/* Back to Sign In Link */}
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Remembered your password?{' '}
-            <Link
-              to="/login"
-              className="font-medium text-purple-600 hover:underline"
-            >
-              Sign in
-            </Link>
-          </p>
         </div>
       </div>
     </div>

@@ -44,6 +44,7 @@ import OrganizationAvailableCoursesPage from '@/pages/myOrganization/availableCo
 import TransactionHistoryPage from '@/pages/transactionHistoryPage';
 import { CartPage } from '@/pages/cartPage';
 import { CheckoutPage } from '@/pages/checkoutPage';
+import StudentCertificatePage from '@/pages/studentCertificates';
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 const DashboardPage = lazy(() => import('@/pages/dashboard'));
 
@@ -202,6 +203,11 @@ export default function AppRouter() {
         {
           path: 'transactions',
           element: <TransactionHistoryPage />,
+          index: true
+        },
+        {
+          path: 'certificates',
+          element: <StudentCertificatePage />,
           index: true
         },
       ]

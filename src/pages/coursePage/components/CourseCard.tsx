@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Star, Clock, ShoppingCart } from 'lucide-react';
+import { Star, Clock, ShoppingCart, ExternalLink } from 'lucide-react';
 
 export default function CourseCard({ course, index = 0, onClick }) {
   return (
@@ -88,8 +88,8 @@ export default function CourseCard({ course, index = 0, onClick }) {
             </div>
 
             <button className="flex items-center justify-center gap-2 rounded-full bg-supperagent px-4 py-2 text-sm font-medium text-white shadow-md shadow-supperagent/20 transition-all hover:bg-supperagent/90">
-              <ShoppingCart className="h-3.5 w-3.5" />
-              Enroll
+              <ExternalLink className="h-3.5 w-3.5" />
+              View Details
             </button>
           </div>
         </div>

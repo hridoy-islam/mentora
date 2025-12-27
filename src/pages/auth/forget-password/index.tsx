@@ -4,9 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { motion } from 'framer-motion';
+import { Loader2, ArrowLeft } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -20,20 +21,18 @@ import { requestOtp, resetError } from '@/redux/features/authSlice';
 import { AppDispatch } from '@/redux/store';
 import { useRouter } from '@/routes/hooks';
 
-// --- Form Schema and Type ---
+// --- Form Schema ---
 const formSchema = z.object({
   email: z.string().email({ message: 'Enter a valid email address' })
 });
 
 type UserFormValue = z.infer<typeof formSchema>;
-// --- End Form Schema ---
 
 export default function ForgotPasswordPage() {
-  // --- Page Hooks ---
   const { user } = useSelector((state: any) => state.auth);
   const navigate = useNavigate();
 
-  // --- Form Hooks (from ForgotPasswordForm) ---
+  // --- Form Hooks ---
   const { loading, error } = useSelector((state: any) => state.auth);
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -46,7 +45,6 @@ export default function ForgotPasswordPage() {
     resolver: zodResolver(formSchema),
     defaultValues
   });
-  // --- End Form Hooks ---
 
   // Redirect if user is already logged in
   useEffect(() => {
@@ -60,98 +58,110 @@ export default function ForgotPasswordPage() {
     dispatch(resetError());
   }, [dispatch]);
 
-  // --- OnSubmit Logic (from ForgotPasswordForm) ---
   const onSubmit = async (data: UserFormValue) => {
     const result: any = await dispatch(requestOtp(data));
     if (result?.payload?.success) {
       localStorage.setItem('tp_otp_email', data.email);
-      router.push('/otp'); // Navigate to OTP page on success
+      router.push('/otp'); 
     }
   };
-  // --- End OnSubmit Logic ---
 
   return (
-    <div className="flex container mx-auto py-16">
-      {/* Left Column - Fixed Image */}
-      <div className="relative hidden items-center justify-center overflow-hidden   lg:flex lg:w-1/2">
-        <img
-          src="/auth.png"
-          alt="Sign In Illustration"
-          className="z-10 w-full  rounded-lg"
-        />
+    <div className="flex w-full min-h-screen bg-white overflow-hidden">
+      
+      {/* Left Column - Brand & Visuals (Fixed width 45%) */}
+      <div className="hidden lg:flex w-[45%] flex-col items-center justify-center p-8 text-white bg-gradient-to-tr from-supperagent to-supperagent/70 relative">
+        <div className="absolute inset-0 opacity-10 bg-[url('/grid-pattern.svg')]"></div>
+        
+        <div className="relative z-10 max-w-md text-center">
+          <motion.img
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            src="/auth.png"
+            alt="Forgot Password Illustration"
+            className="w-full max-w-sm mx-auto drop-shadow-2xl mb-8 rounded-xl"
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h1 className="text-3xl font-bold mb-3">Forgot Password?</h1>
+            <p className="text-white/80 text-lg leading-relaxed">
+              It happens to the best of us. We'll help you get back into your account in no time.
+            </p>
+          </motion.div>
+        </div>
       </div>
 
       {/* Right Column - Form */}
-      <div className="flex w-full items-center justify-center  lg:w-1/2">
+      <div className="flex-1 flex items-center justify-center p-4 lg:p-8 bg-white">
         <div className="w-full max-w-md">
-          {/* Header Text */}
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">
-            Forgot Password?
-          </h1>
-          <p className="mb-8 text-gray-600">
-            No worries! Just enter the email address you used to sign up, and
-            we'll send you an OTP to reset it.
-          </p>
+          
+          <div className="mb-6 text-center lg:text-left">
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+              Reset Password
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Enter your email to receive a One-Time Password (OTP).
+            </p>
+          </div>
 
-          {/* --- Inlined Form JSX --- */}
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="w-full space-y-4"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Email <span className="text-red-500">*</span>
-                    </FormLabel>
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs font-semibold text-gray-700">Email Address</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="jhon@gmail.com"
+                        placeholder="john@example.com"
                         disabled={loading}
                         {...field}
-                        className="h-12 w-full"
+                        className="h-10 text-sm border-gray-300 focus:border-supperagent focus:ring-supperagent rounded-lg"
                       />
                     </FormControl>
-                    {fieldState.error && (
-                      <FormMessage>{fieldState.error.message}</FormMessage>
-                    )}
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
 
-              <Button
+              <motion.button
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={loading}
-                className="h-12 w-full bg-supperagent text-base font-semibold text-white hover:bg-supperagent/90"
+                className="w-full h-10 bg-supperagent text-white font-semibold text-sm rounded-lg shadow-md hover:bg-supperagent/90 disabled:opacity-70 flex items-center justify-center gap-2 transition-all mt-2"
               >
-                {loading ? 'Sending OTP...' : 'Send OTP'}
-              </Button>
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {loading ? 'Sending...' : 'Send OTP'}
+              </motion.button>
             </form>
           </Form>
 
           {error && (
             <Badge
               variant="outline"
-              className="mt-4 w-full justify-center border-red-500 py-2 text-red-500"
+              className="mt-4 w-full justify-center border-red-200 bg-red-50 py-2 text-red-600"
             >
               {error}
             </Badge>
           )}
 
-          {/* Back to Sign In Link */}
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Remembered your password?{' '}
+          {/* Back to Login Link */}
+          <div className="mt-6 text-center">
             <Link
               to="/login"
-              className="font-medium text-purple-600 hover:underline"
+              className="inline-flex items-center justify-center gap-2 text-xs font-semibold text-gray-600 hover:text-supperagent transition-colors"
             >
-              Sign in
+              <ArrowLeft className="w-3 h-3" />
+              Back to Sign In
             </Link>
-          </p>
+          </div>
+
         </div>
       </div>
     </div>

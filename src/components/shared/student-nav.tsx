@@ -203,6 +203,7 @@ export function StudentNav() {
                 <ul className="flex items-center space-x-10">
                   <NavLink to="/student" end>Dashboard</NavLink>
                   <NavLink to="/student/courses">Courses</NavLink>
+                  <NavLink to="/student/certificates">Certificates</NavLink>
                   <NavLink to="/student/contact">Contact</NavLink>
                 </ul>
               </nav>
@@ -272,7 +273,7 @@ export function StudentNav() {
                             <span>Subtotal</span>
                             <span>${cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</span>
                           </div>
-                          <button onClick={handleCart} className="w-full rounded-lg bg-supperagent px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-supperagent/90">Go to Cart</button>
+                          <button onClick={handleCart} className="w-full rounded-lg bg-supperagent px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-supperagent/90">Go To Cart Page</button>
                         </div>
                       )}
                     </div>

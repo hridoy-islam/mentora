@@ -79,45 +79,28 @@ const FormInput = ({
 // --- Compact Cart Item (Read Only) ---
 function CartItemCompact({ item }) {
   return (
-    <div className="group -mx-2 flex gap-4 rounded-lg border-b border-dashed border-gray-200 px-2 py-5 transition-colors last:border-0 hover:bg-gray-50/50">
-      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-        <img
-          src={item.image || '/placeholder.jpg'}
-          alt={item.title}
-          className="h-full w-full object-cover object-center"
-        />
+    <div className="group -mx-2 flex items-center justify-between gap-4 rounded-lg border-b border-dashed border-gray-200 px-2 py-4 transition-colors last:border-0 hover:bg-gray-50/50">
+      {/* Title */}
+      <h3 className="line-clamp-1 flex-1 text-sm font-bold text-gray-900">
+        {item.title}
+      </h3>
+
+      {/* Quantity */}
+      <div className="flex items-center gap-1 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1">
+        <span className="text-xs font-medium text-gray-500">Qty</span>
+        <span className="text-sm font-bold text-gray-900">
+          {item.quantity}
+        </span>
       </div>
 
-      <div className="flex flex-1 flex-col justify-between py-0.5">
-        <div className="flex justify-between gap-2">
-          <h3 className="line-clamp-2 text-sm font-bold leading-snug text-gray-900">
-            {item.title}
-          </h3>
-        </div>
-
-        <div className="mt-2 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-gray-900">
-              ${(item.price * item.quantity).toFixed(2)}
-            </span>
-            {item.quantity > 1 && (
-              <span className="text-xs font-medium text-gray-400">
-                (${item.price.toFixed(2)} ea)
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1">
-            <span className="text-xs font-medium text-gray-500">Qty:</span>
-            <span className="text-sm font-bold text-gray-900">
-              {item.quantity}
-            </span>
-          </div>
-        </div>
+      {/* Amount */}
+      <div className="text-sm font-bold text-gray-900">
+        ${(item.price * item.quantity).toFixed(2)}
       </div>
     </div>
   );
 }
+
 
 // --- Main Page ---
 export function CheckoutPage() {

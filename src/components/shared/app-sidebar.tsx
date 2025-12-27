@@ -76,6 +76,11 @@ const adminNav = [
     ]
   },
   {
+    title: 'Question Bank',
+    url: '/dashboard/questions',
+    icon: Calculator
+  },
+  {
     title: 'Report',
     url: '/dashboard/report',
     icon: Calculator

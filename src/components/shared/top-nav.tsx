@@ -260,7 +260,7 @@ export function TopNav() {
                         <span>Subtotal</span>
                         <span>${cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}</span>
                       </div>
-                      <button onClick={handleCart} className="w-full rounded-lg bg-supperagent px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-supperagent/90">Checkout Now</button>
+                      <button onClick={handleCart} className="w-full rounded-lg bg-supperagent px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-supperagent/90">Go To Cart Page</button>
                     </div>
                   )}
                 </div>

@@ -2,65 +2,74 @@ import UserAuthForm from './components/user-auth-form';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 export default function SignInPage() {
   const { user } = useSelector((state: any) => state.auth);
   const navigate = useNavigate();
 
   useEffect(() => {
-     if (user?.role) {
-    if (user.role === 'student') navigate('/student');
-    else if (['admin', 'instructor', 'company'].includes(user.role)) navigate('/dashboard');
-  }
+    if (user?.role) {
+      if (user.role === 'student') navigate('/student');
+      else if (['admin', 'instructor', 'company'].includes(user.role)) navigate('/dashboard');
+    }
   }, [user, navigate]);
 
   return (
-<div className="flex container mx-auto py-16">
-  {/* Left Column - Image */}
-  <div className="hidden lg:flex w-full lg:w-1/2 items-center justify-center   relative overflow-hidden">
-    <img
-      src="/auth.png"
-      alt="Sign In Illustration"
-      className="w-full z-10 rounded-lg"
-    />
-  </div>
-
-  {/* Right Column - Form */}
-  <div className="w-full lg:w-1/2 flex items-center justify-center ">
-    <div className="w-full max-w-md">
-      {/* Header Text */}
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Sign In!</h1>
-      <p className="text-gray-600 mb-8">
-        Discover, learn, and thrive with us. Experience a smooth and rewarding
-        educational adventure. Let's get started!
-      </p>
-
-      {/* Auth Form Component */}
-      <UserAuthForm />
-
-      {/* "OR" Separator */}
-      <div className="mt-6 flex items-center justify-center">
-        <span className="w-full border-t border-gray-300"></span>
-        <span className="mx-4 flex-shrink-0 text-gray-500 text-sm uppercase">
-          OR
-        </span>
-        <span className="w-full border-t border-gray-300"></span>
+    <div className="flex w-full min-h-screen bg-white overflow-hidden ">
+      {/* Left Column - Brand & Visuals (Fixed width 45%) */}
+      <div className="hidden lg:flex w-[45%] flex-col items-center justify-center p-8 text-white bg-gradient-to-tr from-supperagent to-supperagent/70 relative">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10 bg-[url('/grid-pattern.svg')]"></div>
+        
+        <div className="relative z-10 max-w-md text-center">
+          <motion.img
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            src="/auth.png"
+            alt="Sign In Illustration"
+            className="w-full max-w-md mx-auto drop-shadow-2xl mb-8 rounded-xl"
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h1 className="text-3xl font-bold mb-3">Welcome Back!</h1>
+            <p className="text-white/80 text-lg leading-relaxed">
+              Discover, learn, and thrive with us. Continue your educational adventure today.
+            </p>
+          </motion.div>
+        </div>
       </div>
 
-      {/* Sign Up Link */}
-      <p className="mt-6 text-center text-sm text-gray-600">
-        Don’t have an account yet?{' '}
-        <Link
-          to="/signup"
-          className="font-medium text-supperagent hover:underline"
-        >
-          Sign up
-        </Link>
-      </p>
+      {/* Right Column - Form */}
+      <div className="flex-1 flex items-center justify-center p-4 lg:p-8 bg-white">
+        <div className="w-full max-w-md space-y-6">
+          <div className="text-center lg:text-left">
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+              Sign In
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Enter your credentials to access your account.
+            </p>
+          </div>
+
+          <UserAuthForm />
+
+          {/* Sign Up Link */}
+          <p className="mt-6 text-center text-xs text-gray-600">
+            Don’t have an account yet?{' '}
+            <Link
+              to="/signup"
+              className="font-semibold text-supperagent hover:text-mentora hover:underline transition-colors"
+            >
+              Sign up here
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-
-
   );
 }
