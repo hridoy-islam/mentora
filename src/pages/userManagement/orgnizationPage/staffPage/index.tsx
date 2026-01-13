@@ -68,7 +68,7 @@ export default function OrganizationStaffPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false); // Loading for fetching specific user details
   const [submitLoading, setSubmitLoading] = useState(false);
-
+  const [companyData, setCompanyData] = useState(null);
   // --- Pagination & Search ---
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -115,6 +115,9 @@ export default function OrganizationStaffPage() {
           ...(search ? { searchTerm: search } : {})
         }
       });
+
+      const companyRes = await axiosInstance.get(`/users/${id}`);
+      setCompanyData(companyRes.data.data);
       setStudents(response.data.data.result);
       setTotalPages(response.data.data.meta.totalPage);
     } catch (error: any) {
@@ -312,7 +315,9 @@ export default function OrganizationStaffPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex flex-row items-center gap-4">
-            <CardTitle>Staff List</CardTitle>
+            <CardTitle>
+              {`${(companyData as any)?.name}'s Staff` || `Staff List`}
+            </CardTitle>
             <div className="flex items-center space-x-4">
               <Input
                 type="text"
