@@ -680,15 +680,15 @@ export function CourseDetails() {
                                 <h4
                                   className={`text-sm font-bold leading-tight ${
                                     isActiveModule
-                                      ? 'text-slate-900'
+                                      ? 'text-black'
                                       : 'text-slate-600 group-hover/module:text-slate-900'
                                   }`}
                                 >
                                   {section.title}
                                 </h4>
-                                <p className="mt-1.5 flex items-center gap-2 text-[11px] font-medium text-slate-400">
+                                <p className="mt-1.5 flex items-center gap-2 text-[11px] font-semibold">
                                   <span>{section.lessonsList.length} Lessons</span>
-                                  <span className="h-1 w-1 rounded-full bg-slate-300"></span>
+                                  <span className="h-1 w-1 rounded-full bg-black"></span>
                                   <span>
                                     {formatDuration(
                                       section.totalDurationMinutes
@@ -751,24 +751,24 @@ export function CourseDetails() {
                                       <p
                                         className={`truncate text-xs ${
                                           isActive
-                                            ? 'font-bold text-slate-900'
+                                            ? 'font-bold text-black'
                                             : 'font-medium text-slate-600'
                                         }`}
                                       >
                                         {lesson.title}
                                       </p>
-                                      <div className="mt-0.5 flex items-center gap-2">
-                                        <span className="text-[10px] text-slate-400">
+                                      <div className="mt-0.5 flex items-center gap-2 font-bold">
+                                        <span className="text-[10px] text-black font-bold">
                                           {lesson.type === 'video'
                                             ? 'Video'
                                             : lesson.type === 'quiz'
                                               ? 'Quiz'
                                               : 'Reading'}
                                         </span>
-                                        <span className="text-[10px] text-slate-300">
+                                        <span className="text-[10px] text-black font-bold">
                                           •
                                         </span>
-                                        <span className="text-[10px] text-slate-400">
+                                        <span className="text-[10px] text-black font-bold">
                                           {formatDuration(
                                             Number(lesson.duration)
                                           )}
