@@ -8,14 +8,14 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogFooter
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -23,14 +23,14 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from '@/components/ui/form';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import axiosInstance from '@/lib/axios';
@@ -56,15 +56,15 @@ const formSchema = z.object({
   state: z.string().optional(),
   city: z.string().optional(),
   zipCode: z.string().optional(),
-  address: z.string().optional(),
+  address: z.string().optional()
 });
 
 // Mock countries list
-const countries = ["USA", "UK", "Canada", "Australia", "India", "Bangladesh"];
+const countries = ['USA', 'UK', 'Canada', 'Australia', 'India', 'Bangladesh'];
 
 export default function OrganizationPage() {
   const [organizations, setOrganizations] = useState<any[]>([]);
-  
+
   // Dialog & Form States
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingOrganization, setEditingOrganization] = useState<any>(null);
@@ -76,7 +76,7 @@ export default function OrganizationPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(100);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -92,8 +92,8 @@ export default function OrganizationPage() {
       state: '',
       city: '',
       zipCode: '',
-      address: '',
-    },
+      address: ''
+    }
   });
 
   const fetchData = async (
@@ -108,8 +108,8 @@ export default function OrganizationPage() {
           role: 'company',
           page,
           limit,
-          ...(search ? { searchTerm: search } : {}),
-        },
+          ...(search ? { searchTerm: search } : {})
+        }
       });
       setOrganizations(response.data.data.result);
       setTotalPages(response.data.data.meta.totalPage);
@@ -117,8 +117,9 @@ export default function OrganizationPage() {
       console.error('Error fetching organizations:', error);
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to fetch organizations.',
-        variant: 'destructive',
+        description:
+          error?.response?.data?.message || 'Failed to fetch organizations.',
+        variant: 'destructive'
       });
     } finally {
       setInitialLoading(false);
@@ -137,8 +138,8 @@ export default function OrganizationPage() {
       country: org.country || '',
       state: org.state || '',
       city: org.city || '',
-      zipCode: org.zipCode || '', 
-      address: org.address || '',
+      zipCode: org.zipCode || '',
+      address: org.address || ''
     });
     setDialogOpen(true);
   };
@@ -157,8 +158,11 @@ export default function OrganizationPage() {
       if (!payload.password || payload.password.trim() === '') {
         delete payload.password;
       }
-      
-      const response = await axiosInstance.patch(`/users/${editingOrganization._id}`, payload);
+
+      const response = await axiosInstance.patch(
+        `/users/${editingOrganization._id}`,
+        payload
+      );
 
       // Update local state
       setOrganizations((prev) =>
@@ -169,7 +173,7 @@ export default function OrganizationPage() {
 
       toast({
         title: 'Success',
-        description: 'Organization details updated successfully.',
+        description: 'Organization details updated successfully.'
       });
 
       setDialogOpen(false);
@@ -177,8 +181,9 @@ export default function OrganizationPage() {
       console.error('Error updating organization:', error);
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to update organization.',
-        variant: 'destructive',
+        description:
+          error?.response?.data?.message || 'Failed to update organization.',
+        variant: 'destructive'
       });
     } finally {
       setSubmitLoading(false);
@@ -200,8 +205,9 @@ export default function OrganizationPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to update status.',
-        variant: 'destructive',
+        description:
+          error?.response?.data?.message || 'Failed to update status.',
+        variant: 'destructive'
       });
     }
   };
@@ -226,9 +232,12 @@ export default function OrganizationPage() {
   return (
     <div className="space-y-3">
       {/* Header and Search Section */}
-      <div className="flex items-center justify-between">
-        <div className="flex flex-row items-center gap-4">
-          <h1 className="text-2xl font-semibold">All Organizations</h1>
+   
+
+      <Card>
+        <CardHeader className='flex flex-row items-center justify-between'>
+          <div className='flex flex-row items-center gap-2'>
+          <CardTitle>Organizations List</CardTitle>
           <div className="flex items-center space-x-4">
             <Input
               value={searchTerm}
@@ -245,17 +254,11 @@ export default function OrganizationPage() {
               Search
             </Button>
           </div>
-        </div>
-
-        <Button size="default" onClick={() => navigate(-1)} variant="outline">
-          <MoveLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Organizations List</CardTitle>
+          </div>
+          <Button size="default" onClick={() => navigate(-1)} variant="outline">
+            <MoveLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
         </CardHeader>
 
         <CardContent>
@@ -298,7 +301,7 @@ export default function OrganizationPage() {
                       </Button>
                     </TableCell>
                     <TableCell className="text-center">
-                      <div className='flex flex-row items-center justify-center gap-2'>
+                      <div className="flex flex-row items-center justify-center gap-2">
                         <Switch
                           checked={org.status === 'active'}
                           onCheckedChange={(checked) =>
@@ -348,7 +351,7 @@ export default function OrganizationPage() {
 
       {/* --- EDIT ORGANIZATION DIALOG --- */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Organization Details</DialogTitle>
           </DialogHeader>
@@ -381,7 +384,12 @@ export default function OrganizationPage() {
                         Email <span className="text-red-500">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="company@example.com" type="email" disabled {...field} />
+                        <Input
+                          placeholder="company@example.com"
+                          type="email"
+                          disabled
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -391,7 +399,6 @@ export default function OrganizationPage() {
 
               {/* Password & Phone */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                
                 {/* --- Password Field (Added) --- */}
                 <FormField
                   control={form.control}
@@ -405,10 +412,10 @@ export default function OrganizationPage() {
                         </span>
                       </FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="******" 
-                          type="password" 
-                          {...field} 
+                        <Input
+                          placeholder="******"
+                          type="password"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />

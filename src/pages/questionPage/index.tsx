@@ -131,64 +131,67 @@ export default function QuestionBankPage() {
   };
 
   // Create / Update Question
-const handleSubmit = async () => {
-  try {
-    const payload = {
-      question: formData.question,
-      type: formData.type,
-      options: formData.type === 'mcq' ? formData.options : [],
-      correctAnswers: formData.type === 'mcq' ? formData.correctAnswers : [],
-      shortAnswer: formData.type === 'short' ? formData.shortAnswer : ''
-    };
+  const handleSubmit = async () => {
+    try {
+      const payload = {
+        question: formData.question,
+        type: formData.type,
+        options: formData.type === 'mcq' ? formData.options : [],
+        correctAnswers: formData.type === 'mcq' ? formData.correctAnswers : [],
+        shortAnswer: formData.type === 'short' ? formData.shortAnswer : ''
+      };
 
-    if (editingQuestion) {
-      const response = await axiosInstance.patch(`/questions/${editingQuestion._id}`, payload);
+      if (editingQuestion) {
+        const response = await axiosInstance.patch(
+          `/questions/${editingQuestion._id}`,
+          payload
+        );
 
-      // Update in local state
-      setQuestions((prev) =>
-        prev.map((q) => (q._id === editingQuestion._id ? { ...q, ...payload } : q))
-      );
+        // Update in local state
+        setQuestions((prev) =>
+          prev.map((q) =>
+            q._id === editingQuestion._id ? { ...q, ...payload } : q
+          )
+        );
 
-      toast({ title: 'Question updated successfully' });
-    } else {
-      const response = await axiosInstance.post('/questions', payload);
+        toast({ title: 'Question updated successfully' });
+      } else {
+        const response = await axiosInstance.post('/questions', payload);
 
-      // Add to local state
-      setQuestions((prev) => [{ ...response.data.data }, ...prev]);
-      toast({ title: 'Question added successfully' });
+        // Add to local state
+        setQuestions((prev) => [{ ...response.data.data }, ...prev]);
+        toast({ title: 'Question added successfully' });
+      }
+
+      setDialogOpen(false);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error?.response?.data?.message || 'Operation failed',
+        variant: 'destructive'
+      });
     }
-
-    setDialogOpen(false);
-  } catch (error: any) {
-    toast({
-      title: 'Error',
-      description: error?.response?.data?.message || 'Operation failed',
-      variant: 'destructive'
-    });
-  }
-};
-
+  };
 
   // Delete Confirmation
-const confirmDelete = async () => {
-  if (!deleteQuestionId) return;
+  const confirmDelete = async () => {
+    if (!deleteQuestionId) return;
 
-  try {
-    await axiosInstance.delete(`/questions/${deleteQuestionId}`);
+    try {
+      await axiosInstance.delete(`/questions/${deleteQuestionId}`);
 
-    // Update local state
-    setQuestions((prev) => prev.filter((q) => q._id !== deleteQuestionId));
+      // Update local state
+      setQuestions((prev) => prev.filter((q) => q._id !== deleteQuestionId));
 
-    toast({ title: 'Question deleted successfully' });
-    setDeleteDialogOpen(false);
-  } catch (error: any) {
-    toast({
-      title: `${error?.response?.data?.message || 'Failed to delete question'}`,
-      variant: 'destructive'
-    });
-  }
-};
-
+      toast({ title: 'Question deleted successfully' });
+      setDeleteDialogOpen(false);
+    } catch (error: any) {
+      toast({
+        title: `${error?.response?.data?.message || 'Failed to delete question'}`,
+        variant: 'destructive'
+      });
+    }
+  };
 
   // Questions Builder Functions (for single question in dialog)
   const updateQuestionText = (value: string) => {
@@ -259,28 +262,32 @@ const confirmDelete = async () => {
 
   return (
     <div className="space-y-3">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex flex-row items-center gap-4">
-          <h1 className="text-2xl font-semibold">Question Bank</h1>
-          <div className="flex items-center space-x-4">
-            <Input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="Search by question"
-              className="h-8 min-w-[300px]"
-            />
-            <Button
-              onClick={handleSearch}
-              size="sm"
-              className="min-w-[100px] border-none bg-supperagent text-white hover:bg-supperagent/90"
-            >
-              Search
-            </Button>
+   
+
+      {/* Table */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex flex-row items-center gap-4">
+            <CardTitle>Questions List</CardTitle>
+            <div className="flex items-center space-x-4">
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="Search by question"
+                className="h-8 min-w-[300px]"
+              />
+              <Button
+                onClick={handleSearch}
+                size="sm"
+                className="min-w-[100px] border-none bg-supperagent text-white hover:bg-supperagent/90"
+              >
+                Search
+              </Button>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-3">
+
+          <div className="flex gap-3">
           <Button
             className="bg-supperagent text-white hover:bg-supperagent/90"
             onClick={() => handleOpenDialog()}
@@ -291,12 +298,6 @@ const confirmDelete = async () => {
             <MoveLeft className="mr-2 h-4 w-4" /> Back
           </Button>
         </div>
-      </div>
-
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Questions List</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -318,7 +319,9 @@ const confirmDelete = async () => {
                 questions.map((q) => (
                   <TableRow key={q._id}>
                     <TableCell>{q.question}</TableCell>
-                    <TableCell className='text-xs'><Badge className='text-xs'>{q.type.toUpperCase()}</Badge></TableCell>
+                    <TableCell className="text-xs">
+                      <Badge className="text-xs">{q.type.toUpperCase()}</Badge>
+                    </TableCell>
                     <TableCell className="flex justify-end gap-2">
                       <Button
                         variant="ghost"
@@ -377,7 +380,7 @@ const confirmDelete = async () => {
                 (option) => option.value === formData.type
               )}
               onChange={updateQuestionType}
-                isDisabled={!!editingQuestion}
+              isDisabled={!!editingQuestion}
               options={questionTypeOptions}
             />
           </div>

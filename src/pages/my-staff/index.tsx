@@ -56,18 +56,16 @@ const formSchema = z.object({
   state: z.string().optional(),
   city: z.string().optional(),
   zipCode: z.string().optional(),
-  address: z.string().optional(), // Full Address Textarea
+  address: z.string().optional() // Full Address Textarea
 });
 
 type StaffFormInputs = z.infer<typeof formSchema>;
-
-
 
 export default function MyStaffPage() {
   const [students, setStudents] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
-  
+
   // Loading States
   const [initialLoading, setInitialLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -95,12 +93,16 @@ export default function MyStaffPage() {
       state: '',
       city: '',
       zipCode: '',
-      address: '',
+      address: ''
     }
   });
 
   // --- FETCH DATA ---
-  const fetchData = async (page: number, limit: number, search: string = '') => {
+  const fetchData = async (
+    page: number,
+    limit: number,
+    search: string = ''
+  ) => {
     try {
       setInitialLoading(true);
       const response = await axiosInstance.get(
@@ -120,7 +122,8 @@ export default function MyStaffPage() {
       console.error('Error fetching students:', error);
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to fetch students.',
+        description:
+          error?.response?.data?.message || 'Failed to fetch students.',
         variant: 'destructive'
       });
     } finally {
@@ -142,7 +145,8 @@ export default function MyStaffPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error?.response?.data?.message || 'Failed to update status.',
+        description:
+          error?.response?.data?.message || 'Failed to update status.',
         variant: 'destructive'
       });
     }
@@ -160,7 +164,7 @@ export default function MyStaffPage() {
       state: '',
       city: '',
       zipCode: '',
-      address: '',
+      address: ''
     });
     setDialogOpen(true);
   };
@@ -171,23 +175,23 @@ export default function MyStaffPage() {
     setDetailsLoading(true); // Simulate fetching details if needed
 
     // If your backend returns address fields in the user object, populate them here
-    // Assuming structure: student.address might be a string or object. 
+    // Assuming structure: student.address might be a string or object.
     // Adjust based on your actual API response.
-    
+
     setTimeout(() => {
-        form.reset({
-          name: student.name,
-          email: student.email.toLowerCase(),
-          phone: student.phone,
-          password: '', // Always reset password on edit
-          country: student.country || '',
-          state: student.state || '',
-          city: student.city || '',
-          zipCode: student.zipCode || '',
-          address: student.address || '', 
-        });
-        setDetailsLoading(false);
-    }, 100); 
+      form.reset({
+        name: student.name,
+        email: student.email.toLowerCase(),
+        phone: student.phone,
+        password: '', // Always reset password on edit
+        country: student.country || '',
+        state: student.state || '',
+        city: student.city || '',
+        zipCode: student.zipCode || '',
+        address: student.address || ''
+      });
+      setDetailsLoading(false);
+    }, 100);
   };
 
   // --- SUBMIT ---
@@ -204,7 +208,7 @@ export default function MyStaffPage() {
         state: data.state,
         city: data.city,
         zipCode: data.zipCode,
-        address: data.address, 
+        address: data.address
       };
 
       if (editingStudent) {
@@ -214,14 +218,13 @@ export default function MyStaffPage() {
         }
 
         await axiosInstance.patch(`/users/${editingStudent._id}`, payload);
-        
+
         setStudents((prev) =>
           prev.map((st) =>
             st._id === editingStudent._id ? { ...st, ...payload } : st
           )
         );
         toast({ title: 'Staff updated successfully' });
-
       } else {
         // --- CREATE ---
         payload.password = data.password; // Required for creation
@@ -239,7 +242,8 @@ export default function MyStaffPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'Operation failed. Try again.',
+        description:
+          error.response?.data?.message || 'Operation failed. Try again.',
         variant: 'destructive'
       });
     } finally {
@@ -267,30 +271,32 @@ export default function MyStaffPage() {
 
   return (
     <div className="space-y-3">
-      {/* HEADER SECTION */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <h1 className="text-2xl font-semibold">All Staff</h1>
-          <div className="flex items-center space-x-2">
-            <Input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="Search by Name, Email"
-              className="h-9 min-w-[200px] lg:min-w-[300px]"
-            />
-            <Button
-              onClick={handleSearch}
-              size="sm"
-              className="bg-supperagent text-white hover:bg-supperagent/90"
-            >
-              Search
-            </Button>
+    
+      {/* TABLE CARD */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex flex-row items-center gap-4">
+            <CardTitle>Staff List</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="Search by Name, Email"
+                className="h-9 min-w-[200px] lg:min-w-[300px]"
+              />
+              <Button
+                onClick={handleSearch}
+                size="sm"
+                className="bg-supperagent text-white hover:bg-supperagent/90"
+              >
+                Search
+              </Button>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
           <Button size="default" onClick={() => navigate(-1)} variant="outline">
             <MoveLeft className="mr-2 h-4 w-4" />
             Back
@@ -302,12 +308,6 @@ export default function MyStaffPage() {
             <Plus className="mr-2 h-4 w-4" /> Add Staff
           </Button>
         </div>
-      </div>
-
-      {/* TABLE CARD */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Staff List</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -324,7 +324,10 @@ export default function MyStaffPage() {
             <TableBody>
               {students.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-gray-500">
+                  <TableCell
+                    colSpan={6}
+                    className="py-8 text-center text-gray-500"
+                  >
                     No students found
                   </TableCell>
                 </TableRow>
@@ -339,18 +342,24 @@ export default function MyStaffPage() {
                         variant="ghost"
                         size="sm"
                         className="bg-supperagent text-white hover:bg-supperagent/90"
-                        onClick={() => navigate(`/dashboard/enroll-courses/${student._id}`)}
+                        onClick={() =>
+                          navigate(`/dashboard/enroll-courses/${student._id}`)
+                        }
                       >
-                        <Eye className="h-4 w-4 mr-2" /> View
+                        <Eye className="mr-2 h-4 w-4" /> View
                       </Button>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex flex-row items-center justify-center gap-2">
                         <Switch
                           checked={student.status === 'active'}
-                          onCheckedChange={(checked) => handleStatusChange(student._id, checked)}
+                          onCheckedChange={(checked) =>
+                            handleStatusChange(student._id, checked)
+                          }
                         />
-                        <span className={`text-sm font-medium ${student.status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
+                        <span
+                          className={`text-sm font-medium ${student.status === 'active' ? 'text-green-600' : 'text-red-600'}`}
+                        >
                           {student.status === 'active' ? 'Active' : 'Disable'}
                         </span>
                       </div>
@@ -381,7 +390,7 @@ export default function MyStaffPage() {
 
       {/* --- NEW DIALOG IMPLEMENTATION --- */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingStudent ? 'Edit Staff' : 'Add New Staff'}
@@ -394,8 +403,10 @@ export default function MyStaffPage() {
             </div>
           ) : (
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 {/* Name & Email */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <FormField
@@ -403,7 +414,9 @@ export default function MyStaffPage() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Name <span className="text-red-500">*</span></FormLabel>
+                        <FormLabel>
+                          Name <span className="text-red-500">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input placeholder="John Doe" {...field} />
                         </FormControl>
@@ -416,13 +429,15 @@ export default function MyStaffPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
+                        <FormLabel>
+                          Email <span className="text-red-500">*</span>
+                        </FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="john@example.com" 
-                            type="email" 
-                            disabled={!!editingStudent} 
-                            {...field} 
+                          <Input
+                            placeholder="john@example.com"
+                            type="email"
+                            disabled={!!editingStudent}
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -441,13 +456,19 @@ export default function MyStaffPage() {
                         <FormLabel>
                           Password
                           {editingStudent ? (
-                            <span className="ml-1 text-xs font-normal text-gray-500">(Optional)</span>
+                            <span className="ml-1 text-xs font-normal text-gray-500">
+                              (Optional)
+                            </span>
                           ) : (
                             <span className="text-red-500">*</span>
                           )}
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="******" type="password" {...field} />
+                          <Input
+                            placeholder="******"
+                            type="password"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -458,7 +479,9 @@ export default function MyStaffPage() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone <span className="text-red-500">*</span></FormLabel>
+                        <FormLabel>
+                          Phone <span className="text-red-500">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input placeholder="+1234567890" {...field} />
                         </FormControl>
@@ -476,7 +499,11 @@ export default function MyStaffPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Country</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a Country" />
@@ -547,7 +574,11 @@ export default function MyStaffPage() {
                     <FormItem>
                       <FormLabel>Address</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Full Address" className="resize-none" {...field} />
+                        <Textarea
+                          placeholder="Full Address"
+                          className="resize-none"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

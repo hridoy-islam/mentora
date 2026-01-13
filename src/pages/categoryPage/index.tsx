@@ -25,10 +25,10 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Category {
   _id: string;
@@ -44,19 +44,23 @@ export default function CategoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(100);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
-  const fetchData = async (page: number, entriesPerPage: number, searchTerm = "") => {
+  const fetchData = async (
+    page: number,
+    entriesPerPage: number,
+    searchTerm = ''
+  ) => {
     try {
       if (initialLoading) setInitialLoading(true);
       const response = await axiosInstance.get(`/category`, {
         params: {
           page,
           limit: entriesPerPage,
-          ...(searchTerm ? { searchTerm } : {}),
+          ...(searchTerm ? { searchTerm } : {})
         }
       });
       setCategories(response.data.data.result);
@@ -76,23 +80,30 @@ export default function CategoryPage() {
     try {
       let response;
       if (editingCategory) {
-        response = await axiosInstance.patch(`/category/${editingCategory._id}`, data);
+        response = await axiosInstance.patch(
+          `/category/${editingCategory._id}`,
+          data
+        );
       } else {
         response = await axiosInstance.post('/category', data);
       }
 
       if (response.data && response.data.success === true) {
         toast({
-          title: editingCategory ? 'Category Updated successfully' : 'Category Created successfully',
+          title: editingCategory
+            ? 'Category Updated successfully'
+            : 'Category Created successfully',
           className: 'bg-supperagent border-none text-white'
         });
 
         if (editingCategory) {
-          setCategories(prev => prev.map(cat =>
-            cat._id === editingCategory._id
-              ? { ...cat, name: data.name }
-              : cat
-          ));
+          setCategories((prev) =>
+            prev.map((cat) =>
+              cat._id === editingCategory._id
+                ? { ...cat, name: data.name }
+                : cat
+            )
+          );
         } else {
           fetchData(currentPage, entriesPerPage, searchTerm);
         }
@@ -119,7 +130,9 @@ export default function CategoryPage() {
     if (!categoryToDelete) return;
 
     try {
-      const response = await axiosInstance.delete(`/category/${categoryToDelete}`);
+      const response = await axiosInstance.delete(
+        `/category/${categoryToDelete}`
+      );
 
       if (response.data && response.data.success === true) {
         toast({
@@ -127,7 +140,9 @@ export default function CategoryPage() {
           className: 'bg-supperagent border-none text-white'
         });
 
-        setCategories(prev => prev.filter(cat => cat._id !== categoryToDelete));
+        setCategories((prev) =>
+          prev.filter((cat) => cat._id !== categoryToDelete)
+        );
       } else {
         toast({
           title: 'Delete operation failed',
@@ -145,9 +160,14 @@ export default function CategoryPage() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: 'active' | 'block') => {
+  const handleStatusChange = async (
+    id: string,
+    newStatus: 'active' | 'block'
+  ) => {
     try {
-      const response = await axiosInstance.patch(`/category/${id}`, { status: newStatus });
+      const response = await axiosInstance.patch(`/category/${id}`, {
+        status: newStatus
+      });
 
       if (response.data && response.data.success === true) {
         toast({
@@ -155,11 +175,11 @@ export default function CategoryPage() {
           className: 'bg-supperagent border-none text-white'
         });
 
-        setCategories(prev => prev.map(cat =>
-          cat._id === id
-            ? { ...cat, status: newStatus }
-            : cat
-        ));
+        setCategories((prev) =>
+          prev.map((cat) =>
+            cat._id === id ? { ...cat, status: newStatus } : cat
+          )
+        );
       } else {
         toast({
           title: 'Status update failed',
@@ -195,11 +215,32 @@ export default function CategoryPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">All Categories List</h1>
+   
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex flex-row items-center gap-4">
+            <CardTitle>Categories List</CardTitle>
+            <div className="flex items-center space-x-4">
+              <Input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by Category Name"
+                className="h-8 min-w-[300px]"
+              />
+              <Button
+                size="sm"
+                onClick={handleSearch}
+                className="min-w-[100px] border-none bg-supperagent text-white hover:bg-supperagent/90"
+              >
+                Search
+              </Button>
+            </div>
 
-        <div className="space-x-4">
-          <Button
+
+          </div>
+
+           <Button
             className="bg-supperagent text-white hover:bg-supperagent/90"
             size={'sm'}
             onClick={() => {
@@ -210,26 +251,8 @@ export default function CategoryPage() {
             <Plus className="mr-2 h-4 w-4" />
             Create Category
           </Button>
-        </div>
-      </div>
-      <div className="flex items-center space-x-4">
-        <Input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search by Category Name"
-          className="max-w-[400px] h-8"
-        />
-        <Button
-          size='sm'
-          onClick={handleSearch}
-          className="border-none min-w-[100px] bg-supperagent text-white hover:bg-supperagent/90"
-        >
-          Search
-        </Button>
-      </div>
-      <Card >
-        <CardContent className='pt-4'>
+        </CardHeader>
+        <CardContent className="pt-4">
           {initialLoading ? (
             <div className="flex justify-center py-6">
               <BlinkingDots size="large" color="bg-supperagent" />
@@ -258,14 +281,21 @@ export default function CategoryPage() {
                         <Switch
                           checked={category.status === 'active'}
                           onCheckedChange={(checked) =>
-                            handleStatusChange(category._id, checked ? 'active' : 'block')
+                            handleStatusChange(
+                              category._id,
+                              checked ? 'active' : 'block'
+                            )
                           }
                         />
-                        <span className={`text-sm font-medium ${category.status === 'active'
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                          }`}>
-                          {category.status === 'active' ? 'Active' : 'Disable'}                      </span>
+                        <span
+                          className={`text-sm font-medium ${
+                            category.status === 'active'
+                              ? 'text-green-600'
+                              : 'text-red-600'
+                          }`}
+                        >
+                          {category.status === 'active' ? 'Active' : 'Disable'}{' '}
+                        </span>
                       </div>
                     </TableCell>
 
@@ -292,19 +322,15 @@ export default function CategoryPage() {
             </Table>
           )}
 
-
-          {
-            categories.length > 40 && (
-              <DataTablePagination
-                pageSize={entriesPerPage}
-                setPageSize={setEntriesPerPage}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            )
-          }
-
+          {categories.length > 40 && (
+            <DataTablePagination
+              pageSize={entriesPerPage}
+              setPageSize={setEntriesPerPage}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -325,12 +351,16 @@ export default function CategoryPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the category.
+              This action cannot be undone. This will permanently delete the
+              category.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

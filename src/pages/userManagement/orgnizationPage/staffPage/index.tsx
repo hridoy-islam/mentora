@@ -174,7 +174,7 @@ export default function OrganizationStaffPage() {
       email: '',
       password: '',
       phone: '',
-      
+
       country: '',
       city: '',
       state: '',
@@ -199,7 +199,7 @@ export default function OrganizationStaffPage() {
         name: userData.name || '',
         email: userData.email || '',
         phone: userData.phone || '',
-       
+
         country: userData.country || '',
         city: userData.city || '',
         state: userData.state || '',
@@ -269,8 +269,7 @@ export default function OrganizationStaffPage() {
           ...basePayload,
           password: data.password,
           role: 'student',
-          organizationId: id,
-
+          organizationId: id
         };
 
         const res = await axiosInstance.post(`/auth/signup`, createPayload);
@@ -309,49 +308,48 @@ export default function OrganizationStaffPage() {
 
   return (
     <div className="space-y-3">
-      {/* Header Actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex flex-row items-center gap-4">
-          <h1 className="text-2xl font-semibold">All Staff</h1>
-          <div className="flex items-center space-x-4">
-            <Input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Search by Name, Email"
-              className="h-8 min-w-[300px]"
-            />
-            <Button
-              onClick={handleSearch}
-              size="sm"
-              className="min-w-[100px] border-none bg-supperagent text-white hover:bg-supperagent/90"
-            >
-              Search
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <Button size="default" onClick={() => navigate(-1)} variant="outline">
-            <MoveLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <Button
-            size="default"
-            onClick={handleAddNew} // Opens Dialog for Create
-            className="bg-supperagent text-white hover:bg-supperagent/90"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Staff
-          </Button>
-        </div>
-      </div>
-
       {/* Main Table Card */}
       <Card>
-        <CardHeader>
-          <CardTitle>Staff List</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex flex-row items-center gap-4">
+            <CardTitle>Staff List</CardTitle>
+            <div className="flex items-center space-x-4">
+              <Input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Search by Name, Email"
+                className="h-8 min-w-[300px]"
+              />
+              <Button
+                onClick={handleSearch}
+                size="sm"
+                className="min-w-[100px] border-none bg-supperagent text-white hover:bg-supperagent/90"
+              >
+                Search
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              size="default"
+              onClick={() => navigate(-1)}
+              variant="outline"
+            >
+              <MoveLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <Button
+              size="default"
+              onClick={handleAddNew} // Opens Dialog for Create
+              className="bg-supperagent text-white hover:bg-supperagent/90"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Staff
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -382,16 +380,21 @@ export default function OrganizationStaffPage() {
                     <TableCell>{student.name}</TableCell>
                     <TableCell>{student.email}</TableCell>
                     <TableCell>{student.phone || 'N/A'}</TableCell>
-                    <TableCell> <div className="flex flex-row items-center ">
+                    <TableCell>
+                      {' '}
+                      <div className="flex flex-row items-center ">
                         <Button
                           variant="ghost"
                           size="sm"
                           className="bg-supperagent text-white hover:bg-supperagent/90"
-                          onClick={() => navigate(`/dashboard/enroll-courses/${student._id}`)}
+                          onClick={() =>
+                            navigate(`/dashboard/enroll-courses/${student._id}`)
+                          }
                         >
-                          <Eye className="h-4 w-4 mr-2" /> View
+                          <Eye className="mr-2 h-4 w-4" /> View
                         </Button>
-                      </div></TableCell>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-center">
                       <div className="flex flex-row items-center">
                         <Switch
@@ -446,225 +449,220 @@ export default function OrganizationStaffPage() {
 
       {/* --- ADD / EDIT DIALOG --- */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-    <DialogHeader>
-      <DialogTitle>
-        {editingStudent ? 'Edit Staff' : 'Add New Staff'}
-      </DialogTitle>
-    </DialogHeader>
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingStudent ? 'Edit Staff' : 'Add New Staff'}
+            </DialogTitle>
+          </DialogHeader>
 
-    {detailsLoading ? (
-      <div className="flex h-40 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    ) : (
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4"
-        >
-          {/* Name & Email */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Name <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="John Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Email <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="john@example.com"
-                      type="email"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Password & Phone */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Password
-                    {editingStudent ? (
-                      <span className="ml-1 text-xs font-normal text-gray-500">
-                        (Optional)
-                      </span>
-                    ) : (
-                      <span className="text-red-500">*</span>
+          {detailsLoading ? (
+            <div className="flex h-40 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+            </div>
+          ) : (
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                {/* Name & Email */}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Name <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="******"
-                      type="password"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+1234567890" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-         
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Email <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="john@example.com"
+                            type="email"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-          {/* Address Fields - Row 1 */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="country"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a Country" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="z-[9999] max-h-[250px]">
-                      {countries.map((country) => (
-                        <SelectItem
-                          key={country}
-                          value={country}
+                {/* Password & Phone */}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Password
+                          {editingStudent ? (
+                            <span className="ml-1 text-xs font-normal text-gray-500">
+                              (Optional)
+                            </span>
+                          ) : (
+                            <span className="text-red-500">*</span>
+                          )}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="******"
+                            type="password"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                          <Input placeholder="+1234567890" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Address Fields - Row 1 */}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Country</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          defaultValue={field.value}
                         >
-                          {country}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="state"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>State</FormLabel>
-                  <FormControl>
-                    <Input placeholder="State" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a Country" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="z-[9999] max-h-[250px]">
+                            {countries.map((country) => (
+                              <SelectItem key={country} value={country}>
+                                {country}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <FormControl>
+                          <Input placeholder="State" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-          {/* Address Fields - Row 2 */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>City</FormLabel>
-                  <FormControl>
-                    <Input placeholder="City" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="zipCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Zip Code</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Zip Code" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                {/* Address Fields - Row 2 */}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input placeholder="City" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="zipCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Zip Code</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Zip Code" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-          {/* Full Address (Updated to Textarea) */}
-          <FormField
-            control={form.control}
-            name="address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Address</FormLabel>
-                <FormControl>
-                  {/* Using Textarea component */}
-                  <Textarea placeholder="Full Address" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                {/* Full Address (Updated to Textarea) */}
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Address</FormLabel>
+                      <FormControl>
+                        {/* Using Textarea component */}
+                        <Textarea placeholder="Full Address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          {/* Dialog Footer with CANCEL Button */}
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDialogOpen(false)} // Close the dialog
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="bg-supperagent hover:bg-supperagent/90"
-              disabled={submitLoading}
-            >
-              {submitLoading && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              {editingStudent ? 'Update Staff' : 'Create Staff'}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    )}
-  </DialogContent>
-</Dialog>
+                {/* Dialog Footer with CANCEL Button */}
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)} // Close the dialog
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-supperagent hover:bg-supperagent/90"
+                    disabled={submitLoading}
+                  >
+                    {submitLoading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {editingStudent ? 'Update Staff' : 'Create Staff'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

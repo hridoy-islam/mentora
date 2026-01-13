@@ -11,7 +11,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Tooltip,
   TooltipContent,
@@ -95,44 +95,47 @@ export default function AdminCoursesPage() {
   };
 
   return (
-    <div className="space-y-6 ">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-row items-center gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">Courses</h1>
-          <div className="flex items-center space-x-4">
-            <Input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search courses..."
-              className="h-8 w-[300px]"
-            />
-            <Button
-              onClick={handleSearch}
-              size="default"
-              className="h-8 bg-supperagent px-4 hover:bg-supperagent/90"
-            >
-              Search
-            </Button>
-          </div>
-        </div>
-        <div className="flex flex-row items-center gap-4">
-          <Button size="default" onClick={() => navigate(-1)} variant="outline">
-            <MoveLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <Button
-            size="default"
-            onClick={() => navigate('create')}
-            className="bg-supperagent hover:bg-supperagent/90"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            New Course
-          </Button>
-        </div>
-      </div>
-
+    <div className="space-y-3 ">
       <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex flex-row items-center gap-4">
+            <CardTitle>Courses</CardTitle>
+            <div className="flex items-center space-x-4">
+              <Input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search courses..."
+                className="h-8 w-[300px]"
+              />
+              <Button
+                onClick={handleSearch}
+                size="default"
+                className="h-8 bg-supperagent px-4 hover:bg-supperagent/90"
+              >
+                Search
+              </Button>
+            </div>
+          </div>
+            <div className="flex flex-row items-center gap-4">
+              <Button
+                size="default"
+                onClick={() => navigate(-1)}
+                variant="outline"
+              >
+                <MoveLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                size="default"
+                onClick={() => navigate('create')}
+                className="bg-supperagent hover:bg-supperagent/90"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Course
+              </Button>
+            </div>
+        </CardHeader>
         <CardContent className="pt-4">
           {loading ? (
             <div className="flex justify-center py-6">
@@ -168,7 +171,7 @@ export default function AdminCoursesPage() {
                       {course.title}
                     </TableCell>
                     <TableCell>{course.categoryId?.name}</TableCell>
-                    <TableCell>{course.instructorId?.name }</TableCell>
+                    <TableCell>{course.instructorId?.name}</TableCell>
                     <TableCell>${course.price}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex flex-row items-center justify-center gap-2">
@@ -201,7 +204,7 @@ export default function AdminCoursesPage() {
                                   navigate(`${course._id}/course-modules`)
                                 }
                               >
-                                <FileText className="h-4 w-4 mr-2" /> Modules
+                                <FileText className="mr-2 h-4 w-4" /> Modules
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -214,10 +217,9 @@ export default function AdminCoursesPage() {
                               <Button
                                 variant="default"
                                 size="sm"
-                               
                                 onClick={() => navigate(`edit/${course._id}`)}
                               >
-                                <Pen className="h-4 w-4 mr-2" /> Edit
+                                <Pen className="mr-2 h-4 w-4" /> Edit
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>

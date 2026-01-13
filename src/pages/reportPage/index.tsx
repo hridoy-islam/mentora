@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
@@ -144,13 +144,13 @@ export default function ReportPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="space-y-3">
+      
+      {/* Main Content Card */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex flex-row items-center gap-4">
-            <h1 className="text-2xl font-semibold">Reports</h1>
-
-            {/* React Select Integration */}
+            <CardTitle>Reports</CardTitle>
             <div className="flex items-center space-x-2 ">
               <div className="w-[250px]">
                 <Select
@@ -209,17 +209,11 @@ export default function ReportPage() {
               </Button>
             </div>
           </div>
-        </div>
 
-        <div className="flex gap-4">
           <Button variant="outline" onClick={() => navigate(-1)}>
             <MoveLeft className="mr-2 h-4 w-4" /> Back
           </Button>
-        </div>
-      </div>
-
-      {/* Main Content Card */}
-      <Card>
+        </CardHeader>
         <CardContent className="pt-4">
           {loading ? (
             <div className="flex justify-center py-6">
@@ -236,8 +230,8 @@ export default function ReportPage() {
                 <TableRow>
                   <TableHead>Buyer Name</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead >Course</TableHead>
-                  <TableHead >Total Amount</TableHead>
+                  <TableHead>Course</TableHead>
+                  <TableHead>Total Amount</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Purchase Date</TableHead>
                 </TableRow>
@@ -317,10 +311,10 @@ export default function ReportPage() {
                     <TableCell>
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar className="mr-2 h-3 w-3" />
-                       
-{report.createdAt
-  ? moment(report.createdAt).format("DD MMM YYYY")
-  : "N/A"}
+
+                        {report.createdAt
+                          ? moment(report.createdAt).format('DD MMM YYYY')
+                          : 'N/A'}
                       </div>
                     </TableCell>
                   </TableRow>

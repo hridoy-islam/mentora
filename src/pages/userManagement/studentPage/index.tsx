@@ -237,38 +237,32 @@ export default function StudentPage() {
 
   return (
     <div className="space-y-3">
-      {/* Header & Search */}
-      <div className="flex items-center justify-between">
-        <div className="flex flex-row items-center gap-4">
-          <h1 className="text-2xl font-semibold">All Students</h1>
-          <div className="flex items-center space-x-4">
-            <Input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Search by Name, Email"
-              className="h-8 min-w-[300px]"
-            />
-            <Button
-              onClick={handleSearch}
-              size="sm"
-              className="min-w-[100px] border-none bg-supperagent text-white hover:bg-supperagent/90"
-            >
-              Search
-            </Button>
-          </div>
-        </div>
-
-        <Button size="default" onClick={() => navigate(-1)} variant="outline">
-          <MoveLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-      </div>
-
       <Card>
-        <CardHeader>
-          <CardTitle>Students List</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex flex-row items-center gap-4">
+            <CardTitle>Students List</CardTitle>
+            <div className="flex items-center space-x-4">
+              <Input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Search by Name, Email"
+                className="h-8 min-w-[300px]"
+              />
+              <Button
+                onClick={handleSearch}
+                size="sm"
+                className="min-w-[100px] border-none bg-supperagent text-white hover:bg-supperagent/90"
+              >
+                Search
+              </Button>
+            </div>
+          </div>
+          <Button size="default" onClick={() => navigate(-1)} variant="outline">
+            <MoveLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
         </CardHeader>
 
         <CardContent>

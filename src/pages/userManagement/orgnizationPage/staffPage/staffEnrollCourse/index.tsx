@@ -117,20 +117,17 @@ export default function StaffEnrollCoursesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header Actions */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Staff: {staffDetails.name}</h1>
-        <Button size="default" onClick={() => navigate(-1)} variant="outline">
-          <MoveLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-      </div>
+    <div className="space-y-3">
+    
 
       {/* Main Enrollments Table Card */}
       <Card>
-        <CardHeader>
-          <CardTitle>Enrolled Courses</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>{`${staffDetails.name}'s Enrolled Courses`||'Enrolled Courses'}</CardTitle>
+          <Button size="default" onClick={() => navigate(-1)} variant="outline">
+          <MoveLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
         </CardHeader>
         <CardContent>
           <Table>

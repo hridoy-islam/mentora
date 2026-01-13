@@ -96,45 +96,19 @@ export default function OrganizationCoursesPage() {
 
   return (
     <div className="space-y-3">
-      {/* HEADER SECTION */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <h1 className="text-2xl font-semibold">My Courses</h1>
-
-          {/* Search Bar */}
-          {/* <div className="flex items-center space-x-2">
-            <Input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Search by Course Name"
-              className="h-9 min-w-[200px] lg:min-w-[300px]"
-            />
-            <Button
-              onClick={handleSearch}
-              size="sm"
-              className="bg-supperagent text-white hover:bg-supperagent/90"
-            >
-              <Search className="mr-2 h-4 w-4" /> Search
-            </Button>
-          </div> */}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button size="default" onClick={() => navigate(-1)} variant="outline">
-            <MoveLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-        </div>
-      </div>
+  
+      
 
       {/* TABLE CARD */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
              <BookOpen className="h-5 w-5" /> Enrolled Course List
           </CardTitle>
+           <Button size="default" onClick={() => navigate(-1)} variant="outline">
+            <MoveLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
         </CardHeader>
         <CardContent>
           <Table>

@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Tooltip,
   TooltipContent,
@@ -177,14 +177,14 @@ export default function CourseModulesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex flex-col w-full">
-          <div className="flex flex-row items-center justify-between">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
             <div className="flex flex-row items-center gap-4">
-              <h1 className="text-3xl font-bold tracking-tight">
-                Course Modules
-              </h1>
-              <div className="flex items-center space-x-4">
+              <div>
+                <CardTitle>Course Modules</CardTitle>
+              </div>
+              <div className="flex  items-center space-x-4">
                 <Input
                   type="text"
                   value={searchTerm}
@@ -202,67 +202,55 @@ export default function CourseModulesPage() {
                 </Button>
               </div>
             </div>
-
-            <div className="flex flex-row items-center gap-4 ">
-              <Button
-                size="default"
-                onClick={() => navigate(-1)}
-                variant="outline"
-              >
-                <MoveLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-              <Button
-                size="default"
-                variant="outline"
-                onClick={() =>
-                  window.open(
-                    `/courses/${courseSlug}`,
-                    '_blank'
-                  )
-                }
-                disabled={!cid}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                Website View
-              </Button>
-
-              <Button
-                size="default"
-                variant="outline"
-                onClick={() =>
-                  window.open(
-                    `/student/courses/${courseSlug}`,
-                    '_blank'
-                  )
-                }
-                disabled={!cid}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                Student View
-              </Button>
-
-              <Button
-                size="default"
-                onClick={openCreateDialog}
-                className="bg-supperagent hover:bg-supperagent/90"
-                disabled={!cid}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                New Module
-              </Button>
-            </div>
+            {courseName && (
+              <p className="mt-2 text-sm text-gray-600">
+                Course: <span className="font-semibold">{courseName}</span>
+              </p>
+            )}
           </div>
+          <div className="flex flex-row items-center gap-4  ">
+            <Button
+              size="default"
+              onClick={() => navigate(-1)}
+              variant="outline"
+            >
+              <MoveLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <Button
+              size="default"
+              variant="outline"
+              onClick={() => window.open(`/courses/${courseSlug}`, '_blank')}
+              disabled={!cid}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Website View
+            </Button>
 
-          {courseName && (
-            <p className="mt-2 text-sm text-gray-600">
-              Course: <span className="font-semibold">{courseName}</span>
-            </p>
-          )}
-        </div>
-      </div>
+            <Button
+              size="default"
+              variant="outline"
+              onClick={() =>
+                window.open(`/student/courses/${courseSlug}`, '_blank')
+              }
+              disabled={!cid}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Student View
+            </Button>
 
-      <Card>
+            <Button
+              size="default"
+              onClick={openCreateDialog}
+              className="bg-supperagent hover:bg-supperagent/90"
+              disabled={!cid}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Module
+            </Button>
+          </div>
+        </CardHeader>
+
         <CardContent className="pt-4">
           {loading ? (
             <div className="flex justify-center py-6">

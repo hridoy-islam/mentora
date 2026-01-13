@@ -100,24 +100,14 @@ export default function StudentCertificatePage() {
 
   return (
     <div className="space-y-6 container mx-auto  py-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
-            Student Certificates
-          </h1>
-        
-        </div>
-
-        <Button size="default" onClick={() => navigate(-1)} variant="outline">
+  
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Certificates List</CardTitle>
+          <Button size="default" onClick={() => navigate(-1)} variant="outline">
           <MoveLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Enrolled Courses List</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>

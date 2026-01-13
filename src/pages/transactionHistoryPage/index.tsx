@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
@@ -124,22 +124,18 @@ export default function TransactionHistoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex flex-row items-center gap-4">
-            <h1 className="text-2xl font-semibold">Purchase History</h1>
-          </div>
-        </div>
-
-        <div className="flex gap-4">
-          <Button variant="outline" onClick={() => navigate(-1)}>
-            <MoveLeft className="mr-2 h-4 w-4" /> Back
-          </Button>
-        </div>
-      </div>
+      
 
       {/* Main Content Card */}
       <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>
+            Purchase History
+          </CardTitle>
+           <Button variant="outline" onClick={() => navigate(-1)}>
+            <MoveLeft className="mr-2 h-4 w-4" /> Back
+          </Button>
+        </CardHeader>
         <CardContent className="pt-4">
           {loading ? (
             <div className="flex justify-center py-6">

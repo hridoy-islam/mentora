@@ -219,10 +219,13 @@ export default function InstructorPage() {
 
   return (
     <div className="space-y-3">
-      {/* Header & Search */}
-      <div className="flex items-center justify-between">
-        <div className="flex flex-row items-center gap-4">
-          <h1 className="text-2xl font-semibold">All Instructors</h1>
+     
+      <Card>
+        <CardHeader className='flex flex-row items-center justify-between'>
+          <div className='flex flex-row items-center gap-4'>
+
+
+          <CardTitle>Instructors List</CardTitle>
           <div className="flex items-center space-x-4">
             <Input
               value={searchTerm}
@@ -239,17 +242,11 @@ export default function InstructorPage() {
               Search
             </Button>
           </div>
-        </div>
-
-        <Button size="default" onClick={() => navigate(-1)} variant="outline">
+          </div>
+          <Button size="default" onClick={() => navigate(-1)} variant="outline">
           <MoveLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Instructors List</CardTitle>
         </CardHeader>
 
         <CardContent>
