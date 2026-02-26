@@ -251,90 +251,7 @@ export function StudentDashboard() {
           <DashboardSkeleton />
         ) : (
           <>
-            {/* Continue Learning Hero Section */}
-            {activeCourse && (
-              <section className="mb-12">
-                <div className="mb-4 flex items-center gap-2">
-                  <Target className="h-5 w-5 text-supperagent" />
-                  <h2 className="text-xl font-bold text-slate-900">
-                    Pick up where you left off
-                  </h2>
-                </div>
-
-                <Card className="group overflow-hidden border-0 bg-white shadow-lg ring-1 ring-slate-100">
-                  <div className="flex flex-col md:flex-row">
-                    {/* Image Section */}
-                    <div className="relative h-56 w-full shrink-0 overflow-hidden md:h-auto md:w-96">
-                      <img
-                        src={getCourseImage(activeCourse.courseId.image)}
-                        alt={activeCourse.courseId.title}
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/10 transition-colors group-hover:bg-black/0" />
-                      <Badge className="absolute left-4 top-4 bg-white/90 text-slate-900 hover:bg-white">
-                        {activeCourse.courseId?.categoryId?.name}
-                      </Badge>
-                    </div>
-
-                    {/* Content Section */}
-                    <div className="flex flex-1 flex-col justify-center p-6 md:p-8">
-                      <div className="mb-6">
-                        {activeCourse.courseId?.instructorId && (
-                          <div className="mb-2 flex items-center gap-2 text-sm text-slate-500">
-                            <GraduationCap className="h-4 w-4" />
-                            <span>
-                              By {activeCourse.courseId?.instructorId?.name}
-                            </span>
-                          </div>
-                        )}
-
-                        <h3 className="mb-2 text-2xl font-bold text-slate-900">
-                          {activeCourse.courseId.title}
-                        </h3>
-                        <div className="line-clamp-2 text-sm text-slate-500">
-                          <div
-                            dangerouslySetInnerHTML={{
-                              __html: activeCourse.courseId.description
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-auto space-y-4">
-                        <div className="flex items-center justify-between text-sm font-medium">
-                          <span className="text-slate-900">
-                            {activeCourse.progress}% Complete
-                          </span>
-                          <span className="text-slate-500">
-                            {activeCourse.completedLessons.length} /{' '}
-                            {activeCourse.derivedTotalLessons} Lessons
-                          </span>
-                        </div>
-                        <Progress
-                          value={activeCourse.progress}
-                          className="h-2.5"
-                        />
-
-                        <div className="pt-2">
-                          <Button
-                            onClick={() =>
-                              navigate(
-                                `/student/courses/${activeCourse.courseId?.slug}`
-                              )
-                            }
-                            size="lg"
-                            className="w-full bg-supperagent font-semibold shadow-md hover:bg-supperagent/90 md:w-auto"
-                          >
-                            <Play className="mr-2 h-4 w-4 fill-current" />
-                            Continue Learning
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </section>
-            )}
+           
 
             {/* All Courses Grid */}
             <section>
@@ -352,7 +269,7 @@ export function StudentDashboard() {
                 <Button
                   size="sm"
                   onClick={() => navigate('/student/my-courses')}
-                  className="group  rounded-full text-white transition-all duration-300 hover:border-supperagent hover:bg-supperagent/90"
+                  className="group   text-white transition-all duration-300 hover:border-supperagent hover:bg-supperagent/90"
                 >
                   Show All Courses
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -364,7 +281,7 @@ export function StudentDashboard() {
               ) : (
                 // Only show first 3 or 6 courses in dashboard summary if you want limit,
                 // otherwise it shows all here too. Currently shows all.
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                   {enrolledCourses.slice(0, 6).map((enrollment) => (
                     <CourseCard
                       key={enrollment._id}
@@ -447,7 +364,7 @@ function CourseCard({
   return (
     <Card
       className="group flex h-full cursor-pointer flex-col overflow-hidden border-slate-200 bg-white transition-all duration-300 hover:shadow-xl"
-      onClick={() => navigate(`courses/${courseId?.slug}`)}
+      onClick={() => navigate(`my-courses/${courseId?.slug}`)}
     >
       {/* Image Area */}
       <div className="relative aspect-video overflow-hidden bg-slate-100">

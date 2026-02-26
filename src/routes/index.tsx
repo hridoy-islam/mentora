@@ -15,7 +15,7 @@ import CourseDetailPage from '@/pages/coursePage/courseDetails';
 import { ContactPage } from '@/pages/contactPage';
 import StudentLayout from '@/components/layout/student-layout';
 import { StudentDashboard } from '@/pages/dashboard/rolewise-dashboard/student-dashboard';
-import { CourseDetails } from '@/pages/enrollCourse/courseDetail';
+import { CourseDetails, EnrollCourseDetails } from '@/pages/enrollCourse/courseDetail';
 import { MyCourses } from '@/pages/myCourse';
 import CoursesPage from '@/pages/adminCourse';
 import AdminCoursesPage from '@/pages/adminCourse';
@@ -170,13 +170,17 @@ export default function AppRouter() {
           path: 'courses',
           element: <CoursePage />
         },
+        {
+          path: 'courses/:slug',
+          element: <CourseDetailPage />
+        },
          {
           path: 'my-courses',
           element: <MyCourses />
         },
          {
-          path: 'courses/:slug',
-          element: <CourseDetails />
+          path: 'my-courses/:slug',
+          element: <EnrollCourseDetails />
         },
          {
           path: 'contact',

@@ -130,7 +130,7 @@ export default function MyOrganizationPage() {
   return (
     <div className="space-y-8 container mx-auto py-8">
       {/* HEADER */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">My Organization</h1>
           <p className="text-muted-foreground mt-1">
@@ -160,7 +160,9 @@ export default function MyOrganizationPage() {
           {company.map((member) => (
             <Card 
               key={member._id} 
-              className="group relative flex flex-col overflow-hidden border border-gray-200 bg-white transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-xl"
+                                onClick={() => handleViewCourses(member._id)}
+
+              className="group cursor-pointer relative flex flex-col overflow-hidden border border-gray-200 bg-white transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-xl"
             >
               {/* Decorative Header Background */}
               <div className="h-24 bg-gradient-to-r from-supperagent to-mentora group-hover:from-supperagent/90 group-hover:to-mentora transition-colors duration-300 relative">

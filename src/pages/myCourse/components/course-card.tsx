@@ -41,7 +41,7 @@ export default function CourseCard({ enrollment, navigate, getCourseImage }: Cou
   return (
     <Card 
       className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-slate-200 overflow-hidden flex flex-col h-full bg-white"
-      onClick={() => navigate(`/student/courses/${courseId.slug}`)}
+      onClick={() => navigate(`/student/my-courses/${courseId.slug}`)}
     >
       {/* Image Area */}
       <div className="relative aspect-video overflow-hidden bg-slate-100">

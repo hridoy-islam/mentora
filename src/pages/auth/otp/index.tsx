@@ -256,7 +256,7 @@ export default function OtpPage() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={otp.some((digit) => digit === '') || loading}
-              className="w-full h-10 bg-supperagent text-white font-semibold text-sm rounded-lg shadow-md hover:bg-supperagent/90 disabled:opacity-70 flex items-center justify-center gap-2 transition-all"
+              className="w-full h-10 bg-supperagent text-white font-semibold text-sm rounded shadow-md hover:bg-supperagent/90 disabled:opacity-70 flex items-center justify-center gap-2 transition-all"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {loading ? 'Verifying...' : 'Verify Code'}

@@ -445,7 +445,7 @@ export default function CoursePage() {
                     <CourseCard
                       key={course._id}
                       course={course}
-                      onClick={() => navigate(`/courses/${course?.slug}`)}
+                      onClick={() => navigate(`${course?.slug}`)}
                     />
                   ))
                 ) : (

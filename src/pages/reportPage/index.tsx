@@ -324,7 +324,7 @@ export default function ReportPage() {
           )}
 
           {/* Pagination */}
-          {reports.length > 0 && (
+          {reports.length > 19 && (
             <div className="mt-4">
               <DataTablePagination
                 pageSize={entriesPerPage}

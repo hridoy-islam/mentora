@@ -60,7 +60,10 @@ interface CourseMetadata {
   description?: string;
 }
 
-export function CourseDetails() {
+// Set to true to enforce lesson locking. Set to false to unlock all lessons.
+const ENABLE_LOCK_FEATURE = false;
+
+export function EnrollCourseDetails() {
   const { slug } = useParams();
   const navigate = useNavigate();
 
@@ -92,9 +95,9 @@ export function CourseDetails() {
         setError(null);
 
         // 1. Fetch Course Info
-        const courseRes = await axiosInstance.get(`/courses?slug=${slug}`);
+        const courseRes = await axiosInstance.get(`/courses/slug/${slug}`);
         
-        const courseData = courseRes.data.data.result[0];
+        const courseData = courseRes.data.data;
         
         // If no course found, stop here (loading will be set to false in finally)
         if (!courseData) {
@@ -140,7 +143,7 @@ export function CourseDetails() {
           const firstModule = modulesWithLessons[0];
           setExpandedModules(new Set([firstModule._id]));
 
-          const firstUnlocked = firstModule.lessonsList.find((l) => !l.lock);
+          const firstUnlocked = firstModule.lessonsList.find((l) => !(ENABLE_LOCK_FEATURE && l.lock));
           if (firstUnlocked) {
             setCurrentLesson(firstUnlocked);
           } else if (firstModule.lessonsList.length > 0) {
@@ -180,7 +183,7 @@ export function CourseDetails() {
     if (!currentModule) return { total: 0, unlocked: 0, percentage: 0 };
 
     const total = currentModule.lessonsList.length;
-    const unlocked = currentModule.lessonsList.filter((l) => !l.lock).length;
+    const unlocked = currentModule.lessonsList.filter((l) => !(ENABLE_LOCK_FEATURE && l.lock)).length;
 
     const percentage = total === 0 ? 0 : Math.round((unlocked / total) * 100);
 
@@ -220,7 +223,7 @@ export function CourseDetails() {
   const handleNextLesson = () => {
     if (currentIndex >= 0 && currentIndex < allLessons.length - 1) {
       const nextLesson = allLessons[currentIndex + 1];
-      if (!nextLesson.lock) {
+      if (!(ENABLE_LOCK_FEATURE && nextLesson.lock)) {
         handleLessonClick(nextLesson);
       }
     }
@@ -229,7 +232,7 @@ export function CourseDetails() {
   const handlePrevLesson = () => {
     if (currentIndex > 0) {
       const prevLesson = allLessons[currentIndex - 1];
-      if (!prevLesson.lock) {
+      if (!(ENABLE_LOCK_FEATURE && prevLesson.lock)) {
         handleLessonClick(prevLesson);
       }
     }
@@ -253,7 +256,7 @@ export function CourseDetails() {
   };
 
   const handleLessonClick = (lesson: LessonData) => {
-    if (!lesson.lock) {
+    if (!(ENABLE_LOCK_FEATURE && lesson.lock)) {
       if (!expandedModules.has(lesson.moduleId)) {
         setExpandedModules((prev) => new Set(prev).add(lesson.moduleId));
       }
@@ -567,7 +570,7 @@ export function CourseDetails() {
                 onClick={handlePrevLesson}
                 disabled={
                   currentIndex <= 0 ||
-                  (currentIndex > 0 && allLessons[currentIndex - 1]?.lock)
+                  (currentIndex > 0 && ENABLE_LOCK_FEATURE && allLessons[currentIndex - 1]?.lock)
                 }
                 className="gap-2 rounded-full bg-supperagent px-6 text-white hover:bg-slate-800 disabled:opacity-50"
               >
@@ -579,7 +582,7 @@ export function CourseDetails() {
                 disabled={
                   currentIndex >= allLessons.length - 1 ||
                   (currentIndex < allLessons.length - 1 &&
-                    allLessons[currentIndex + 1]?.lock)
+                    ENABLE_LOCK_FEATURE && allLessons[currentIndex + 1]?.lock)
                 }
                 className="gap-2 rounded-full bg-supperagent px-6 text-white hover:bg-slate-800 disabled:opacity-50"
               >
@@ -711,19 +714,22 @@ export function CourseDetails() {
                               {section.lessonsList.map((lesson, idx) => {
                                 const isActive =
                                   currentLesson?._id === lesson._id;
+                                
+                                // NEW: Compute lock state using our feature flag
+                                const isLocked = ENABLE_LOCK_FEATURE && lesson.lock;
 
                                 return (
                                   <button
                                     key={lesson._id}
                                     onClick={() => handleLessonClick(lesson)}
-                                    disabled={lesson.lock}
+                                    disabled={isLocked}
                                     className={`relative mx-2 my-0.5 flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all duration-200
                                       ${
                                         isActive
                                           ? 'bg-white shadow-sm ring-1 ring-slate-200'
                                           : 'hover:bg-slate-200/50'
                                       }
-                                      ${lesson.lock ? 'cursor-not-allowed opacity-60 grayscale' : ''}
+                                      ${isLocked ? 'cursor-not-allowed opacity-60 grayscale' : ''}
                                     `}
                                   >
                                     {/* Active Indicator Strip */}
@@ -740,7 +746,7 @@ export function CourseDetails() {
                                           : 'border-slate-200 bg-white text-slate-400'
                                       }`}
                                     >
-                                      {lesson.lock ? (
+                                      {isLocked ? (
                                         <Lock className="h-3.5 w-3.5" />
                                       ) : (
                                         <span>{idx + 1}</span>
@@ -777,7 +783,7 @@ export function CourseDetails() {
                                     </div>
 
                                     {/* Playing Icon if Active */}
-                                    {isActive && !lesson.lock && (
+                                    {isActive && !isLocked && (
                                       <Play className="h-3 w-3 fill-supperagent text-supperagent" />
                                     )}
                                   </button>

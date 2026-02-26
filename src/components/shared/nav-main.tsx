@@ -47,20 +47,20 @@ export function NavMain({ items }: { items: NavItem[] }) {
           <Collapsible
             open={isOpen}
             onOpenChange={() => toggleItem(item.title)}
-            className="hover:border-sidebar-border hover:bg-sidebar-accent w-full rounded-lg border border-transparent"
+            className="hover:border-sidebar-border hover:bg-sidebar-accent w-full rounded border border-transparent"
           >
             <CollapsibleTrigger asChild>
               <SidebarMenuButton
-                className={`flex items-center h-10 justify-between gap-2 hover:bg-supperagent hover:text-white ${level > 0 ? 'pl-2' : ''}`}
+                className={`flex !rounded items-center h-10 justify-between gap-2 hover:bg-supperagent hover:text-white ${level > 0 ? 'pl-2' : ''}`}
               >
                 <div className="flex items-center gap-2">
-                  {item.icon && <item.icon size={16} />}
+                  {item.icon && <item.icon size={16}  />}
                   <span>{item.title}</span>
                 </div>
                 {isOpen ? (
-                  <IconChevronDown size={14} className="text-gray-600 " />
+                  <IconChevronDown size={14} className="text-current " />
                 ) : (
-                  <IconChevronRight size={14} className="text-gray-600 " />
+                  <IconChevronRight size={14} className="text-current " />
                 )}
               </SidebarMenuButton>
             </CollapsibleTrigger>
@@ -78,7 +78,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                         ) : (
                           <SidebarMenuSubButton
                             asChild
-                            className={`hover:bg-supperagent h-10 hover:text-white ${level > 0 ? 'pl-2' : ''}`}
+                            className={`hover:bg-supperagent !rounded h-10 hover:text-white ${level > 0 ? 'pl-2' : ''}`}
                           >
                             <Link
                               to={subItem.url || '#'}
@@ -99,10 +99,10 @@ export function NavMain({ items }: { items: NavItem[] }) {
         ) : (
           <SidebarMenuButton
             asChild
-            className={`hover:bg-supperagent h-10 hover:text-white ${level > 0 ? 'pl-2' : ''} ${isActive ? 'bg-supperagent text-white' : ''}`}
+            className={`hover:bg-supperagent !rounded h-10 hover:text-white ${level > 0 ? 'pl-2' : ''} `}
           >
             <Link to={item.url || '#'} className="flex items-center gap-2">
-              {item.icon && <item.icon size={16} />}
+              {item.icon && <item.icon size={16}  />}
               <span>{item.title}</span>
             </Link>
           </SidebarMenuButton>

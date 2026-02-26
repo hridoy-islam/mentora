@@ -45,8 +45,8 @@ import { AuthDialog } from './components/auth-dialog';
 import { Loader } from '@/components/shared/MedicareLoader';
 
 // --- WORLDPAY CONSTANTS ---
-const WORLDPAY_CHECKOUT_ID = 'your-checkout-id'; // <--- REPLACE WITH YOUR ID
-const WORLDPAY_SCRIPT_URL = 'https://try.access.worldpay.com/access-checkout/v2/checkout.js';
+// const WORLDPAY_CHECKOUT_ID = 'your-checkout-id'; // <--- REPLACE WITH YOUR ID
+// const WORLDPAY_SCRIPT_URL = 'https://try.access.worldpay.com/access-checkout/v2/checkout.js';
 
 // --- Helper Component: FormInput ---
 const FormInput = ({
@@ -131,7 +131,9 @@ export function CheckoutPage() {
   // Payment Logic States
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
-  const [isSdkReady, setIsSdkReady] = useState(false);
+  
+  // DEV MODE: Set SDK to ready by default so we can click the button
+  const [isSdkReady, setIsSdkReady] = useState(true); 
   const [paymentError, setPaymentError] = useState('');
 
   // Worldpay Ref
@@ -141,7 +143,8 @@ export function CheckoutPage() {
   const couponRef = useRef(null);
   const [couponBoxSize, setCouponBoxSize] = useState({ width: 0, height: 0 });
 
-  // --- Worldpay Integration Logic ---
+  // --- Worldpay Integration Logic (COMMENTED FOR DEV MODE) ---
+  /*
   useEffect(() => {
     // 1. Helper to load script dynamically
     const loadCheckoutScript = (src) => {
@@ -168,20 +171,13 @@ export function CheckoutPage() {
 
         window.Worldpay.checkout.init({
             id: WORLDPAY_CHECKOUT_ID,
-            form: '#payment-section-container', // Must match the container ID in JSX
+            form: '#payment-section-container',
             fields: {
-                pan: {
-                    selector: '#card-pan',
-                },
-                expiry: {
-                    selector: '#card-expiry',
-                },
-                cvv: {
-                    selector: '#card-cvc', 
-                },
+                pan: { selector: '#card-pan' },
+                expiry: { selector: '#card-expiry' },
+                cvv: { selector: '#card-cvc' },
             },
             styles: {
-                // Style the iframes to match the site look
                 'input': { 
                     'color': '#111827', 
                     'font-size': '14px', 
@@ -219,10 +215,11 @@ export function CheckoutPage() {
     // 4. Cleanup
     return () => {
         if (checkoutRef.current) {
-            checkoutRef.current.remove(); // Uncomment if SDK supports remove() to clean DOM
+            checkoutRef.current.remove();
         }
     };
   }, []);
+  */
 
   // Prefill form data
   useEffect(() => {
@@ -287,6 +284,13 @@ export function CheckoutPage() {
     setPaymentError('');
     setIsProcessingOrder(true);
 
+    // DEV MODE BYPASS: Simulate Worldpay Tokenization
+    setTimeout(async () => {
+      console.log("DEV MODE: Simulating payment success...");
+      await processBackendOrder('dummy-dev-session-id-12345');
+    }, 1000);
+
+    /* --- ORIGINAL WORLDPAY LOGIC (COMMENTED OUT) ---
     // 1. Validate Worldpay is loaded
     if (!checkoutRef.current) {
         setPaymentError("Payment system not initialized. Please refresh page.");
@@ -306,6 +310,7 @@ export function CheckoutPage() {
         // 3. Send Session + Order Data to Backend
         await processBackendOrder(session);
     });
+    */
   };
 
   const processBackendOrder = async (sessionId) => {
@@ -674,70 +679,78 @@ export function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* --- WORLDPAY SECURE PAYMENT FIELDS --- */}
+                  {/* --- WORLDPAY SECURE PAYMENT FIELDS (DEV MODE BYPASS) --- */}
                   <div className="mb-4">
                     <h2 className="mb-4 text-lg font-bold text-gray-900">
                       Payment Method
                     </h2>
                     
-                    {/* Container ID must match init config 'form' */}
                     <div id="payment-section-container" className="space-y-4">
-                        
-                        {/* 1. Card Number */}
-                        <div>
-                           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
-                             Card Number
-                           </label>
-                           <div className="relative">
-                               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none">
-                                   <CreditCard size={18} />
-                               </div>
-                               {/* Worldpay iframe injects here */}
-                               <div id="card-pan" className="h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-3 flex items-center shadow-sm"></div>
-                           </div>
-                        </div>
+                      {/* DEV MODE MESSAGE */}
+                      <div className="rounded-xl border border-dashed border-blue-300 bg-blue-50 p-6 text-center shadow-sm">
+                        <Lock size={24} className="mx-auto mb-2 text-blue-400" />
+                        <h3 className="text-sm font-bold text-blue-800">Dev Mode Active</h3>
+                        <p className="text-xs text-blue-600 mt-1">
+                          Worldpay is currently bypassed for testing. Clicking "Pay" will simulate a successful transaction.
+                        </p>
+                      </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            {/* 2. Expiry */}
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                  Expiry
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none">
-                                        <Calendar size={18} />
-                                    </div>
-                                    <div id="card-expiry" className="h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-3 flex items-center shadow-sm"></div>
-                                </div>
-                            </div>
+                      {/* ORIGINAL FIELDS COMMENTED OUT FOR DEV */}
+                      {/*
+                      <div>
+                         <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Card Number
+                         </label>
+                         <div className="relative">
+                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none">
+                                 <CreditCard size={18} />
+                             </div>
+                             <div id="card-pan" className="h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-3 flex items-center shadow-sm"></div>
+                         </div>
+                      </div>
 
-                            {/* 3. CVC */}
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                  CVC
-                                </label>
-                                <div className="relative">
-                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none">
-                                        <ShieldCheck size={18} />
-                                    </div>
-                                    <div id="card-cvc" className="h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-3 flex items-center shadow-sm"></div>
-                                </div>
-                            </div>
-                        </div>
+                      <div className="grid grid-cols-2 gap-4">
+                          <div>
+                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Expiry
+                              </label>
+                              <div className="relative">
+                                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none">
+                                      <Calendar size={18} />
+                                  </div>
+                                  <div id="card-expiry" className="h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-3 flex items-center shadow-sm"></div>
+                              </div>
+                          </div>
 
-                        {/* Error Message Display */}
-                        {paymentError && (
-                            <div className="rounded-lg border border-red-100 bg-red-50 p-3 flex items-start gap-2 text-sm text-red-600">
-                                <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                                <span>{paymentError}</span>
-                            </div>
-                        )}
-                        
-                        {!isSdkReady && (
-                           <div className="text-center text-xs text-gray-400 flex justify-center items-center gap-2">
-                              <Loader2 className="h-3 w-3 animate-spin" /> Loading secure payment fields...
-                           </div>
-                        )}
+                          <div>
+                              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                CVC
+                              </label>
+                              <div className="relative">
+                                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none">
+                                      <ShieldCheck size={18} />
+                                  </div>
+                                  <div id="card-cvc" className="h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-3 flex items-center shadow-sm"></div>
+                              </div>
+                          </div>
+                      </div>
+                      */}
+
+                      {/* Error Message Display */}
+                      {paymentError && (
+                          <div className="rounded-lg border border-red-100 bg-red-50 p-3 flex items-start gap-2 text-sm text-red-600">
+                              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                              <span>{paymentError}</span>
+                          </div>
+                      )}
+                      
+                      {/* Loader Commented out since Dev Mode bypasses SDK
+                      {!isSdkReady && (
+                         <div className="text-center text-xs text-gray-400 flex justify-center items-center gap-2">
+                            <Loader2 className="h-3 w-3 animate-spin" /> Loading secure payment fields...
+                         </div>
+                      )}
+                      */}
                     </div>
                   </div>
 
@@ -783,7 +796,7 @@ export function CheckoutPage() {
                     <div className="flex items-center gap-2 rounded-full border border-green-100 bg-green-50 px-3 py-1.5 text-green-700">
                       <ShieldCheck size={14} />
                       <span className="text-[10px] font-bold uppercase tracking-wide">
-                        SSL Secure Payment via Worldpay
+                        SSL Secure Payment via Worldpay (Bypassed)
                       </span>
                     </div>
                   </div>
