@@ -382,12 +382,7 @@ function CourseCard({
         </div>
 
         {/* Category Badge */}
-        <Badge
-          className="absolute right-3 top-3 bg-white/95 text-slate-800 shadow-sm hover:bg-white"
-          variant="secondary"
-        >
-          {courseId.categoryId?.name}
-        </Badge>
+       
 
         {/* Completed Badge */}
         {isCompleted && (
@@ -430,10 +425,10 @@ function CourseCard({
               <BookOpen className="h-3.5 w-3.5" />
               <span>{derivedTotalLessons} Lessons</span>
             </div>
-            <div className="flex items-center gap-1.5">
+            {/* <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
               <span>{totalHours}h</span>
-            </div>
+            </div> */}
           </div>
         </div>
       </CardContent>

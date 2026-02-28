@@ -1001,11 +1001,11 @@ useEffect(() => {
                     value={additionalNote}
                     onChange={setAdditionalNote}
                     placeholder="Add additional notes for this lesson..."
-                    className="h-[250px] pb-16"
+                    className="h-[200px] pb-20"
                   />
                 </div>
               </div>
-              <div className="mt-6">
+              <div className="mt-5">
                 <Button type="submit" disabled={loading} className="w-full bg-supperagent hover:bg-supperagent/90">
                   {loading ? 'Saving...' : 'Update Lesson'}
                 </Button>

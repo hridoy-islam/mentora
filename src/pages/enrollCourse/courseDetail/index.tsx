@@ -11,7 +11,8 @@ import {
   AlertCircle,
   ChevronRight,
   Search,
-  FileQuestion // Added icon for no data
+  FileQuestion,
+  XCircle 
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import axiosInstance from '@/lib/axios';
+import { useSelector } from 'react-redux';
 
 // --- Types ---
 interface QuestionOption {
@@ -40,11 +42,13 @@ interface LessonData {
   videoUrl?: string;
   content?: string;
   questions?: QuestionOption[];
+  importedQuestions?: QuestionOption[]; 
 }
 
 interface CourseModule {
   _id: string;
   title: string;
+  index?: number;
 }
 
 interface Section {
@@ -60,8 +64,18 @@ interface CourseMetadata {
   description?: string;
 }
 
-// Set to true to enforce lesson locking. Set to false to unlock all lessons.
-const ENABLE_LOCK_FEATURE = false;
+interface EvaluatedAnswer {
+  questionId: string;
+  providedAnswer: string[];
+  isCorrect: boolean;
+  marksAwarded: number;
+}
+
+interface QuizResult {
+  totalScore: number;
+  isPassed: boolean;
+  answers: EvaluatedAnswer[];
+}
 
 export function EnrollCourseDetails() {
   const { slug } = useParams();
@@ -73,18 +87,23 @@ export function EnrollCourseDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Enrollment & Progress State
+  const [enrolledCourseId, setEnrolledCourseId] = useState<string | null>(null);
+  const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
+  const [completedModules, setCompletedModules] = useState<Set<string>>(new Set());
+
   // UI State
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(
-    new Set()
-  );
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [currentLesson, setCurrentLesson] = useState<LessonData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Quiz State
-  const [selectedAnswers, setSelectedAnswers] = useState<
-    Record<string, string>
-  >({});
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizSubmissionId, setQuizSubmissionId] = useState<string | null>(null);
+  const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
+
+  const { user } = useSelector((state: any) => state.auth);
 
   // --- Fetching Logic ---
   useEffect(() => {
@@ -96,22 +115,22 @@ export function EnrollCourseDetails() {
 
         // 1. Fetch Course Info
         const courseRes = await axiosInstance.get(`/courses/slug/${slug}`);
-        
         const courseData = courseRes.data.data;
         
-        // If no course found, stop here (loading will be set to false in finally)
         if (!courseData) {
             setCourse(null);
             return; 
         }
-
         setCourse(courseData);
 
         // 2. Fetch Modules
         const modulesRes = await axiosInstance.get('/course-modules', {
           params: { courseId: courseData._id }
         });
-        const modules: CourseModule[] = modulesRes.data.data.result;
+        
+        const rawModules: CourseModule[] = modulesRes.data.data.result || [];
+        // Sort modules by their index
+        const modules = rawModules.sort((a, b) => (a.index || 0) - (b.index || 0));
 
         // 3. Fetch Lessons
         const modulesWithLessons = await Promise.all(
@@ -120,7 +139,7 @@ export function EnrollCourseDetails() {
               params: { moduleId: mod._id }
             });
 
-            const rawLessons: LessonData[] = lessonsRes.data.data.result;
+            const rawLessons: LessonData[] = lessonsRes.data.data.result || [];
             const sortedLessons = rawLessons.sort((a, b) => a.index - b.index);
             const totalDuration = sortedLessons.reduce(
               (acc, lesson) => acc + (parseInt(lesson.duration) || 0),
@@ -135,23 +154,39 @@ export function EnrollCourseDetails() {
             };
           })
         );
-
         setSections(modulesWithLessons);
+
+        // 4. Fetch Enrolled Course Info to track progress
+        const enrollRes = await axiosInstance.get('/enrolled-courses', {
+           params: { courseId: courseData._id } 
+        });
+        
+        const enrollment = enrollRes.data.data?.result?.[0] || enrollRes.data.data;
+        
+        if (enrollment) {
+          setEnrolledCourseId(enrollment._id);
+          setCompletedLessons(new Set(enrollment.completedLessons?.map((l: any) => l._id || l) || []));
+          setCompletedModules(new Set(enrollment.completedModules?.map((m: any) => m._id || m) || []));
+        }
 
         // Auto-select logic
         if (modulesWithLessons.length > 0) {
           const firstModule = modulesWithLessons[0];
           setExpandedModules(new Set([firstModule._id]));
 
-          const firstUnlocked = firstModule.lessonsList.find((l) => !(ENABLE_LOCK_FEATURE && l.lock));
-          if (firstUnlocked) {
-            setCurrentLesson(firstUnlocked);
+          // Find first uncompleted lesson
+          const allLsn = modulesWithLessons.flatMap(m => m.lessonsList);
+          const firstUncompleted = allLsn.find((l) => !(enrollment?.completedLessons || []).includes(l._id));
+          
+          if (firstUncompleted) {
+            setCurrentLesson(firstUncompleted);
+            setExpandedModules(new Set([firstUncompleted.moduleId]));
           } else if (firstModule.lessonsList.length > 0) {
             setCurrentLesson(firstModule.lessonsList[0]);
           }
         }
       } catch (err) {
-        console.error('Failed to load course:', err);
+        console.error('Failed to load course details:', err);
         setError('Failed to load course details.');
       } finally {
         setLoading(false);
@@ -161,9 +196,8 @@ export function EnrollCourseDetails() {
     fetchData();
   }, [slug]);
 
-  // --- Navigation & Helper Logic ---
 
-  // 1. Flatten lessons for Next/Prev buttons
+  // --- Helper & Progression Logic ---
   const allLessons = useMemo(() => {
     return sections.flatMap((section) => section.lessonsList);
   }, [sections]);
@@ -173,22 +207,123 @@ export function EnrollCourseDetails() {
     return allLessons.findIndex((l) => l._id === currentLesson._id);
   }, [currentLesson, allLessons]);
 
-  // --- NEW: Module-Wise Progress Logic ---
+  // Determine if a lesson should be unlocked
+  const isLessonUnlocked = (lessonId: string) => {
+    const index = allLessons.findIndex(l => l._id === lessonId);
+    if (index === 0) return true; // 1st lesson is always unlocked
+    if (completedLessons.has(lessonId)) return true; // Already completed
+    
+    // Unlock if the PREVIOUS lesson is completed
+    const prevLesson = allLessons[index - 1];
+    if (prevLesson && completedLessons.has(prevLesson._id)) {
+      return true;
+    }
+    return false;
+  };
+
+  // Utility to mark a specific lesson as completed in the backend
+  const markAsCompleted = async (lessonToComplete: LessonData) => {
+    if (!enrolledCourseId) return;
+    if (completedLessons.has(lessonToComplete._id)) return;
+
+    const newCompletedLessons = new Set(completedLessons);
+    newCompletedLessons.add(lessonToComplete._id);
+
+    const newCompletedModules = new Set(completedModules);
+    const currentModuleObj = sections.find(s => s._id === lessonToComplete.moduleId);
+    
+    if (currentModuleObj) {
+      const allModuleLessonsCompleted = currentModuleObj.lessonsList.every(l => newCompletedLessons.has(l._id));
+      if (allModuleLessonsCompleted) {
+        newCompletedModules.add(currentModuleObj._id);
+      }
+    }
+
+    const progress = Math.round((newCompletedLessons.size / allLessons.length) * 100);
+
+    try {
+      await axiosInstance.patch(`/enrolled-courses/${enrolledCourseId}`, {
+        completedLessons: Array.from(newCompletedLessons),
+        completedModules: Array.from(newCompletedModules),
+        progress
+      });
+
+      setCompletedLessons(newCompletedLessons);
+      setCompletedModules(newCompletedModules);
+    } catch (err) {
+      console.error("Failed to update course progress", err);
+    }
+  };
+
+
+  // --- Quiz Handling Logic ---
+  const handleQuizSubmit = async () => {
+    if (!course || !currentLesson || !enrolledCourseId) return;
+
+    const allQuestions = [
+      ...(currentLesson.questions || []),
+      ...(currentLesson.importedQuestions || [])
+    ];
+
+    const answersPayload = allQuestions.map((q, idx) => {
+      return {
+        questionId: q._id , 
+        providedAnswer: [selectedAnswers[idx] || ""],
+      };
+    });
+
+    try {
+      let responseData;
+      
+      if (quizSubmissionId) {
+        const res = await axiosInstance.patch(`/quiz-submission/${quizSubmissionId}`, {
+          answers: answersPayload,
+        });
+        responseData = res.data.data;
+      } else {
+        const res = await axiosInstance.post('/quiz-submission', {
+          courseId: course._id,
+          lessonId: currentLesson._id,
+          answers: answersPayload,
+          studentId: user._id
+        });
+        responseData = res.data.data;
+        setQuizSubmissionId(responseData._id); 
+      }
+
+      setQuizResult({
+        totalScore: responseData.totalScore,
+        isPassed: responseData.isPassed,
+        answers: responseData.answers
+      });
+      setQuizSubmitted(true);
+
+      if (responseData.isPassed) {
+         await markAsCompleted(currentLesson);
+         // Note: Intentionally NOT auto-advancing here so the user can see their score and which ones they got wrong.
+      }
+    } catch (error) {
+      console.error("Quiz submission failed", error);
+    }
+  };
+
+
+  // --- Module-Wise Progress Logic ---
   const currentModule = useMemo(() => {
     if (!currentLesson) return null;
     return sections.find((section) => section._id === currentLesson.moduleId);
   }, [sections, currentLesson]);
 
   const moduleStats = useMemo(() => {
-    if (!currentModule) return { total: 0, unlocked: 0, percentage: 0 };
+    if (!currentModule) return { total: 0, completed: 0, percentage: 0 };
 
     const total = currentModule.lessonsList.length;
-    const unlocked = currentModule.lessonsList.filter((l) => !(ENABLE_LOCK_FEATURE && l.lock)).length;
+    // Calculate progress based on actual COMPLETED lessons
+    const completed = currentModule.lessonsList.filter((l) => completedLessons.has(l._id)).length;
+    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
 
-    const percentage = total === 0 ? 0 : Math.round((unlocked / total) * 100);
-
-    return { total, unlocked, percentage };
-  }, [currentModule]);
+    return { total, completed, percentage };
+  }, [currentModule, completedLessons]);
 
   // --- Search Filtering ---
   const filteredSections = useMemo(() => {
@@ -197,7 +332,7 @@ export function EnrollCourseDetails() {
     const filtered = sections
       .map((section) => {
         const matchingLessons = section.lessonsList.filter((lesson) =>
-          lesson.title.toLowerCase().includes(lowerQuery)
+          lesson?.title?.toLowerCase()?.includes(lowerQuery)
         );
         return {
           ...section,
@@ -208,10 +343,9 @@ export function EnrollCourseDetails() {
     return filtered;
   }, [sections, searchQuery]);
 
-  // Auto-expand on search
   useEffect(() => {
     if (searchQuery.trim()) {
-      const ids = filteredSections.map((s) => s._id);
+      const ids = filteredSections?.map((s) => s._id);
       setExpandedModules((prev) => {
         const next = new Set(prev);
         ids.forEach((id) => next.add(id));
@@ -220,19 +354,39 @@ export function EnrollCourseDetails() {
     }
   }, [searchQuery, filteredSections]);
 
-  const handleNextLesson = () => {
+
+  // --- Navigation Controls ---
+  const handleLessonClick = (lesson: LessonData, forceBypass = false) => {
+    if (forceBypass || isLessonUnlocked(lesson._id)) {
+      if (!expandedModules.has(lesson.moduleId)) {
+        setExpandedModules((prev) => new Set(prev).add(lesson.moduleId));
+      }
+      setCurrentLesson(lesson);
+      setSelectedAnswers({});
+      setQuizSubmitted(false);
+      setQuizSubmissionId(null);
+      setQuizResult(null); // Reset quiz results on lesson change
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleNextLesson = async () => {
+    if (!currentLesson) return;
+
+    if (currentLesson.type !== 'quiz' && !completedLessons.has(currentLesson._id)) {
+       await markAsCompleted(currentLesson);
+    }
+
     if (currentIndex >= 0 && currentIndex < allLessons.length - 1) {
       const nextLesson = allLessons[currentIndex + 1];
-      if (!(ENABLE_LOCK_FEATURE && nextLesson.lock)) {
-        handleLessonClick(nextLesson);
-      }
+      handleLessonClick(nextLesson, true);
     }
   };
 
   const handlePrevLesson = () => {
     if (currentIndex > 0) {
       const prevLesson = allLessons[currentIndex - 1];
-      if (!(ENABLE_LOCK_FEATURE && prevLesson.lock)) {
+      if (isLessonUnlocked(prevLesson._id)) {
         handleLessonClick(prevLesson);
       }
     }
@@ -255,18 +409,6 @@ export function EnrollCourseDetails() {
     setExpandedModules(newExpanded);
   };
 
-  const handleLessonClick = (lesson: LessonData) => {
-    if (!(ENABLE_LOCK_FEATURE && lesson.lock)) {
-      if (!expandedModules.has(lesson.moduleId)) {
-        setExpandedModules((prev) => new Set(prev).add(lesson.moduleId));
-      }
-      setCurrentLesson(lesson);
-      setSelectedAnswers({});
-      setQuizSubmitted(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
   const getYoutubeEmbedUrl = (url?: string) => {
     if (!url) return '';
     const regExp =
@@ -285,6 +427,8 @@ export function EnrollCourseDetails() {
           Select a lesson to begin
         </div>
       );
+
+    const isAlreadyCompleted = completedLessons.has(currentLesson._id);
 
     if (currentLesson.type === 'video') {
       return (
@@ -311,13 +455,15 @@ export function EnrollCourseDetails() {
             </div>
           </Card>
 
-          <div className="px-1">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              {currentLesson.title}
-            </h1>
-            <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
-              Video Lesson • {currentLesson.duration} minutes
-            </p>
+          <div className="px-1 flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                {currentLesson.title}
+              </h1>
+              <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
+                Video Lesson • {currentLesson.duration} minutes
+              </p>
+            </div>
           </div>
         </div>
       );
@@ -327,15 +473,17 @@ export function EnrollCourseDetails() {
       return (
         <Card className="border-slate-200 shadow-sm">
           <CardContent className="p-8 sm:p-10">
-            <div className="mb-8 border-b border-slate-100 pb-6">
-              <h1 className="mb-2 text-3xl font-bold tracking-tight text-slate-900">
-                {currentLesson.title}
-              </h1>
-              <div className="flex items-center gap-2 text-sm text-slate-500">
-                <FileText className="h-4 w-4" />
-                <span>
-                  Reading Material • {currentLesson.duration} min read
-                </span>
+            <div className="mb-8 border-b border-slate-100 pb-6 flex justify-between items-start">
+              <div>
+                <h1 className="mb-2 text-3xl font-bold tracking-tight text-slate-900">
+                  {currentLesson.title}
+                </h1>
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <FileText className="h-4 w-4" />
+                  <span>
+                    Reading Material • {currentLesson.duration} min read
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -351,6 +499,11 @@ export function EnrollCourseDetails() {
     }
 
     if (currentLesson.type === 'quiz') {
+      const allQuestions = [
+        ...(currentLesson.questions || []),
+        ...(currentLesson.importedQuestions || [])
+      ];
+
       return (
         <Card className="border-slate-200 shadow-sm">
           <CardContent className="p-8 sm:p-10">
@@ -369,109 +522,139 @@ export function EnrollCourseDetails() {
                 </div>
               </div>
               <Badge variant="secondary" className="w-fit px-3 py-1 text-sm">
-                {currentLesson.questions?.length || 0} Questions
+                {allQuestions.length} Questions
               </Badge>
             </div>
 
-            <div className="space-y-10">
-              {currentLesson.questions?.map((q, qIndex) => (
-                <div key={qIndex} className="space-y-4">
-                  <h3 className="text-lg font-semibold leading-snug text-slate-900">
-                    <span className="mr-2 text-slate-400">{qIndex + 1}.</span>
-                    {q.question}
-                  </h3>
-
-                  <div className="grid grid-cols-1 gap-3 pl-0 sm:pl-6">
-                    {q.options.map((opt, optIndex) => {
-                      const isSelected = selectedAnswers[qIndex] === opt;
-                      const isCorrect = q.correctAnswers.includes(opt);
-
-                      let containerStyle =
-                        'border-slate-200 hover:border-supperagent hover:bg-supperagent/10';
-                      let textStyle = 'text-slate-600';
-                      let indicatorStyle = 'border-slate-300';
-
-                      if (quizSubmitted) {
-                        if (isCorrect) {
-                          containerStyle =
-                            'bg-emerald-50 border-emerald-500 shadow-sm';
-                          textStyle = 'text-emerald-800 font-medium';
-                          indicatorStyle =
-                            'border-emerald-500 bg-emerald-500 text-white';
-                        } else if (isSelected && !isCorrect) {
-                          containerStyle =
-                            'bg-rose-50 border-rose-500 shadow-sm';
-                          textStyle = 'text-rose-800 font-medium';
-                          indicatorStyle =
-                            'border-rose-500 bg-rose-500 text-white';
-                        }
-                      } else if (isSelected) {
-                        containerStyle =
-                          'border-supperagent bg-supperagent/5 shadow-md ring-1 ring-supperagent/10';
-                        textStyle = 'text-supperagent font-semibold';
-                        indicatorStyle = 'border-supperagent bg-supperagent';
-                      }
-
-                      return (
-                        <div
-                          key={optIndex}
-                          onClick={() =>
-                            !quizSubmitted &&
-                            setSelectedAnswers((prev) => ({
-                              ...prev,
-                              [qIndex]: opt
-                            }))
-                          }
-                          className={`
-                            group relative flex cursor-pointer select-none items-center gap-4 rounded-xl border-2 p-4 transition-all duration-200 ease-in-out
-                            ${containerStyle}
-                          `}
-                        >
-                          <div
-                            className={`flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors ${indicatorStyle}`}
-                          >
-                            {isSelected && (
-                              <div
-                                className={`h-2 w-2 rounded-full bg-current ${quizSubmitted ? 'bg-white' : 'bg-white'}`}
-                              />
-                            )}
-                          </div>
-                          <span className={`${textStyle} flex-1`}>{opt}</span>
-                          {quizSubmitted && isCorrect && (
-                            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                          )}
-                          {quizSubmitted && isSelected && !isCorrect && (
-                            <AlertCircle className="h-5 w-5 text-rose-500" />
-                          )}
-                        </div>
-                      );
-                    })}
+            {/* Assessment Feedback Card */}
+            {quizSubmitted && quizResult && (
+              <div className={`mb-8 p-6 rounded-xl border ${quizResult.isPassed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                <div className="flex items-center gap-3">
+                  {quizResult.isPassed ? (
+                    <CheckCircle2 className="h-8 w-8 text-green-600" />
+                  ) : (
+                    <XCircle className="h-8 w-8 text-red-600" />
+                  )}
+                  <div>
+                    <h2 className={`text-xl font-bold ${quizResult.isPassed ? 'text-green-800' : 'text-red-800'}`}>
+                      {quizResult.isPassed ? 'Congratulations! You Passed' : 'Quiz Failed. Keep Trying!'}
+                    </h2>
+                    <p className={`font-medium mt-1 ${quizResult.isPassed ? 'text-green-700' : 'text-red-700'}`}>
+                      You scored {quizResult.totalScore} out of {allQuestions.length}.
+                    </p>
                   </div>
                 </div>
-              ))}
+              </div>
+            )}
+
+            <div className="space-y-10">
+              {allQuestions?.map((q, qIndex) => {
+                const evaluatedData = quizResult?.answers.find(ans => ans.questionId === q._id);
+
+                return (
+                  <div key={qIndex} className="space-y-4">
+                    <h3 className="text-lg font-semibold leading-snug text-slate-900">
+                      <span className="mr-2 text-slate-400">{qIndex + 1}.</span>
+                      {q.question}
+                    </h3>
+
+                    <div className="grid grid-cols-1 gap-3 pl-0 sm:pl-6">
+                      {q.options?.map((opt, optIndex) => {
+                        const isSelected = selectedAnswers[qIndex] === opt;
+                        
+                        let containerStyle = 'border-slate-200 hover:border-supperagent hover:bg-supperagent/10';
+                        let textStyle = 'text-slate-600';
+                        let indicatorStyle = 'border-slate-300';
+                        let IconToRender = null;
+
+                        // STYLING LOGIC FOR SUBMITTED STATE
+                        if (quizSubmitted && quizResult && evaluatedData) {
+                          const isOptionProvidedByStudent = evaluatedData.providedAnswer.includes(opt);
+
+                          if (isOptionProvidedByStudent) {
+                            if (evaluatedData.isCorrect) {
+                               // Provided and correct
+                               containerStyle = 'border-green-500 bg-green-50 shadow-md ring-1 ring-green-500/10';
+                               textStyle = 'text-green-700 font-semibold';
+                               indicatorStyle = 'border-green-500 bg-green-500 text-white';
+                               IconToRender = <CheckCircle2 className="w-4 h-4" />;
+                            } else {
+                               // Provided but wrong
+                               containerStyle = 'border-red-500 bg-red-50 shadow-md ring-1 ring-red-500/10';
+                               textStyle = 'text-red-700 font-semibold';
+                               indicatorStyle = 'border-red-500 bg-red-500 text-white';
+                               IconToRender = <XCircle className="w-4 h-4" />;
+                            }
+                          } else {
+                             // Option was not selected
+                             containerStyle = 'border-slate-200 opacity-60 cursor-not-allowed';
+                          }
+                        } 
+                        // STYLING LOGIC FOR ACTIVE SELECTION
+                        else if (isSelected) {
+                          containerStyle = 'border-supperagent bg-supperagent/5 shadow-md ring-1 ring-supperagent/10';
+                          textStyle = 'text-supperagent font-semibold';
+                          indicatorStyle = 'border-supperagent bg-supperagent';
+                        }
+
+                        return (
+                          <div
+                            key={optIndex}
+                            onClick={() =>
+                              !quizSubmitted &&
+                              setSelectedAnswers((prev) => ({
+                                ...prev,
+                                [qIndex]: opt
+                              }))
+                            }
+                            className={`
+                              group relative flex cursor-pointer select-none items-center gap-4 rounded-xl border-2 p-4 transition-all duration-200 ease-in-out
+                              ${containerStyle}
+                            `}
+                          >
+                            <div
+                              className={`flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors ${indicatorStyle}`}
+                            >
+                              {(isSelected && !quizSubmitted) && (
+                                <div className="h-2 w-2 rounded-full bg-white" />
+                              )}
+                              {IconToRender}
+                            </div>
+                            <span className={`${textStyle} flex-1`}>{opt}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="mt-12 flex justify-end border-t border-slate-100 pt-8">
+            <div className="mt-12 flex justify-end border-t border-slate-100 pt-8 gap-4">
               {!quizSubmitted ? (
                 <Button
-                  onClick={() => setQuizSubmitted(true)}
+                  onClick={handleQuizSubmit}
                   size="lg"
                   className="min-w-[150px] bg-supperagent text-white shadow-lg shadow-indigo-200 hover:bg-supperagent/90"
                 >
                   Submit Quiz
                 </Button>
               ) : (
-                <Button
-                  onClick={() => {
-                    setSelectedAnswers({});
-                    setQuizSubmitted(false);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  size="lg"
-                  className="min-w-[150px] bg-supperagent text-white shadow-lg shadow-indigo-200 hover:bg-supperagent/90"
-                >
-                  Retake Quiz
-                </Button>
+                <>
+                  <Button
+                    onClick={() => {
+                      setSelectedAnswers({});
+                      setQuizSubmitted(false);
+                      setQuizResult(null);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    size="lg"
+                    variant="outline"
+                    className="min-w-[150px] shadow-lg"
+                  >
+                    Retake Quiz
+                  </Button>
+                </>
               )}
             </div>
           </CardContent>
@@ -509,7 +692,7 @@ export function EnrollCourseDetails() {
       </div>
     );
 
-  // --- NEW: No Data State ---
+  // --- No Data State ---
   if (!course)
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 bg-slate-50">
@@ -527,6 +710,22 @@ export function EnrollCourseDetails() {
         </Button>
       </div>
     );
+
+  // Determine if Next should be disabled (uncompleted quiz, or last lesson already completed)
+  const isNextDisabled = () => {
+    if (!currentLesson) return true;
+
+    if (currentLesson.type === 'quiz' && !completedLessons.has(currentLesson._id)) {
+      return true;
+    }
+    
+    // Disable if it's the very last lesson and it is already completed
+    if (currentIndex === allLessons.length - 1 && completedLessons.has(currentLesson._id)) {
+      return true;
+    }
+    
+    return false;
+  };
 
   // --- Main Content ---
   return (
@@ -570,7 +769,7 @@ export function EnrollCourseDetails() {
                 onClick={handlePrevLesson}
                 disabled={
                   currentIndex <= 0 ||
-                  (currentIndex > 0 && ENABLE_LOCK_FEATURE && allLessons[currentIndex - 1]?.lock)
+                  (currentIndex > 0 && !isLessonUnlocked(allLessons[currentIndex - 1]._id))
                 }
                 className="gap-2 rounded-full bg-supperagent px-6 text-white hover:bg-slate-800 disabled:opacity-50"
               >
@@ -579,14 +778,15 @@ export function EnrollCourseDetails() {
 
               <Button
                 onClick={handleNextLesson}
-                disabled={
-                  currentIndex >= allLessons.length - 1 ||
-                  (currentIndex < allLessons.length - 1 &&
-                    ENABLE_LOCK_FEATURE && allLessons[currentIndex + 1]?.lock)
-                }
+                disabled={isNextDisabled()}
                 className="gap-2 rounded-full bg-supperagent px-6 text-white hover:bg-slate-800 disabled:opacity-50"
               >
-                Next Lesson <ChevronRight className="h-4 w-4" />
+                {/* Dynamically render Complete vs Next Lesson */}
+                {currentIndex === allLessons.length - 1 ? (
+                  <>Complete <CheckCircle2 className="h-4 w-4" /></>
+                ) : (
+                  <>Next Lesson <ChevronRight className="h-4 w-4" /></>
+                )}
               </Button>
             </div>
           </div>
@@ -598,7 +798,6 @@ export function EnrollCourseDetails() {
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
                 {/* --- HEADER SECTION: Bold & Dark --- */}
                 <div className="relative bg-slate-900 p-6 text-white">
-                  {/* Decorative background glow using supperagent color */}
                   <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-supperagent/20 blur-3xl"></div>
                   <div className="absolute -left-10 bottom-0 h-32 w-32 rounded-full bg-supperagent/10 blur-3xl"></div>
 
@@ -615,7 +814,7 @@ export function EnrollCourseDetails() {
 
                       <div className="flex items-center gap-1 rounded-md bg-slate-800 px-2 py-1">
                         <span className="text-xs font-bold text-supperagent">
-                          {moduleStats.unlocked}
+                          {moduleStats.completed}
                         </span>
                         <span className="text-[10px] text-slate-500">/</span>
                         <span className="text-xs font-bold text-slate-400">
@@ -663,7 +862,6 @@ export function EnrollCourseDetails() {
                           key={section._id}
                           className="group/module border-b border-slate-200 bg-white last:border-0"
                         >
-                          {/* Module Header (Accordion) */}
                           <button
                             onClick={() => toggleModule(section._id)}
                             className={`w-full px-5 py-4 text-left transition-colors duration-200 
@@ -693,9 +891,7 @@ export function EnrollCourseDetails() {
                                   <span>{section.lessonsList.length} Lessons</span>
                                   <span className="h-1 w-1 rounded-full bg-black"></span>
                                   <span>
-                                    {formatDuration(
-                                      section.totalDurationMinutes
-                                    )}
+                                    {formatDuration(section.totalDurationMinutes)}
                                   </span>
                                 </p>
                               </div>
@@ -712,11 +908,9 @@ export function EnrollCourseDetails() {
                           >
                             <div className="flex flex-col bg-slate-50/50 pb-2 pt-1">
                               {section.lessonsList.map((lesson, idx) => {
-                                const isActive =
-                                  currentLesson?._id === lesson._id;
-                                
-                                // NEW: Compute lock state using our feature flag
-                                const isLocked = ENABLE_LOCK_FEATURE && lesson.lock;
+                                const isActive = currentLesson?._id === lesson._id;
+                                const isLocked = !isLessonUnlocked(lesson._id);
+                                const isCompleted = completedLessons.has(lesson._id);
 
                                 return (
                                   <button
@@ -732,12 +926,10 @@ export function EnrollCourseDetails() {
                                       ${isLocked ? 'cursor-not-allowed opacity-60 grayscale' : ''}
                                     `}
                                   >
-                                    {/* Active Indicator Strip */}
                                     {isActive && (
                                       <div className="absolute left-0 top-1/2 h-1/2 w-1 -translate-y-1/2 rounded-r bg-supperagent"></div>
                                     )}
 
-                                    {/* Icon Container */}
                                     <div
                                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold shadow-sm transition-colors
                                       ${
@@ -746,7 +938,9 @@ export function EnrollCourseDetails() {
                                           : 'border-slate-200 bg-white text-slate-400'
                                       }`}
                                     >
-                                      {isLocked ? (
+                                      {isCompleted ? (
+                                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                      ) : isLocked ? (
                                         <Lock className="h-3.5 w-3.5" />
                                       ) : (
                                         <span>{idx + 1}</span>
@@ -771,19 +965,14 @@ export function EnrollCourseDetails() {
                                               ? 'Quiz'
                                               : 'Reading'}
                                         </span>
+                                        <span className="text-[10px] text-black font-bold">•</span>
                                         <span className="text-[10px] text-black font-bold">
-                                          •
-                                        </span>
-                                        <span className="text-[10px] text-black font-bold">
-                                          {formatDuration(
-                                            Number(lesson.duration)
-                                          )}
+                                          {formatDuration(Number(lesson.duration))}
                                         </span>
                                       </div>
                                     </div>
 
-                                    {/* Playing Icon if Active */}
-                                    {isActive && !isLocked && (
+                                    {isActive && !isLocked && !isCompleted && (
                                       <Play className="h-3 w-3 fill-supperagent text-supperagent" />
                                     )}
                                   </button>

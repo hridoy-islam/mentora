@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   Plus,
   Pen,
@@ -8,7 +8,8 @@ import {
   Save,
   Trash2,
   Search,
-  Eye
+  Eye,
+  GripVertical
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,16 +27,14 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,18 +42,25 @@ import axiosInstance from '@/lib/axios';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
 import { DataTablePagination } from '@/components/shared/data-table-pagination';
 
+// DnD Imports
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+
 export default function CourseModulesPage() {
-  const [modules, setModules] = useState<any>([]);
+  const [modules, setModules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [courseName, setCourseName] = useState('');
   const navigate = useNavigate();
   const { cid } = useParams();
+  
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
   const [currentModule, setCurrentModule] = useState<any>(null);
   const [formData, setFormData] = useState({ title: '' });
+  
   const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(100);
@@ -89,9 +95,14 @@ export default function CourseModulesPage() {
           }
         }
       );
+      
       setTotalPages(modulesResponse.data.data.meta.totalPage);
 
-      setModules(modulesResponse.data.data?.result || []);
+      // Sort fetched modules by index
+      const sorted = (modulesResponse.data.data?.result || []).sort(
+        (a: any, b: any) => a.index - b.index
+      );
+      setModules(sorted);
     } catch (error) {
       console.error('Error fetching modules:', error);
     } finally {
@@ -175,271 +186,338 @@ export default function CourseModulesPage() {
     setOpenDialog(true);
   };
 
+  // --- Drag and Drop Logic ---
+  const moveRow = (fromIndex: number, toIndex: number) => {
+    const updated = [...modules];
+    const [movedItem] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, movedItem);
+
+    const reIndexed = updated.map((mod, i) => ({
+      ...mod,
+      index: i + 1
+    }));
+
+    setModules(reIndexed);
+    saveNewOrder(reIndexed);
+  };
+
+  const saveNewOrder = async (updatedModules: any[]) => {
+    try {
+      await axiosInstance.patch(`/course-modules/reorder/${cid}`, {
+        modules: updatedModules.map((m) => ({
+          id: m._id,
+          index: m.index
+        }))
+      });
+    } catch (error) {
+      console.error('Error saving module order:', error);
+    }
+  };
+
+  const DraggableRow = ({ module, index }: any) => {
+    const ref = useRef<any>(null);
+    const ITEM_TYPE = 'module';
+
+    const [, drop] = useDrop({
+      accept: ITEM_TYPE,
+      hover: (item: any) => {
+        if (item.index !== index) {
+          moveRow(item.index, index);
+          item.index = index;
+        }
+      }
+    });
+
+    const [{ isDragging }, drag] = useDrag({
+      type: ITEM_TYPE,
+      item: { id: module._id, index },
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging()
+      })
+    });
+
+    drag(drop(ref));
+
+    return (
+      <TableRow
+        ref={ref}
+        style={{ opacity: isDragging ? 0.4 : 1, cursor: 'grab' }}
+      >
+        <TableCell className="font-medium">
+          <div className="flex items-center gap-2">
+            <GripVertical className="h-4 w-4 text-gray-400" />
+            {module?.title}
+          </div>
+        </TableCell>
+
+        <TableCell className="text-right">
+          <div className="flex items-center justify-end gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => navigate(`${module._id}/lessons`)}
+                  >
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    View Lessons
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>View Lessons</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => openEditDialog(module)}
+                  >
+                    <Pen className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Edit Module</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      setDeletingModuleId(module._id);
+                      setDeleteConfirmOpen(true);
+                    }}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Delete Module</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
+    <DndProvider backend={HTML5Backend}>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <div className="flex flex-row items-center gap-4">
+                <div>
+                  <CardTitle>Course Modules</CardTitle>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <Input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search modules..."
+                    className="h-8 w-[200px]"
+                  />
+                  <Button
+                    onClick={handleSearch}
+                    size="default"
+                    className="h-8 bg-supperagent px-4 hover:bg-supperagent/90"
+                  >
+                    <Search className="mr-2 h-4 w-4" />
+                    Search
+                  </Button>
+                </div>
+              </div>
+              {courseName && (
+                <p className="mt-2 text-sm text-gray-600">
+                  Course: <span className="font-semibold">{courseName}</span>
+                </p>
+              )}
+            </div>
             <div className="flex flex-row items-center gap-4">
-              <div>
-                <CardTitle>Course Modules</CardTitle>
-              </div>
-              <div className="flex  items-center space-x-4">
-                <Input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search modules..."
-                  className="h-8 w-[200px]"
-                />
-                <Button
-                  onClick={handleSearch}
-                  size="default"
-                  className="h-8 bg-supperagent px-4 hover:bg-supperagent/90"
-                >
-                  <Search className="mr-2 h-4 w-4" />
-                  Search
-                </Button>
-              </div>
-            </div>
-            {courseName && (
-              <p className="mt-2 text-sm text-gray-600">
-                Course: <span className="font-semibold">{courseName}</span>
-              </p>
-            )}
-          </div>
-          <div className="flex flex-row items-center gap-4  ">
-            <Button
-              size="default"
-              onClick={() => navigate(-1)}
-              variant="outline"
-            >
-              <MoveLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-            <Button
-              size="default"
-              variant="outline"
-              onClick={() => window.open(`/courses/${courseSlug}`, '_blank')}
-              disabled={!cid}
-            >
-              <Eye className="mr-2 h-4 w-4" />
-              Website View
-            </Button>
-
-            <Button
-              size="default"
-              variant="outline"
-              onClick={() =>
-                window.open(`/student/courses/${courseSlug}`, '_blank')
-              }
-              disabled={!cid}
-            >
-              <Eye className="mr-2 h-4 w-4" />
-              Student View
-            </Button>
-
-            <Button
-              size="default"
-              onClick={openCreateDialog}
-              className="bg-supperagent hover:bg-supperagent/90"
-              disabled={!cid}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              New Module
-            </Button>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-4">
-          {loading ? (
-            <div className="flex justify-center py-6">
-              <BlinkingDots size="large" color="bg-supperagent" />
-            </div>
-          ) : modules.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              <BookOpen className="mb-4 h-12 w-12 text-gray-400" />
-              <p className="text-lg">No modules found.</p>
               <Button
-                onClick={openCreateDialog}
-                className="mt-4 bg-supperagent hover:bg-supperagent/90"
+                size="default"
+                onClick={() => navigate(-1)}
+                variant="outline"
+              >
+                <MoveLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                size="default"
+                variant="outline"
+                onClick={() => window.open(`/courses/${courseSlug}`, '_blank')}
                 disabled={!cid}
               >
-                Create your first module
+                <Eye className="mr-2 h-4 w-4" />
+                Website View
+              </Button>
+
+              <Button
+                size="default"
+                variant="outline"
+                onClick={() =>
+                  window.open(`/student/courses/${courseSlug}`, '_blank')
+                }
+                disabled={!cid}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Student View
+              </Button>
+
+              <Button
+                size="default"
+                onClick={openCreateDialog}
+                className="bg-supperagent hover:bg-supperagent/90"
+                disabled={!cid}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Module
               </Button>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Module Title</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {modules.map((module: any, index: number) => (
-                  <TableRow key={module?._id}>
-                    <TableCell className="font-medium">
-                      {module?.title}
-                    </TableCell>
+          </CardHeader>
 
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() =>
-                                  navigate(`${module._id}/lessons`)
-                                }
-                              >
-                                <BookOpen className="mr-2 h-4 w-4" />
-                                View Lessons
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>View Lessons</p>
-                            </TooltipContent>
-                          </Tooltip>
-
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => openEditDialog(module)}
-                              >
-                                <Pen className="mr-2 h-4 w-4" />
-                                Edit
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Edit Module</p>
-                            </TooltipContent>
-                          </Tooltip>
-
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => {
-                                  setDeletingModuleId(module._id);
-                                  setDeleteConfirmOpen(true);
-                                }}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Delete Module</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </TableCell>
+          <CardContent className="pt-4">
+            {loading ? (
+              <div className="flex justify-center py-6">
+                <BlinkingDots size="large" color="bg-supperagent" />
+              </div>
+            ) : modules.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                <BookOpen className="mb-4 h-12 w-12 text-gray-400" />
+                <p className="text-lg">No modules found.</p>
+                <Button
+                  onClick={openCreateDialog}
+                  className="mt-4 bg-supperagent hover:bg-supperagent/90"
+                  disabled={!cid}
+                >
+                  Create your first module
+                </Button>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Module Title</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          {modules.length > 40 && (
-            <DataTablePagination
-              pageSize={entriesPerPage}
-              setPageSize={setEntriesPerPage}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Create/Edit Module Dialog */}
-      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="rounded-xl border p-6 shadow-lg sm:max-w-3xl">
-          <DialogHeader className="space-y-2 text-center">
-            <DialogTitle className="text-2xl font-semibold">
-              {dialogMode === 'create' ? 'Create New Module' : 'Edit Module'}
-            </DialogTitle>
-            <DialogDescription className="text-base text-muted-foreground">
-              {dialogMode === 'create'
-                ? 'Provide the necessary information to add a new module.'
-                : 'Modify the details of the selected module.'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleDialogSubmit} className="mt-4 space-y-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="title" className="text-lg font-medium">
-                Title
-              </Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                placeholder="Enter module title"
-                required
-                className="h-12 text-lg"
+                </TableHeader>
+                <TableBody>
+                  {modules.map((module: any, index: number) => (
+                    <DraggableRow
+                      key={module?._id}
+                      module={module}
+                      index={index}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+            {modules.length > 40 && (
+              <DataTablePagination
+                pageSize={entriesPerPage}
+                setPageSize={setEntriesPerPage}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
               />
-            </div>
+            )}
+          </CardContent>
+        </Card>
 
-            <DialogFooter className="flex justify-end space-x-3 pt-4">
+        {/* Create/Edit Module Dialog */}
+        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+          <DialogContent className="rounded-xl border p-6 shadow-lg sm:max-w-3xl">
+            <DialogHeader className="space-y-2 text-center">
+              <DialogTitle className="text-2xl font-semibold">
+                {dialogMode === 'create' ? 'Create New Module' : 'Edit Module'}
+              </DialogTitle>
+              <DialogDescription className="text-base text-muted-foreground">
+                {dialogMode === 'create'
+                  ? 'Provide the necessary information to add a new module.'
+                  : 'Modify the details of the selected module.'}
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleDialogSubmit} className="mt-4 space-y-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="title" className="text-lg font-medium">
+                  Title
+                </Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  placeholder="Enter module title"
+                  required
+                  className="h-12 text-lg"
+                />
+              </div>
+
+              <DialogFooter className="flex justify-end space-x-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpenDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-supperagent hover:bg-supperagent/90"
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  {dialogMode === 'create' ? 'Create Module' : 'Save Changes'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delete Module</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this module? This action cannot be
+                undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpenDialog(false)}
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setDeletingModuleId(null);
+                }}
               >
                 Cancel
               </Button>
               <Button
-                type="submit"
-                className=" bg-supperagent hover:bg-supperagent/90"
+                type="button"
+                variant="destructive"
+                onClick={handleDeleteModule}
               >
-                <Save className="mr-2 h-4 w-4" />
-                {dialogMode === 'create' ? 'Create Module' : 'Save Changes'}
+                <Trash2 className="mr-2 h-4 w-4" /> Delete
               </Button>
             </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Module</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this module? This action cannot be
-              undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setDeleteConfirmOpen(false);
-                setDeletingModuleId(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDeleteModule}
-            >
-              <Trash2 className="mr-2 h-4 w-4" /> Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </DndProvider>
   );
 }
