@@ -386,7 +386,7 @@ function CourseCard({
 
         {/* Completed Badge */}
         {isCompleted && (
-          <div className="absolute left-3 top-3 flex items-center gap-1 rounded bg-emerald-500 px-2 py-1 text-xs font-bold text-white shadow-sm">
+          <div className="absolute left-3 top-3 flex items-center gap-1 rounded bg-theme px-2 py-1 text-xs font-bold text-white shadow-sm">
             <CheckCircle className="h-3 w-3" /> Completed
           </div>
         )}

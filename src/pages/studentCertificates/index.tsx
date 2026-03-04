@@ -17,7 +17,8 @@ import axiosInstance from '@/lib/axios';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
 import moment from 'moment';
 import { useSelector } from 'react-redux';
-
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import { CertificatePDF } from './components/CertificatePDF';
 // Interface matching the provided Mongoose model structure (frontend view)
 interface EnrolledCourse {
   _id: string;
@@ -120,77 +121,61 @@ export default function StudentCertificatePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {courses.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="py-8 text-center text-gray-500">
-                    No enrolled courses found for this student.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                courses.map((item) => (
+              {courses.map((item) => {
+                const isReady = item.progress === 100;
+
+                return (
                   <TableRow key={item._id}>
-                    {/* Course Name & Issue Date */}
                     <TableCell>
-                      <div className="flex flex-col space-y-1">
-                        <span className="font-medium text-base">
-                          {item.courseId?.title || 'Unknown Course'}
-                        </span>
-                        
-                        {item.completedDate ? (
-                          <div className="flex items-center text-xs text-green-600">
-                            <Calendar className="mr-1 h-3 w-3" />
-                            <span>
-                              Issued: {moment(item.completedDate).format('LL')}
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center text-xs text-gray-400">
-                            <Calendar className="mr-1 h-3 w-3" />
-                            <span>Not yet issued</span>
-                          </div>
-                        )}
+                      <div className="font-medium">{item.courseId?.title}</div>
+                      <div className="text-xs text-gray-400">
+                        {isReady ? `Completed: ${moment(item.updatedAt).format('LL')}` : 'In Progress'}
                       </div>
                     </TableCell>
 
-                    {/* Status */}
                     <TableCell className="text-center">
-                      <Badge 
-                        variant={item.status === 'completed' ? 'default' : 'secondary'}
-                        className={
-                            item.status === 'completed' 
-                            ? "bg-green-100 text-green-700 hover:bg-green-100" 
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-100"
-                        }
-                      >
-                        {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                      <Badge variant={isReady ? 'default' : 'secondary'}>
+                        {isReady ? 'Completed' : 'Active'}
                       </Badge>
                     </TableCell>
 
-                    {/* Progress Bar/Text */}
                     <TableCell className="text-center">
-                        <span className="text-sm font-medium">{item.progress}%</span>
+                      <span className="text-sm font-medium">{item.progress}%</span>
                     </TableCell>
 
-                    {/* Actions */}
                     <TableCell className="text-right">
-                      <Button
-                        variant={item.status === 'completed' ? 'default' : 'ghost'}
-                        size="sm"
-                        disabled={item.status !== 'completed'}
-                        onClick={() => handleViewCertificate(item)}
-                        className={`
-                            ${item.status === 'completed' 
-                                ? 'bg-supperagent text-white hover:bg-supperagent/90' 
-                                : 'text-gray-400 cursor-not-allowed'}
-                        `}
-                      >
-                        <FileText className="mr-2 h-4 w-4" />
-                        View Certificate
-                      </Button>
+                      {isReady ? (
+                        <PDFDownloadLink
+                          document={
+                            <CertificatePDF
+                              studentName={user.name}
+                              courseTitle={item.courseId.title}
+                              date={moment(item.updatedAt).format('LL')}
+                            />
+                          }
+                          fileName={`${item.courseId.title}-Certificate.pdf`}
+                        >
+                          {({ loading }) => (
+                            <Button 
+                              size="sm" 
+                              className="bg-supperagent text-white"
+                              disabled={loading}
+                            >
+                              <FileText className="mr-2 h-4 w-4" />
+                              {loading ? 'Preparing...' : 'Download Certificate'}
+                            </Button>
+                          )}
+                        </PDFDownloadLink>
+                      ) : (
+                        <Button size="sm" variant="ghost" disabled className="text-gray-400">
+                          <Award className="mr-2 h-4 w-4" />
+                          Complete Course to Unlock
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
-                ))
-              )}
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

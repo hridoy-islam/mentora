@@ -191,7 +191,7 @@ const{id} = useParams()
   }
 
   return (
-    <div className="container mx-auto space-y-6 px-4 py-8 sm:px-6">
+    <div className="container mx-auto space-y-6 ">
       {/* --- HEADER --- */}
       <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
