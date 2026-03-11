@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pen, MoveLeft, Eye, Loader2 } from 'lucide-react';
+import { Plus, Pen, MoveLeft, Eye, Loader2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -271,43 +271,57 @@ export default function MyStaffPage() {
 
   return (
     <div className="space-y-3">
-    
       {/* TABLE CARD */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex flex-row items-center gap-4">
-            <CardTitle>Staff List</CardTitle>
-            <div className="flex items-center space-x-2">
-              <Input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="Search by Name, Email"
-                className="h-9 min-w-[200px] lg:min-w-[300px]"
-              />
+        <CardHeader className="relative overflow-hidden ">
+          {/* Decorative Gradient Blob for visual interest */}
+          <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-supperagent/5 blur-3xl" />
+
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            {/* Left Section: Title & Search */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center lg:gap-8">
+              <CardTitle className="flex items-center gap-2 whitespace-nowrap ">
+                <Users className="h-5 w-5" />
+                Staff List
+              </CardTitle>
+
+              <div className="flex w-full items-center space-x-2 sm:max-w-sm">
+                <div className="relative w-full">
+                  <Input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    placeholder="Search name or email..."
+                    className="h-10 w-full border-muted-foreground/20 bg-background/50 pl-4 pr-10 backdrop-blur-sm transition-all focus:ring-2 focus:ring-supperagent/50"
+                  />
+                </div>
+                <Button
+                  onClick={handleSearch}
+                  className="h-10 bg-supperagent px-4 text-white shadow-lg shadow-supperagent/20 hover:bg-supperagent/90 hover:shadow-supperagent/40"
+                >
+                  Search
+                </Button>
+              </div>
+            </div>
+
+            {/* Right Section: Action Buttons */}
+            <div className="flex items-center gap-3">
               <Button
-                onClick={handleSearch}
-                size="sm"
-                className="bg-supperagent text-white hover:bg-supperagent/90"
+                size="default"
+                onClick={() => navigate(-1)}
+                variant="outline"
               >
-                Search
+                <MoveLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+
+              <Button onClick={handleAdd}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Staff
               </Button>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-          <Button size="default" onClick={() => navigate(-1)} variant="outline">
-            <MoveLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <Button
-            onClick={handleAdd}
-            className="bg-supperagent text-white hover:bg-supperagent/90"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Staff
-          </Button>
-        </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -374,7 +388,7 @@ export default function MyStaffPage() {
               )}
             </TableBody>
           </Table>
-          {students.length > 0 && (
+          {students.length > 40 && (
             <div className="mt-4">
               <DataTablePagination
                 pageSize={entriesPerPage}

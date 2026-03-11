@@ -126,15 +126,15 @@ export function AdminDashboard() {
         <h1 className="text-3xl font-bold text-gray-800">Welcome Back, Academine 👋</h1>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {displayStats.map((stat) => (
           <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
+            <div className="flex p-3 flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-bold text-muted-foreground">{stat.title}</CardTitle>
               <div className={`p-2 rounded-lg ${stat.color}`}>
                 <StatIcon>{stat.icon}</StatIcon>
               </div>
-            </CardHeader>
+            </div>
             <CardContent>
               <div className="text-2xl font-bold">
                 {loading ? <span className="animate-pulse">...</span> : stat.value}
@@ -145,9 +145,9 @@ export function AdminDashboard() {
       </div>
 
       <Card>
-        <CardHeader>
+        <div className='p-3'>
           <CardTitle>Sales & Enrollments Performance ({new Date().getFullYear()})</CardTitle>
-        </CardHeader>
+        </div>
         <CardContent>
           <ResponsiveContainer width="100%" height={350}>
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>

@@ -166,7 +166,7 @@ export default function OrganizationCoursesPage() {
             </TableBody>
           </Table>
 
-          {courses.length > 0 && (
+          {courses.length > 50 && (
             <div className="mt-4">
               <DataTablePagination
                 pageSize={entriesPerPage}

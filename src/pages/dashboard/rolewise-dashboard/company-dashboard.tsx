@@ -26,7 +26,7 @@ export function CompanyDashboard() {
   // Pagination & Search
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(5);
+  const [entriesPerPage, setEntriesPerPage] = useState(25);
   const[totalCourse,setTotalCourse] = useState(0);
   const[totalAmount,setTotalAmount] = useState(0);
 
@@ -71,7 +71,7 @@ export function CompanyDashboard() {
 
 
   const companyStats = [
-    { title: 'Purchase Amount', value: `£${totalAmount}` },
+    // { title: 'Purchase Amount', value: `£${totalAmount}` },
     { title: 'Total Course', value: totalCourse }
   ];
 
@@ -92,16 +92,15 @@ export function CompanyDashboard() {
 
       {/* Section 1: Profile & Stats */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Stats Grid */}
         <div className="lg:col-span-8">
           <div className="grid gap-6 sm:grid-cols-3">
             {companyStats.map((stat) => (
-              <Card key={stat.title}>
-                <CardHeader className="pb-2">
+              <Card key={stat.title} className='bg-white'>
+                <div className="pb-2 p-3 rounded-md bg-white">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     {stat.title}
                   </CardTitle>
-                </CardHeader>
+                </div>
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>
                 </CardContent>
@@ -179,7 +178,7 @@ export function CompanyDashboard() {
             </TableBody>
           </Table>
 
-          {courses.length > 0 && (
+          {courses.length > 20 && (
             <div className="mt-4">
               <DataTablePagination
                 pageSize={entriesPerPage}

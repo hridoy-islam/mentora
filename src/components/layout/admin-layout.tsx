@@ -29,7 +29,7 @@ export default function AdminLayout({
           <div className='md:hidden'>
             <SiteHeader />
             </div>
-          <main className="w-full p-4 md:p-6 ">{children}</main>
+          <main className="w-full p-2 ">{children}</main>
         </SidebarInset>
       </div>
 

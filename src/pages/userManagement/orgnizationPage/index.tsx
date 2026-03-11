@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pen, Settings, MoveLeft, Eye, Loader2 } from 'lucide-react';
+import {
+  Plus,
+  Pen,
+  Settings,
+  MoveLeft,
+  Eye,
+  Loader2,
+  Building2
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -45,12 +53,13 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { countries } from '@/types';
 
 // --- 1. Updated Zod Schema (Added Password) ---
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email address'),
-  password: z.string().optional(), // Optional password
+  password: z.string().optional(), // Optional password (handled dynamically in UI)
   phone: z.string().optional(),
   country: z.string().optional(),
   state: z.string().optional(),
@@ -58,9 +67,6 @@ const formSchema = z.object({
   zipCode: z.string().optional(),
   address: z.string().optional()
 });
-
-// Mock countries list
-const countries = ['USA', 'UK', 'Canada', 'Australia', 'India', 'Bangladesh'];
 
 export default function OrganizationPage() {
   const [organizations, setOrganizations] = useState<any[]>([]);
@@ -126,7 +132,24 @@ export default function OrganizationPage() {
     }
   };
 
-  // --- 3. Handle Edit Click (Reset Password to empty) ---
+  // --- 3. Handle Add Click (Reset form for new entry) ---
+  const handleAddClick = () => {
+    setEditingOrganization(null);
+    form.reset({
+      name: '',
+      email: '',
+      password: '',
+      phone: '',
+      country: '',
+      state: '',
+      city: '',
+      zipCode: '',
+      address: ''
+    });
+    setDialogOpen(true);
+  };
+
+  // --- 4. Handle Edit Click (Reset Password to empty) ---
   const handleEditClick = (org: any) => {
     setEditingOrganization(org);
     // Reset form with organization details
@@ -144,45 +167,45 @@ export default function OrganizationPage() {
     setDialogOpen(true);
   };
 
-  // --- 4. Handle Form Submission (Filter empty password) ---
+  // --- 5. Handle Form Submission (Create & Update) ---
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!editingOrganization) return;
-
     try {
       setSubmitLoading(true);
 
-      // Create a payload copy
-      const payload = { ...values };
+      // Create a payload copy and normalize email
+      const payload: any = { ...values, email: values.email.toLowerCase() };
 
-      // Remove password from payload if it's empty (so we don't overwrite with "")
+      // Remove password from payload if it's empty (so we don't overwrite with "" or send empty pass)
       if (!payload.password || payload.password.trim() === '') {
         delete payload.password;
       }
 
-      const response = await axiosInstance.patch(
-        `/users/${editingOrganization._id}`,
-        payload
-      );
-
-      // Update local state
-      setOrganizations((prev) =>
-        prev.map((item) =>
-          item._id === editingOrganization._id ? { ...item, ...payload } : item
-        )
-      );
-
-      toast({
-        title: 'Success',
-        description: 'Organization details updated successfully.'
-      });
+      if (editingOrganization) {
+        // UPDATE Existing Organization
+        await axiosInstance.patch(`/users/${editingOrganization._id}`, payload);
+        toast({
+          title: 'Success',
+          description: 'Organization details updated successfully.'
+        });
+      } else {
+        // CREATE New Organization
+        payload.role = 'company';
+        await axiosInstance.post('/auth/signup', payload);
+        toast({
+          title: 'Success',
+          description: 'Organization created successfully.'
+        });
+      }
 
       setDialogOpen(false);
+      // Refresh the data to show the new/updated record
+      fetchData(currentPage, entriesPerPage, searchTerm);
     } catch (error: any) {
-      console.error('Error updating organization:', error);
+      console.error('Error saving organization:', error);
       toast({
         title: 'Error',
         description:
-          error?.response?.data?.message || 'Failed to update organization.',
+          error?.response?.data?.message || 'Failed to save organization.',
         variant: 'destructive'
       });
     } finally {
@@ -221,80 +244,94 @@ export default function OrganizationPage() {
     fetchData(1, entriesPerPage, searchTerm);
   };
 
-  if (initialLoading) {
-    return (
-      <div className="flex justify-center py-6">
-        <BlinkingDots size="large" color="bg-supperagent" />
-      </div>
-    );
-  }
+
 
   return (
     <div className="space-y-3">
-      {/* Header and Search Section */}
-   
+      <Card className="">
+        <CardHeader>
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center lg:gap-8">
+              <div>
+                <CardTitle className="flex items-center gap-2 tracking-tight">
+                  <Building2 className="h-6 w-6 text-supperagent" />
+                  Organizations
+                </CardTitle>
+              </div>
 
-      <Card>
-        <CardHeader className='flex flex-row items-center justify-between'>
-          <div className='flex flex-row items-center gap-2'>
-          <CardTitle>Organizations List</CardTitle>
-          <div className="flex items-center space-x-4">
-            <Input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="Search by Name, Email"
-              className="h-8 min-w-[300px]"
-            />
-            <Button
-              onClick={handleSearch}
-              size="sm"
-              className="min-w-[100px] border-none bg-supperagent text-white hover:bg-supperagent/90"
-            >
-              Search
-            </Button>
+              <div className="flex w-full items-center space-x-2">
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="Search by Name, Email"
+                  className=""
+                />
+                <Button onClick={handleSearch}>Search</Button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button size="sm" onClick={() => navigate(-1)} variant="outline">
+                <MoveLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button onClick={handleAddClick} size="sm">
+                <Plus className="mr-2 h-4 w-4" /> Add Company
+              </Button>
+            </div>
           </div>
-          </div>
-          <Button size="default" onClick={() => navigate(-1)} variant="outline">
-            <MoveLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
-            <TableHeader>
+            <TableHeader className="">
               <TableRow>
-                <TableHead>Name</TableHead>
+                <TableHead className="pl-6">Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>Staff</TableHead>
                 <TableHead className="w-32 text-center">Status</TableHead>
-                <TableHead className="w-32 text-center">Actions</TableHead>
+                <TableHead className="w-32 pr-6 text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
-              {organizations.length === 0 ? (
+              {/* 1. Check if loading first */}
+              {initialLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center">
+                    <div className="flex items-center justify-center">
+                      {/* Assuming you have BlinkingDots imported, or you can use Loader2 */}
+                      <BlinkingDots size="large" color="bg-supperagent" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : organizations.length === 0 ? (
+                /* 2. Then check if empty */
                 <TableRow>
                   <TableCell
                     colSpan={6}
-                    className="py-8 text-center text-gray-500"
+                    className="py-12 text-center text-muted-foreground"
                   >
                     No organizations found
                   </TableCell>
                 </TableRow>
               ) : (
+                /* 3. Finally, render the data */
                 organizations.map((org) => (
-                  <TableRow key={org._id}>
-                    <TableCell>{org.name}</TableCell>
+                  <TableRow
+                    key={org._id}
+                    className="transition-colors hover:bg-muted/30"
+                  >
+                    <TableCell className="pl-6 font-medium">
+                      {org.name}
+                    </TableCell>
                     <TableCell>{org.email}</TableCell>
                     <TableCell>{org.phone || 'N/A'}</TableCell>
                     <TableCell>
                       <Button
-                        variant="ghost"
                         size="sm"
-                        className="bg-supperagent text-white hover:bg-supperagent/90"
                         onClick={() => navigate(`${org._id}/staffs`)}
                       >
                         <Eye className="mr-2 h-4 w-4" /> View
@@ -309,24 +346,22 @@ export default function OrganizationPage() {
                           }
                         />
                         <span
-                          className={`text-sm font-medium ${
+                          className={`text-xs font-semibold uppercase ${
                             org.status === 'active'
                               ? 'text-green-600'
-                              : 'text-red-600'
+                              : 'text-red-500'
                           }`}
                         >
-                          {org.status === 'active' ? 'Active' : 'Disable'}
+                          {org.status === 'active' ? 'Active' : 'Disabled'}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="space-x-1 text-center">
+                    <TableCell className="pr-6 text-center">
                       <Button
-                        variant="ghost"
                         size="icon"
-                        className="bg-supperagent text-white hover:bg-supperagent/90"
                         onClick={() => handleEditClick(org)}
                       >
-                        <Pen className="h-4 w-4" />
+                        <Pen className="h-3.5 w-3.5" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -335,8 +370,8 @@ export default function OrganizationPage() {
             </TableBody>
           </Table>
 
-          {organizations.length > 40 && (
-            <div className="mt-4">
+          {organizations.length > 40 && !initialLoading && (
+            <div className="mt-4 p-4">
               <DataTablePagination
                 pageSize={entriesPerPage}
                 setPageSize={setEntriesPerPage}
@@ -349,11 +384,15 @@ export default function OrganizationPage() {
         </CardContent>
       </Card>
 
-      {/* --- EDIT ORGANIZATION DIALOG --- */}
+      {/* --- CREATE / EDIT ORGANIZATION DIALOG --- */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Organization Details</DialogTitle>
+            <DialogTitle className="text-xl font-bold">
+              {editingOrganization
+                ? 'Edit Organization Details'
+                : 'Add New Organization'}
+            </DialogTitle>
           </DialogHeader>
 
           <Form {...form}>
@@ -387,7 +426,7 @@ export default function OrganizationPage() {
                         <Input
                           placeholder="company@example.com"
                           type="email"
-                          disabled
+                          disabled={!!editingOrganization} // Disable email edit if updating
                           {...field}
                         />
                       </FormControl>
@@ -399,7 +438,6 @@ export default function OrganizationPage() {
 
               {/* Password & Phone */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {/* --- Password Field (Added) --- */}
                 <FormField
                   control={form.control}
                   name="password"
@@ -407,9 +445,13 @@ export default function OrganizationPage() {
                     <FormItem>
                       <FormLabel>
                         Password
-                        <span className="ml-1 text-xs font-normal text-gray-500">
-                          (Optional)
-                        </span>
+                        {editingOrganization ? (
+                          <span className="ml-1 text-xs font-normal text-muted-foreground">
+                            (Optional)
+                          </span>
+                        ) : (
+                          <span className="ml-1 text-red-500">*</span>
+                        )}
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -457,7 +499,7 @@ export default function OrganizationPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="z-[9999] max-h-[250px]">
-                          {countries.map((country) => (
+                          {countries.map((country: any) => (
                             <SelectItem key={country} value={country}>
                               {country}
                             </SelectItem>
@@ -539,13 +581,15 @@ export default function OrganizationPage() {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-supperagent hover:bg-supperagent/90"
+                  className="bg-supperagent text-white hover:bg-supperagent/90"
                   disabled={submitLoading}
                 >
                   {submitLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  Update Organization
+                  {editingOrganization
+                    ? 'Update Organization'
+                    : 'Create Organization'}
                 </Button>
               </DialogFooter>
             </form>
