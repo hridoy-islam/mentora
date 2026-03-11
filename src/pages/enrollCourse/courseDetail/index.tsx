@@ -597,6 +597,10 @@ export function EnrollCourseDetails() {
                           indicatorStyle = 'border-supperagent bg-supperagent';
                         }
 
+                        // Determine if this specific option is an image
+                        // Assuming q.optionType is an array of strings like ['text', 'image', 'text', 'text']
+                        const isImage = q.optionType && q.optionType[optIndex] === 'image';
+
                         return (
                           <div
                             key={optIndex}
@@ -613,14 +617,27 @@ export function EnrollCourseDetails() {
                             `}
                           >
                             <div
-                              className={`flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors ${indicatorStyle}`}
+                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${indicatorStyle}`}
                             >
                               {(isSelected && !quizSubmitted) && (
                                 <div className="h-2 w-2 rounded-full bg-white" />
                               )}
                               {IconToRender}
                             </div>
-                            <span className={`${textStyle} flex-1`}>{opt}</span>
+                            
+                            {/* Render logic for Text vs Image */}
+                            <div className={`flex-1 ${textStyle}`}>
+                              {isImage ? (
+                                <img 
+                                  src={opt} 
+                                  alt={`Option ${optIndex + 1}`} 
+                                  className="max-h-40 rounded-md object-contain border border-slate-200 bg-white" 
+                                />
+                              ) : (
+                                <span>{opt}</span>
+                              )}
+                            </div>
+
                           </div>
                         );
                       })}

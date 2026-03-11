@@ -112,7 +112,7 @@ export function CompanyDashboard() {
 
       {/* Section 2: Course List */}
       <Card>
-        <CardHeader>
+        <CardHeader className=''>
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" /> Enrolled Course List
           </CardTitle>

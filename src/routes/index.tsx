@@ -42,9 +42,11 @@ import ReportPage from '@/pages/reportPage';
 import MyOrganizationPage from '@/pages/myOrganization';
 import OrganizationAvailableCoursesPage from '@/pages/myOrganization/availableCourses';
 import TransactionHistoryPage from '@/pages/transactionHistoryPage';
-import { CartPage } from '@/pages/cartPage';
-import { CheckoutPage } from '@/pages/checkoutPage';
+import { CartPage } from '@/pages/cartPage/publicCartPage';
 import StudentCertificatePage from '@/pages/studentCertificates';
+import {  StudentCartPage } from '@/pages/cartPage/studentCartPage';
+import { StudentCheckoutPage } from '@/pages/checkoutPage/StudentCheckoutPage';
+import { CheckoutPage } from '@/pages/checkoutPage/PublicCheckoutPage';
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 const DashboardPage = lazy(() => import('@/pages/dashboard'));
 
@@ -196,12 +198,12 @@ export default function AppRouter() {
         },
         {
           path: 'cart',
-          element: <CartPage />,
+          element: <StudentCartPage />,
           index: true
         },
         {
           path: 'checkout',
-          element: <CheckoutPage />,
+          element: <StudentCheckoutPage />,
           index: true
         },
         {

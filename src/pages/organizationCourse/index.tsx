@@ -105,10 +105,16 @@ export default function OrganizationCoursesPage() {
           <CardTitle className="flex items-center gap-2">
              <BookOpen className="h-5 w-5" /> Enrolled Course List
           </CardTitle>
+          <div className='flex flex-row items-center gap-4'>
+
            <Button size="default" onClick={() => navigate(-1)} variant="outline">
             <MoveLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
+           <Button size="default" onClick={() => navigate('/courses')} >
+           Explore More Courses
+          </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
