@@ -6,7 +6,9 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
-  MoreHorizontal
+  MoreHorizontal,
+  Users,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -164,7 +166,6 @@ const{id} = useParams()
       toast({
         title: 'Success',
         description: 'Successfully enrolled in the course',
-        className: 'bg-green-600 text-white border-none'
       });
 
      
@@ -193,7 +194,7 @@ const{id} = useParams()
   return (
     <div className="container mx-auto space-y-6 ">
       {/* --- HEADER --- */}
-      <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border-b py-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
            {userData? <>{userData?.name}'s Courses</>:<>Available Courses</>} 
@@ -222,114 +223,166 @@ const{id} = useParams()
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {courses.map((license, index) => {
-            const seatsFull = license.usedSeats >= license.totalSeats;
-            const isProcessing = enrollingId === license._id;
-            const isDisabled = !license.isActive || seatsFull || isProcessing;
-            const course = license.courseId;
+       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+  {courses.map((license, index) => {
+    const seatsFull = license.usedSeats >= license.totalSeats;
+    const isProcessing = enrollingId === license._id;
+    const isDisabled = !license.isActive || seatsFull || isProcessing;
+    const course = license.courseId;
 
-            return (
-              <motion.div
-                key={license._id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-                className="h-full"
-              >
+    // Calculate seat usage percentage for the progress bar
+    const usagePercentage = Math.min(
+      100,
+      (license.usedSeats / license.totalSeats) * 100 || 0
+    );
+
+    return (
+      <motion.div
+        key={license._id}
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: index * 0.05 }}
+        className="h-full"
+      >
+        <div
+          className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-supperagent/30 hover:shadow-xl hover:shadow-supperagent/5 ${
+            !license.isActive ? 'opacity-70 grayscale transition-none' : ''
+          }`}
+        >
+          {/* --- Image & Badges Section --- */}
+          <div className="relative h-48 w-full overflow-hidden bg-slate-100">
+            {/* Status Badges */}
+            <div className="absolute left-3 top-3 z-10 flex flex-col gap-2">
+              {!license.isActive ? (
+                <span className="flex items-center gap-1 rounded-full bg-slate-800/80 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-md">
+                  <AlertCircle className="h-3 w-3" /> Inactive
+                </span>
+              ) : seatsFull ? (
+                <span className="flex items-center gap-1 rounded-full bg-red-500/90 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-md">
+                  <Users className="h-3 w-3" /> Seats Full
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 rounded-full bg-emerald-500/90 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-md">
+                  Available
+                </span>
+              )}
+            </div>
+
+            <motion.img
+              src={course?.image || '/placeholder.jpg'}
+              alt={course?.title}
+              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            />
+
+            {/* Subtle bottom gradient for depth */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          </div>
+
+          {/* --- Content Section --- */}
+          <div className="flex flex-grow flex-col p-5">
+            {/* Title */}
+            <h3
+              className="mb-1.5 line-clamp-2 text-lg font-semibold tracking-tight text-slate-900 transition-colors group-hover:text-supperagent"
+              title={course?.title}
+            >
+              {course?.title || 'Untitled Course'}
+            </h3>
+
+            {/* Instructor */}
+            {/* <div className="mb-4 flex items-center gap-2 text-sm text-slate-500">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100">
+                <User className="h-3.5 w-3.5 text-slate-400" />
+              </div>
+              <span className="truncate font-medium">
+                {course?.instructorId?.name || 'Organization Instructor'}
+              </span>
+            </div> */}
+
+            {/* Spacer to push footer to bottom */}
+            <div className="mt-auto" />
+
+            {/* Seat Usage Progress */}
+            <div className="mb-4 space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                <span>Credit Usage</span>
+                <span>
+                  {license.usedSeats} / {license.totalSeats}
+                </span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                    !license.isActive ? 'opacity-75 grayscale' : ''
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    seatsFull ? 'bg-red-500' : 'bg-supperagent'
                   }`}
-                >
-                  {/* Image Section */}
-                  <div className="relative h-48 overflow-hidden bg-gray-200">
-                    <motion.img
-                      src={course.image || 'placeholder.jpg'}
-                      alt={course.title}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
+                  style={{ width: `${usagePercentage}%` }}
+                />
+              </div>
+            </div>
 
-                    {/* Overlay Gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  </div>
-
-                  {/* Content Section */}
-                  <div className="flex flex-grow flex-col p-5">
-                    {/* Title */}
-                    <h3
-                      className="mb-2 line-clamp-2 text-lg font-bold text-gray-900 transition-colors group-hover:text-supperagent"
-                      title={course?.title}
-                    >
-                      {course?.title || 'Untitled Course'}
-                    </h3>
-
-                    {/* Instructor */}
-                    <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
-                      <User className="h-3.5 w-3.5" />
-                      <span className="truncate">
-                        {course?.instructorId?.name ||
-                          'Organization Instructor'}
+            {/* --- Footer & Action --- */}
+            <div className="border-t border-slate-100 pt-4">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    disabled={isDisabled}
+                    className={`relative w-full overflow-hidden rounded-xl font-medium transition-all duration-300 ${
+                      seatsFull || !license.isActive
+                        ? 'bg-slate-100 text-slate-400 hover:bg-slate-100'
+                        : 'bg-supperagent text-white shadow-md shadow-supperagent/20 hover:-translate-y-0.5 hover:bg-supperagent/90 hover:shadow-lg hover:shadow-supperagent/30'
+                    }`}
+                  >
+                    {isProcessing ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Processing...
                       </span>
-                    </div>
+                    ) : seatsFull ? (
+                      'No Seats Available'
+                    ) : (
+                      'Enroll Now'
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
 
-                    {/* Footer: Seats + Enroll Button */}
-                    <div className="mt-auto flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
-                      {/* Enrollment Action with Dialog */}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            size="sm"
-                            disabled={isDisabled}
-                            className={`w-full rounded-xl px-4 font-medium shadow-md transition-all 
-                                    ${
-                                      seatsFull
-                                        ? 'bg-gray-100 text-gray-400 shadow-none hover:bg-gray-100'
-                                        : 'bg-supperagent text-white shadow-supperagent/20 hover:bg-supperagent/90'
-                                    }`}
-                          >
-                            {isProcessing ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              'Enroll Now'
-                            )}
-                          </Button>
-                        </AlertDialogTrigger>
-
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Confirm Enrollment
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to enroll in{' '}
-                              <strong>{course?.title}</strong>?
-                              <br />
-                              <span className="mt-2 block text-xs text-gray-500">
-                                This will use one of the organization's
-                                available licenses.
-                              </span>
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleEnroll(license)}
-                              className="bg-supperagent hover:bg-supperagent/90"
-                            >
-                              Confirm Enrollment
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+                <AlertDialogContent className="rounded-2xl sm:max-w-md">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-xl">
+                      Confirm Enrollment
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-slate-500">
+                      Are you sure you want to enroll in{' '}
+                      <strong className="text-slate-900 font-semibold">
+                        {course?.title}
+                      </strong>
+                      ?
+                      <span className="mt-4 flex items-start gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-600 border border-slate-100">
+                        <Users className="h-4 w-4 mt-0.5 text-supperagent shrink-0" />
+                        This will allocate 1 seat from your organization's available credit ({license.totalSeats - license.usedSeats} remaining).
+                      </span>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="mt-4 gap-2 sm:gap-0">
+                    <AlertDialogCancel className="rounded-xl border-slate-200">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleEnroll(license)}
+                      className="rounded-xl bg-supperagent hover:bg-supperagent/90"
+                    >
+                      Confirm Enrollment
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
         </div>
+      </motion.div>
+    );
+  })}
+</div>
       )}
 
       {/* --- PAGINATION --- */}

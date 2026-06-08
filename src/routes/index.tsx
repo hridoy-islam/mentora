@@ -37,7 +37,6 @@ import PreviewLayout from '@/components/layout/preview-layout';
 import MyStaffPage from '@/pages/my-staff';
 import OrganizationCoursesPage from '@/pages/organizationCourse';
 import AboutPage from '@/pages/aboutPage';
-import StaffEnrollCoursePage from '@/pages/userManagement/orgnizationPage/staffPage/staffEnrollCourse';
 import ReportPage from '@/pages/reportPage';
 import MyOrganizationPage from '@/pages/myOrganization';
 import OrganizationAvailableCoursesPage from '@/pages/myOrganization/availableCourses';
@@ -47,6 +46,12 @@ import StudentCertificatePage from '@/pages/studentCertificates';
 import {  StudentCartPage } from '@/pages/cartPage/studentCartPage';
 import { StudentCheckoutPage } from '@/pages/checkoutPage/StudentCheckoutPage';
 import { CheckoutPage } from '@/pages/checkoutPage/PublicCheckoutPage';
+import { PaymentSuccessPage } from '@/pages/paymentActionPage/paymentSuccess';
+import CompanyTransactionHistoryPage from '@/pages/userManagement/orgnizationPage/companyTransactionsPage';
+import OrganizationActivityLogs from '@/pages/userManagement/orgnizationPage/CourseActivityLogs';
+import StudentTransactionHistoryPage from '@/pages/studentTransactionHistoryPage';
+import OrganizationStaffEnrollCoursesPage from '@/pages/userManagement/orgnizationPage/staffPage/staffEnrollCourse';
+import StaffStudentCoursesPage from '@/pages/organizationCourse/EnrolledStaff';
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 const DashboardPage = lazy(() => import('@/pages/dashboard'));
 
@@ -117,8 +122,9 @@ export default function AppRouter() {
         },
          {
           path: 'enroll-courses/:sid',
-          element: <StaffEnrollCoursePage />
+          element: <StaffStudentCoursesPage />
         },
+         
          {
           path: 'instructors',
           element: <InstructorPage />
@@ -136,8 +142,21 @@ export default function AppRouter() {
           element: <OrganizationCoursesPage />
         },
         {
+          path: 'company/courses/activity/:lid',
+          element: <OrganizationActivityLogs />
+        },
+        {
+          path: 'company/courses/staff/:lid',
+          element: <OrganizationStaffEnrollCoursesPage />
+        },
+        {
           path: 'report',
           element: <ReportPage />
+        },
+         {
+          path: 'transactions/:cid',
+          element: <CompanyTransactionHistoryPage />,
+          index: true
         },
          {
           path: 'transactions',
@@ -206,14 +225,24 @@ export default function AppRouter() {
           element: <StudentCheckoutPage />,
           index: true
         },
-        {
-          path: 'transactions',
-          element: <TransactionHistoryPage />,
-          index: true
-        },
+        // {
+        //   path: 'transactions',
+        //   element: <TransactionHistoryPage />,
+        //   index: true
+        // },
         {
           path: 'certificates',
           element: <StudentCertificatePage />,
+          index: true
+        },
+        {
+          path: 'transactions',
+          element: <StudentTransactionHistoryPage />,
+          index: true
+        },
+        {
+          path: 'profile',
+          element: <ProfilePage />,
           index: true
         },
       ]
@@ -231,6 +260,11 @@ export default function AppRouter() {
       children: [
         {
           element: <HomePage />,
+          index: true
+        },
+        {
+          path: '/payment/success',
+          element: <PaymentSuccessPage />,
           index: true
         },
         {

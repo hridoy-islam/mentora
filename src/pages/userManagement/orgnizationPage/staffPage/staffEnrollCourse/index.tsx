@@ -1,20 +1,13 @@
 import { useEffect, useState } from 'react';
-import { MoveLeft, Loader2 } from 'lucide-react';
+import { MoveLeft, BookOpen, User, Calendar, BarChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
 import axiosInstance from '@/lib/axios';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
-import { Progress } from '@/components/ui/progress'; // Assuming you have a Progress component
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import moment from 'moment';
 import { DataTablePagination } from '@/components/shared/data-table-pagination';
 
@@ -35,11 +28,10 @@ interface EnrolledCourse {
   completedDate?: string;
 }
 
-export default function StaffEnrollCoursesPage() {
+export default function OrganizationStaffEnrollCoursesPage() {
   const [enrollments, setEnrollments] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [staffDetails, setStaffDetails] = useState({ name: '', email: '' });
-  // --- Pagination & Search ---
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(100);
@@ -47,56 +39,36 @@ export default function StaffEnrollCoursesPage() {
 
   const { toast } = useToast();
   const navigate = useNavigate();
-  const {sid: studentId } = useParams();
+  const { lid } = useParams();
 
   const fetchEnrollments = async (
     page: number,
     limit: number,
     search: string = ''
   ) => {
-    if (!studentId) {
-      toast({
-        title: 'Error',
-        description: 'Staff ID is missing in the URL.',
-        variant: 'destructive'
-      });
-      navigate(-1); // Go back if ID is missing
-      return;
-    }
-
     try {
       setLoading(true);
 
       const response = await axiosInstance.get(
-        `/enrolled-courses?studentId=${studentId}`,
+        `/enrolled-courses?licenseId=${lid}&status=active`,
         {
           params: {
-            
             page,
             limit,
             ...(search ? { searchTerm: search } : {})
           }
         }
       );
-      const res = await axiosInstance.get(`/users/${studentId}`);
-
-      let userData = res.data.data;
 
       const enrolledCourses: EnrolledCourse[] = response.data.data.result;
       setEnrollments(enrolledCourses);
       setTotalPages(response.data.data.meta.totalPage);
-
-      setStaffDetails({
-        name: userData.name,
-        email: userData.email
-      });
     } catch (error: any) {
       console.error('Error fetching enrollments:', error);
       toast({
         title: 'Error',
         description:
-          error?.response?.data?.message ||
-          'Failed to fetch staff enrollments.',
+          error?.response?.data?.message || 'Failed to fetch staff enrollments.',
         variant: 'destructive'
       });
     } finally {
@@ -106,7 +78,20 @@ export default function StaffEnrollCoursesPage() {
 
   useEffect(() => {
     fetchEnrollments(currentPage, entriesPerPage, searchTerm);
-  }, [studentId, currentPage, entriesPerPage]);
+  }, [lid, currentPage, entriesPerPage]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'completed':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'dropped':
+        return 'bg-red-100 text-red-700 border-red-200';
+      default:
+        return '';
+    }
+  };
 
   if (loading) {
     return (
@@ -118,92 +103,114 @@ export default function StaffEnrollCoursesPage() {
 
   return (
     <div className="space-y-3">
-    
-
-      {/* Main Enrollments Table Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{`${staffDetails.name}'s Enrolled Courses`||'Enrolled Courses'}</CardTitle>
-          <Button size="default" onClick={() => navigate(-1)} variant="outline">
-          <MoveLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
+          <CardTitle className="text-xl font-semibold">
+            Enrolled Courses
+          </CardTitle>
+          <Button
+            size="default"
+            onClick={() => navigate(-1)}
+            variant="outline"
+          >
+            <MoveLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Course Title</TableHead>
-                <TableHead className="w-[150px]">Status</TableHead>
-                <TableHead className="w-[200px]">Progress</TableHead>
-                <TableHead className="w-[150px]">Start Date</TableHead>
-                <TableHead className="w-[200px] text-right">
-                  Completion Date
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {enrollments.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-8 text-center text-gray-500"
+          {enrollments.length === 0 ? (
+            <p className="py-12 text-center text-muted-foreground">
+              No staff members are currently enrolled in any courses.
+            </p>
+          ) : (
+            <>
+              <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {enrollments.map((enrollment) => (
+                  <Card
+                    key={enrollment._id}
+                    className="overflow-hidden shadow-sm transition-shadow hover:shadow-md"
                   >
-                    This staff member is not currently enrolled in any courses.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                enrollments.map((enrollment) => (
-                  <TableRow key={enrollment._id}>
-                    <TableCell className="font-medium">
-                      {enrollment.courseId.title}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`font-medium capitalize ${
-                          enrollment.status === 'active'
-                            ? 'text-blue-600'
-                            : enrollment.status === 'completed'
-                              ? 'text-green-600'
-                              : 'text-red-600'
-                        }`}
-                      >
-                        {enrollment.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Progress value={enrollment.progress} className="h-2" />
-                        <span>{enrollment.progress}%</span>
+                    <CardHeader className="bg-muted/30 px-4 py-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <BookOpen className="h-4 w-4 text-primary" />
+                        {enrollment.courseId.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-4 py-3 space-y-3">
+                      {/* Staff Name */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">
+                          {enrollment.studentId.name}
+                        </span>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      {enrollment.startDate
-                        ? moment(enrollment.startDate).format('DD MMM,YYYY')
-                        : '-'}
-                    </TableCell>
 
-                    <TableCell className="text-right">
-                      {enrollment.completedDate
-                        ? moment(enrollment.completedDate).format('DD MMM,YYYY')
-                        : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))
+                      {/* Status */}
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className={`${getStatusColor(
+                            enrollment.status
+                          )} capitalize`}
+                          variant="outline"
+                        >
+                          {enrollment.status}
+                        </Badge>
+                      </div>
+
+                      {/* Progress */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <BarChart className="h-3 w-3" />
+                            Progress
+                          </span>
+                          <span>{enrollment.progress}%</span>
+                        </div>
+                        <Progress
+                          value={enrollment.progress}
+                          className="h-2"
+                        />
+                      </div>
+
+                      {/* Dates */}
+                      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>
+                            {enrollment.startDate
+                              ? moment(enrollment.startDate).format(
+                                  'DD MMM, YYYY'
+                                )
+                              : '-'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 justify-end">
+                          <span>
+                            {enrollment.completedDate
+                              ? moment(enrollment.completedDate).format(
+                                  'DD MMM, YYYY'
+                                )
+                              : '-'}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="mt-4">
+                  <DataTablePagination
+                    pageSize={entriesPerPage}
+                    setPageSize={setEntriesPerPage}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
               )}
-            </TableBody>
-          </Table>
-          {enrollments.length > 10 && (
-            <div className="mt-4">
-              <DataTablePagination
-                pageSize={entriesPerPage}
-                setPageSize={setEntriesPerPage}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            </div>
+            </>
           )}
         </CardContent>
       </Card>

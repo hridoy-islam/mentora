@@ -129,22 +129,34 @@ export function CheckoutPage() {
 
   const couponRef = useRef<HTMLDivElement>(null);
   const [couponBoxSize, setCouponBoxSize] = useState({ width: 0, height: 0 });
-
+  const [userData, setUserData] = useState<any>(null);
   // Pre-fill form from logged-in user profile
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        fullName: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        country: user.country || '',
-        city: user.city || '',
-        address: user.address || '',
-        state: user.state || '',
-        zipCode: user.zipCode || ''
-      });
+
+
+  const fetchUserData = async () => {
+    try {
+      const response = await axiosInstance.get(`/users/${user?._id}`);
+      setUserData(response.data.data);
+    } catch (error: any) {
+      console.error('Error fetching user data:', error);
+      
     }
-  }, [user]);
+  }
+  useEffect(() => {
+    fetchUserData()
+    
+      setFormData({
+        fullName: userData?.name || '',
+        email: userData?.email || '',
+        phone: userData?.phone || '',
+        country: userData?.country || '',
+        city: userData?.city || '',
+        address: userData?.address || '',
+        state: userData?.state || '',
+        zipCode: userData?.zipCode || ''
+      });
+    
+  }, [userData,user]);
 
   useEffect(() => {
     if (couponRef.current) {
@@ -186,9 +198,9 @@ export function CheckoutPage() {
 
   // ─── Checkout ──────────────────────────────────────────────────────────────
   /**
-   * Calls the backend to create a pending order and get a Worldpay redirect URL.
-   * Then redirects the browser to Worldpay's Hosted Payment Page.
-   * After payment, Worldpay redirects back to /payment/success?orderId=...
+   * Calls the backend to create a Stripe Checkout Session and returns a URL.
+   * The frontend then redirects to Stripe's hosted payment page.
+   * After payment, Stripe redirects back to /payment/success?orderId=...
    */
   const handleCheckout = async () => {
     if (!user) {
@@ -207,7 +219,9 @@ export function CheckoutPage() {
           courseId: item?.id,
           quantity: item.quantity,
           unitPrice: item.price,
-          subTotal: item.price * item.quantity
+          subTotal: item.price * item.quantity,
+          // Pass title so Stripe can display it on the payment page
+          title: item.title
         })),
         totalAmount,
         buyerId: user?._id,
@@ -226,7 +240,7 @@ export function CheckoutPage() {
         }
       };
 
-      // Ask backend to create a pending order + Worldpay payment session
+      // Ask backend to create a pending order + Stripe Checkout Session
       const response = await axiosInstance.post('/order/initiate-payment', orderData);
       const { redirectUrl } = response.data.data;
 
@@ -234,10 +248,8 @@ export function CheckoutPage() {
         throw new Error('No redirect URL returned from server.');
       }
 
-      // Clear cart before redirecting so it's empty when user comes back
-      dispatch(clearCart());
 
-      // ✅ Redirect user to Worldpay's Hosted Payment Page
+
       window.location.href = redirectUrl;
 
     } catch (error: any) {
@@ -352,7 +364,7 @@ export function CheckoutPage() {
                       Billing Address
                     </h3>
                     <p className="mt-1 text-xs text-gray-500">
-                      Used to pre-fill Worldpay's payment form
+                      Used to pre-fill Stripe's payment form
                     </p>
                   </div>
 
@@ -426,21 +438,6 @@ export function CheckoutPage() {
                         className="min-h-[100px] w-full resize-y rounded-xl border border-gray-200 bg-gray-50/50 py-3 pl-10 pr-4 text-sm font-medium text-gray-900 shadow-sm transition-all duration-300 ease-out placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
                       />
                     </div>
-                  </div>
-                </div>
-
-                {/* Worldpay info banner */}
-                <div className="mt-8 flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-                  <CreditCard size={20} className="mt-0.5 shrink-0 text-blue-500" />
-                  <div>
-                    <p className="text-sm font-semibold text-blue-900">
-                      Secure payment via Worldpay
-                    </p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-blue-700">
-                      After clicking "Proceed to Payment", you'll be taken to Worldpay's
-                      secure hosted page to enter your card details. You'll be redirected
-                      back here once your payment is complete.
-                    </p>
                   </div>
                 </div>
               </div>
@@ -572,7 +569,7 @@ export function CheckoutPage() {
                       {isProcessingOrder ? (
                         <>
                           <Loader2 className="h-5 w-5 animate-spin" />
-                          <span>Redirecting to Worldpay...</span>
+                          <span>Redirecting to Stripe...</span>
                         </>
                       ) : !user ? (
                         <span className="flex items-center gap-2">
@@ -599,11 +596,11 @@ export function CheckoutPage() {
                     <div className="flex items-center gap-2 rounded-full border border-green-100 bg-green-50 px-3 py-1.5 text-green-700">
                       <ShieldCheck size={14} />
                       <span className="text-[10px] font-bold uppercase tracking-wide">
-                        SSL Secure Payment via Worldpay
+                        SSL Secure Payment via Stripe
                       </span>
                     </div>
                     <p className="text-center text-[10px] text-gray-400">
-                      You will be redirected to Worldpay's secure hosted payment page
+                      You will be redirected to Stripe's secure hosted payment page
                     </p>
                   </div>
                 </div>

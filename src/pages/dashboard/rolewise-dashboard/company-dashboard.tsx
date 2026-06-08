@@ -9,13 +9,15 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Eye } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import axiosInstance from '@/lib/axios';
 import { useToast } from '@/components/ui/use-toast';
 import { DataTablePagination } from '@/components/shared/data-table-pagination';
 import moment from 'moment';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 
 export function CompanyDashboard() {
@@ -29,7 +31,7 @@ export function CompanyDashboard() {
   const [entriesPerPage, setEntriesPerPage] = useState(25);
   const[totalCourse,setTotalCourse] = useState(0);
   const[totalAmount,setTotalAmount] = useState(0);
-
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
 
   // Get user from Redux
@@ -122,11 +124,11 @@ export function CompanyDashboard() {
             <TableHeader>
               <TableRow>
                 <TableHead>Course Name</TableHead>
-                <TableHead className="text-center">Total Available</TableHead>
+                <TableHead className="text-center">Total Seats</TableHead>
                 <TableHead className="text-center">Available Seats</TableHead>
                 <TableHead className="text-center">Remaining</TableHead>
-                <TableHead className="text-center">Purchase Date</TableHead>
-                <TableHead className="w-32 text-center">Status</TableHead>
+                <TableHead className="text-center">Activity Logs</TableHead>
+                <TableHead className="w-32 text-center">Enrolled Staff</TableHead>
               </TableRow>
             </TableHeader>
 
@@ -158,19 +160,16 @@ export function CompanyDashboard() {
                       {license.totalSeats - license.usedSeats}
                     </TableCell>
                     <TableCell className="text-center">
-                      {moment(license.createdAt).format('L')}
+                          <Button onClick={()=> navigate(`company/courses/activity/${license._id}`)}>
+                        <Eye className="mr-2 h-4 w-4 " />
+                        View
+                      </Button>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge
-                        variant={license.isActive ? 'default' : 'secondary'}
-                        className={
-                          license.isActive
-                            ? 'bg-green-600 hover:bg-green-700'
-                            : 'bg-gray-400'
-                        }
-                      >
-                        {license.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
+                      <Button onClick={()=> navigate(`company/courses/staff/${license._id}`)}>
+                        <Eye className="mr-2 h-4 w-4 " />
+                        View
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))

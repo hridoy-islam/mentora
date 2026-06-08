@@ -154,7 +154,7 @@ const companyNav = [
   },
 
   {
-    title: 'Transactions',
+    title: 'Billing & History',
     url: '/dashboard/transactions',
     icon: DollarSign
   }

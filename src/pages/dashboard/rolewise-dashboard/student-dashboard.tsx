@@ -260,16 +260,15 @@ export function StudentDashboard() {
                   <h2 className="text-xl font-bold text-slate-900">
                     My Courses
                   </h2>
-                  <Badge variant="outline" className="px-3 py-1 text-slate-600">
-                    {enrolledCourses.length} Enrolled
-                  </Badge>
+                 
                 </div>
 
                 {/* --- SHOW ALL COURSES BUTTON --- */}
                 <Button
                   size="sm"
+                  variant={'link'}
                   onClick={() => navigate('/student/my-courses')}
-                  className="group   text-white transition-all duration-300 hover:border-supperagent hover:bg-supperagent/90"
+                  className="group   transition-all duration-300 text-supperagent hover:text-supperagent/80 font-semibold"
                 >
                   Show All Courses
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -364,7 +363,7 @@ function CourseCard({
   return (
     <Card
       className="group flex h-full cursor-pointer flex-col overflow-hidden border-slate-200 bg-white transition-all duration-300 hover:shadow-xl"
-      onClick={() => navigate(`my-courses/${courseId?.slug}`)}
+      onClick={() => navigate(`my-courses/${courseId?.slug}`,{ state: { enrollCourseId: enrollment._id } })}
     >
       {/* Image Area */}
       <div className="relative aspect-video overflow-hidden bg-slate-100">

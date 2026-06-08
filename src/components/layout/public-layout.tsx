@@ -26,10 +26,10 @@ export default function PublicLayout({
 
 
  return (
-    <div className="flex min-h-screen flex-col overflow-hidden bg-white">
+    <div className="flex min-h-screen flex-col overflow-hidden bg-white relative">
       
       {/* Top contact bar */}
-      <div className="bg-supperagent h-12 text-white">
+      <div className="bg-supperagent h-12 text-white relative z-[99999]">
         <div className="container mx-auto flex h-full items-center justify-start  gap-8">
           
           {/* Email */}

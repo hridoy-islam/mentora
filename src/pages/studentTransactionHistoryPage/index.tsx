@@ -33,7 +33,7 @@ interface UserOption {
   label: string;
 }
 
-export default function TransactionHistoryPage() {
+export default function studentTransactionHistoryPage() {
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -123,16 +123,12 @@ export default function TransactionHistoryPage() {
   };
 
   return (
-    <div className="space-y-6">
-      
-
+    <div className="container mx-auto mt-5 space-y-6">
       {/* Main Content Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>
-            Billing & History
-          </CardTitle>
-           <Button variant="outline" onClick={() => navigate(-1)}>
+          <CardTitle>Billing & History</CardTitle>
+          <Button variant="outline" onClick={() => navigate(-1)}>
             <MoveLeft className="mr-2 h-4 w-4" /> Back
           </Button>
         </CardHeader>
@@ -147,103 +143,104 @@ export default function TransactionHistoryPage() {
               <p>No reports found.</p>
             </div>
           ) : (
-           <Table>
-  <TableHeader>
-    <TableRow>
-      <TableHead>Transaction ID</TableHead>
-      <TableHead>Course</TableHead>
-      <TableHead>Total Quantity</TableHead>
-      <TableHead>Total Amount</TableHead>
-      <TableHead>Status</TableHead>
-      <TableHead className="text-right">Purchase Date</TableHead>
-    </TableRow>
-  </TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Transaction ID</TableHead>
+                  <TableHead>Course</TableHead>
+                  <TableHead>Total Quantity</TableHead>
+                  <TableHead>Total Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Purchase Date</TableHead>
+                </TableRow>
+              </TableHeader>
 
-  <TableBody>
-    {reports.map((report) => {
-      const totalQuantity =
-        report.items?.reduce(
-          (acc: number, item: any) => acc + (item.quantity || 1),
-          0
-        ) || 0;
+              <TableBody>
+                {reports.map((report) => {
+                  const totalQuantity =
+                    report.items?.reduce(
+                      (acc: number, item: any) => acc + (item.quantity || 1),
+                      0
+                    ) || 0;
 
-      return (
-        <TableRow key={report._id}>
-          {/* Transaction ID */}
-          <TableCell className="font-medium">
-            {report._id || '-'}
-          </TableCell>
+                  return (
+                    <TableRow key={report._id}>
+                      {/* Transaction ID */}
+                      <TableCell className="font-medium">
+                        {report._id || '-'}
+                      </TableCell>
 
-          {/* Course List */}
-          <TableCell>
-            <div className="flex flex-col gap-1">
-              {report.items && report.items.length > 0 ? (
-                report.items.map((item: any, index: number) => (
-                  <div
-                    key={index}
-                    className="flex items-center border-b border-gray-100 pb-1 text-sm last:border-0 last:pb-0"
-                  >
-                    <span
-                      className="max-w-[200px] truncate text-gray-700"
-                      title={item.courseId?.title}
-                    >
-                      {item.courseId?.title || 'Unknown Course'}
-                    </span>
+                      {/* Course List */}
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {report.items && report.items.length > 0 ? (
+                            report.items.map((item: any, index: number) => (
+                              <div
+                                key={index}
+                                className="flex items-center border-b border-gray-100 pb-1 text-sm last:border-0 last:pb-0"
+                              >
+                                <span
+                                  className="max-w-[200px] truncate text-gray-700"
+                                  title={item.courseId?.title}
+                                >
+                                  {item.courseId?.title || 'Unknown Course'}
+                                </span>
 
-                    <Badge
-                      variant="secondary"
-                      className="ml-2 h-5 text-xs"
-                    >
-                      Qty: {item.quantity || 1}
-                    </Badge>
-                  </div>
-                ))
-              ) : (
-                <span className="text-sm text-gray-400">
-                  No items
-                </span>
-              )}
-            </div>
-          </TableCell>
+                                <Badge
+                                  variant="secondary"
+                                  className="ml-2 h-5 text-xs"
+                                >
+                                  Qty: {item.quantity || 1}
+                                </Badge>
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-sm text-gray-400">
+                              No items
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
 
-          {/* Total Quantity */}
-          <TableCell className="font-semibold text-gray-700">
-            {totalQuantity}
-          </TableCell>
+                      {/* Total Quantity */}
+                      <TableCell className="font-semibold text-gray-700">
+                        {totalQuantity}
+                      </TableCell>
 
-          {/* Total Amount */}
-          <TableCell className="font-semibold text-gray-700">
-            <div className="flex items-center">
-              {report.totalAmount?.toLocaleString()}
-            </div>
-          </TableCell>
+                      {/* Total Amount */}
+                      <TableCell className="font-semibold text-gray-700">
+                        <div className="flex items-center">
+                          {report.totalAmount?.toLocaleString()}
+                        </div>
+                      </TableCell>
 
-          {/* Payment Status */}
-          <TableCell>
-            <Badge
-              className={`border-0 ${getStatusColor(
-                report.paymentStatus
-              )}`}
-            >
-              {report.paymentStatus?.toUpperCase() || ''}
-            </Badge>
-          </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={`border-0 ${getStatusColor(
+                            report.paymentStatus
+                          )}`}
+                        >
+                          {report.paymentStatus
+                            ? report.paymentStatus.charAt(0).toUpperCase() +
+                              report.paymentStatus.slice(1).toLowerCase()
+                            : ''}
+                        </Badge>
+                      </TableCell>
+                      {/* Date */}
+                      <TableCell>
+                        <div className="flex items-center justify-end text-sm text-gray-500">
+                          <Calendar className="mr-2 h-3 w-3" />
 
-          {/* Date */}
-          <TableCell>
-            <div className="flex items-center text-sm text-gray-500 justify-end">
-              <Calendar className="mr-2 h-3 w-3" />
-
-              {report.createdAt
-                ? moment(report.createdAt).format('DD MMM YYYY')
-                : 'N/A'}
-            </div>
-          </TableCell>
-        </TableRow>
-      );
-    })}
-  </TableBody>
-</Table>
+                          {report.createdAt
+                            ? moment(report.createdAt).format('DD MMM YYYY')
+                            : 'N/A'}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
 
           {/* Pagination */}

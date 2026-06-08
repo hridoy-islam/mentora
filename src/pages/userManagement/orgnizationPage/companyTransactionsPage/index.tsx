@@ -33,7 +33,7 @@ interface UserOption {
   label: string;
 }
 
-export default function TransactionHistoryPage() {
+export default function CompanyTransactionHistoryPage() {
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Play, BookOpen, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Define the interface for your enrollment data
 export interface EnrolledCourseData {
@@ -31,18 +32,19 @@ interface CourseCardProps {
   getCourseImage: (imagePath?: string) => string;
 }
 
-export default function CourseCard({ enrollment, navigate, getCourseImage }: CourseCardProps) {
+export default function CourseCard({ enrollment, getCourseImage }: CourseCardProps) {
   const { courseId, progress, derivedTotalLessons, derivedTotalDurationMin } = enrollment;
   const totalHours = derivedTotalDurationMin ? (derivedTotalDurationMin / 60).toFixed(1) : "0";
 
   // Safeguard: if courseId is missing (deleted course), don't render
   if (!courseId) return null;
-
+ const navigate = useNavigate();
   return (
     <Card 
       className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-slate-200 overflow-hidden flex flex-col h-full bg-white"
-      onClick={() => navigate(`/student/my-courses/${courseId.slug}`)}
-    >
+onClick={() =>
+  navigate(`/student/my-courses/${courseId.slug}`,{ state: { enrollCourseId: enrollment._id } })
+}    >
       {/* Image Area */}
       <div className="relative aspect-video overflow-hidden bg-slate-100">
         <img

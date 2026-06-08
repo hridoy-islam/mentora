@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MoveLeft, Search, BookOpen } from 'lucide-react';
+import { MoveLeft, Search, BookOpen, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -41,18 +41,15 @@ export default function OrganizationCoursesPage() {
   ) => {
     try {
       setInitialLoading(true);
-      
-      const response = await axiosInstance.get(
-        `/course-license`, 
-        {
-          params: {
-            companyId: user?._id, 
-            page,
-            limit,
-            ...(search ? { searchTerm: search } : {})
-          }
+
+      const response = await axiosInstance.get(`/course-license`, {
+        params: {
+          companyId: user?._id,
+          page,
+          limit,
+          ...(search ? { searchTerm: search } : {})
         }
-      );
+      });
 
       // Assuming standard response structure based on your previous file
       // Adjust .data.data.result / .data.result based on your actual API wrapper
@@ -96,24 +93,24 @@ export default function OrganizationCoursesPage() {
 
   return (
     <div className="space-y-3">
-  
-      
-
       {/* TABLE CARD */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-             <BookOpen className="h-5 w-5" /> Enrolled Course List
+            <BookOpen className="h-5 w-5" /> Enrolled Course List
           </CardTitle>
-          <div className='flex flex-row items-center gap-4'>
-
-           <Button size="default" onClick={() => navigate(-1)} variant="outline">
-            <MoveLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-           <Button size="default" onClick={() => navigate('/courses')} >
-           Explore More Courses
-          </Button>
+          <div className="flex flex-row items-center gap-4">
+            <Button
+              size="default"
+              onClick={() => navigate(-1)}
+              variant="outline"
+            >
+              <MoveLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <Button size="default" onClick={() => navigate('/courses')}>
+              Explore More Courses
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -124,8 +121,10 @@ export default function OrganizationCoursesPage() {
                 <TableHead className="text-center">Total Available</TableHead>
                 <TableHead className="text-center">Available Seats</TableHead>
                 <TableHead className="text-center">Remaining</TableHead>
-                <TableHead className="text-center">Purchase Date</TableHead>
-                <TableHead className="w-32 text-center">Status</TableHead>
+                <TableHead className="text-center">Activity Logs</TableHead>
+                <TableHead className="w-32 text-center">
+                  Enrolled Staff
+                </TableHead>
               </TableRow>
             </TableHeader>
 
@@ -156,15 +155,16 @@ export default function OrganizationCoursesPage() {
                       {license.totalSeats - license.usedSeats}
                     </TableCell>
                     <TableCell className="text-center">
-                       {new Date(license.createdAt).toLocaleDateString()}
+                          <Button onClick={()=> navigate(`activity/${license._id}`)}>
+                        <Eye className="mr-2 h-4 w-4 " />
+                        View
+                      </Button>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge 
-                        variant={license.isActive ? "default" : "secondary"}
-                        className={license.isActive ? "bg-green-600 hover:bg-green-700" : "bg-gray-400"}
-                      >
-                        {license.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
+                      <Button onClick={()=> navigate(`staff/${license._id}`)}>
+                        <Eye className="mr-2 h-4 w-4 " />
+                        View
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
