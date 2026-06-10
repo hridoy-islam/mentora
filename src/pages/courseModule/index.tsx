@@ -367,7 +367,7 @@ export default function CourseModulesPage() {
                 size="default"
                 variant="outline"
                 onClick={() =>
-                  window.open(`/student/courses/${courseSlug}`, '_blank')
+                  window.open(`/student/my-courses/${courseSlug}`, '_blank')
                 }
                 disabled={!cid}
               >

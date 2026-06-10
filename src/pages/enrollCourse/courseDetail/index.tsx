@@ -111,6 +111,7 @@ interface QuizRendererProps {
   alreadyCompleted: boolean;
   existingResult: QuizResult | null;
   onQuizPassed: () => void;
+  isAdmin: boolean;
 }
 
 function QuizRenderer({
@@ -121,13 +122,13 @@ function QuizRenderer({
   alreadyCompleted,
   existingResult,
   onQuizPassed,
+  isAdmin,
 }: QuizRendererProps) {
   const allQuestions: QuestionOption[] = useMemo(
     () => [...(lesson.questions || []), ...(lesson.importedQuestions || [])],
     [lesson]
   );
 
-  // Quiz flow state
   const [step, setStep] = useState<QuizStep>(
     alreadyCompleted && existingResult ? 'result' : 'ready'
   );
@@ -138,7 +139,6 @@ function QuizRenderer({
   const [showConfirmStart, setShowConfirmStart] = useState(false);
   const [showAnswerDialog, setShowAnswerDialog] = useState(false);
 
-  // Reset when lesson changes
   useEffect(() => {
     setStep(alreadyCompleted && existingResult ? 'result' : 'ready');
     setCurrentQuestionIndex(0);
@@ -166,65 +166,92 @@ function QuizRenderer({
   };
 
   const handleNextQuestion = () => {
-    if (!isLastQuestion) {
-      setCurrentQuestionIndex((i) => i + 1);
-    }
+    if (!isLastQuestion) setCurrentQuestionIndex((i) => i + 1);
   };
 
   const handlePrevQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((i) => i - 1);
-    }
+    if (currentQuestionIndex > 0) setCurrentQuestionIndex((i) => i - 1);
   };
 
-  const handleSubmitQuiz = async () => {
-    // Ensure all questions answered
-    const unansweredCount = allQuestions.filter(
-      (_, idx) => !selectedAnswers[idx] || selectedAnswers[idx].length === 0
-    ).length;
+ const handleSubmitQuiz = async () => {
+  const unansweredCount = allQuestions.filter(
+    (_, idx) => !selectedAnswers[idx] || selectedAnswers[idx].length === 0
+  ).length;
 
-    if (unansweredCount > 0) {
-      alert(`Please answer all questions. ${unansweredCount} question(s) remaining.`);
-      return;
-    }
+  if (unansweredCount > 0) {
+    alert(`Please answer all questions. ${unansweredCount} question(s) remaining.`);
+    return;
+  }
 
-    const answersPayload = allQuestions.map((q, idx) => ({
-      questionId: q._id,
-      providedAnswer: selectedAnswers[idx] || [],
-    }));
-
-    setIsSubmitting(true);
-    try {
-      const res = await axiosInstance.post('/quiz-submission', {
-        courseId: course._id,
-        lessonId: lesson._id,
-        answers: answersPayload,
-        studentId: user._id,
-      });
-      const data = res.data.data;
-      const result: QuizResult = {
-        totalScore: data.totalScore,
-        isPassed: data.isPassed,
-        answers: (data.answers || []).map((a: any) => ({
-          questionId: a.questionId,
-          providedAnswer: a.providedAnswer || [],
-          correctAnswers: a.correctAnswers || [],
-          isCorrect: a.isCorrect,
-          marksAwarded: a.marksAwarded,
-        })),
+  // ── Admin: evaluate locally, no API call ─────────────────────────────────
+  if (isAdmin) {
+    let totalScore = 0;
+    const answers: EvaluatedAnswer[] = allQuestions.map((q, idx) => {
+      const provided = selectedAnswers[idx] || [];
+      const correct = q.correctAnswers || [];
+      const isCorrect =
+        provided.length === correct.length &&
+        provided.every((a) => correct.includes(a));
+      const marksAwarded = isCorrect ? 1 : 0;
+      if (isCorrect) totalScore++;
+      return {
+        questionId: q._id ?? String(idx),
+        providedAnswer: provided,
+        correctAnswers: correct,
+        isCorrect,
+        marksAwarded,
       };
-      setQuizResult(result);
-      setStep('result');
-      if (result.isPassed) {
-        onQuizPassed();
-      }
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Failed to submit quiz. Please try again.';
-      alert(msg);
-    } finally {
-      setIsSubmitting(false);
+    });
+
+    const passMarks = lesson.quizConfig?.passMarks ?? Math.ceil(allQuestions.length * 0.5);
+    const result: QuizResult = {
+      totalScore,
+      isPassed: totalScore >= passMarks,
+      answers,
+    };
+    setQuizResult(result);
+    setStep('result');
+    return; // done — no onQuizPassed, no PATCH
+  }
+
+  // ── Student: submit to backend ────────────────────────────────────────────
+  const answersPayload = allQuestions.map((q, idx) => ({
+    questionId: q._id,
+    providedAnswer: selectedAnswers[idx] || [],
+  }));
+
+  setIsSubmitting(true);
+  try {
+    const res = await axiosInstance.post('/quiz-submission', {
+      courseId: course._id,
+      lessonId: lesson._id,
+      answers: answersPayload,
+      studentId: user._id,
+    });
+    const data = res.data.data;
+    const result: QuizResult = {
+      totalScore: data.totalScore,
+      isPassed: data.isPassed,
+      answers: (data.answers || []).map((a: any) => ({
+        questionId: a.questionId,
+        providedAnswer: a.providedAnswer || [],
+        correctAnswers: a.correctAnswers || [],
+        isCorrect: a.isCorrect,
+        marksAwarded: a.marksAwarded,
+      })),
+    };
+    setQuizResult(result);
+    setStep('result');
+    if (result.isPassed) {
+      onQuizPassed();
     }
-  };
+  } catch (err: any) {
+    const msg = err.response?.data?.message || 'Failed to submit quiz. Please try again.';
+    alert(msg);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // ── READY screen ──────────────────────────────────────────────────────────
   if (step === 'ready') {
@@ -232,7 +259,6 @@ function QuizRenderer({
       <>
         <Card className="overflow-hidden border-slate-200 shadow-sm">
           <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 px-10 py-16 text-center text-white">
-            {/* decorative blobs */}
             <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-supperagent/20 blur-3xl" />
             <div className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-indigo-500/10 blur-3xl" />
 
@@ -243,15 +269,27 @@ function QuizRenderer({
             <h2 className="mb-2 text-3xl font-bold tracking-tight">{lesson.title}</h2>
             <p className="mb-8 text-slate-400">Test your knowledge • {allQuestions.length} Questions</p>
 
-           
+            {/* Show warning only to students */}
+            {!isAdmin && (
+              <div className="mb-6 mx-auto max-w-md rounded-xl border border-amber-500/20 bg-amber-500/10 px-5 py-4 text-left">
+                <p className="text-sm font-semibold text-amber-300 mb-1">⚠ Before you start</p>
+                <ul className="space-y-1 text-xs text-amber-200/80 list-disc list-inside">
+                  <li>You can only attempt this quiz once — no retakes.</li>
+                  <li>Answer every question before submitting.</li>
+                </ul>
+              </div>
+            )}
 
-            <div className="mb-6 mx-auto max-w-md rounded-xl border border-amber-500/20 bg-amber-500/10 px-5 py-4 text-left">
-              <p className="text-sm font-semibold text-amber-300 mb-1">⚠ Before you start</p>
-              <ul className="space-y-1 text-xs text-amber-200/80 list-disc list-inside">
-                <li>You can only attempt this quiz once — no retakes.</li>
-                <li>Answer every question before submitting.</li>
-              </ul>
-            </div>
+            {/* Admin preview badge */}
+            {isAdmin && (
+              <div className="mb-6 mx-auto max-w-md rounded-xl border border-blue-500/20 bg-blue-500/10 px-5 py-4 text-left">
+                <p className="text-sm font-semibold text-blue-300 mb-1">👁 Admin Preview Mode</p>
+                <ul className="space-y-1 text-xs text-blue-200/80 list-disc list-inside">
+                  <li>You are previewing this quiz as an admin.</li>
+                  <li>Submissions will not affect any student records.</li>
+                </ul>
+              </div>
+            )}
 
             <Button
               size="lg"
@@ -259,27 +297,29 @@ function QuizRenderer({
               className="min-w-[200px] bg-supperagent text-white font-semibold shadow-lg shadow-supperagent/30 hover:bg-supperagent/90 transition-all duration-200"
             >
               <Play className="mr-2 h-4 w-4 fill-white" />
-              Start Quiz
+              {isAdmin ? 'Preview Quiz' : 'Start Quiz'}
             </Button>
           </div>
         </Card>
 
-        {/* Confirmation Dialog */}
         <Dialog open={showConfirmStart} onOpenChange={setShowConfirmStart}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <HelpCircle className="h-5 w-5 text-supperagent" />
-                Ready to Begin?
+                {isAdmin ? 'Preview Quiz?' : 'Ready to Begin?'}
               </DialogTitle>
               <DialogDescription className="pt-1">
-                Once you start, the quiz timer begins. You cannot retake this quiz after submitting.
-                Make sure you have enough time to complete all <strong>{allQuestions.length} questions</strong>.
+                {isAdmin
+                  ? `You are previewing this quiz as an admin. Your answers won't be saved. The quiz has ${allQuestions.length} question(s).`
+                  : `Once you start, the quiz timer begins. You cannot retake this quiz after submitting. Make sure you have enough time to complete all `}
+                {!isAdmin && <strong>{allQuestions.length} questions</strong>}
+                {!isAdmin && '.'}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex-col gap-2 sm:flex-row">
               <Button variant="outline" onClick={() => setShowConfirmStart(false)} className="w-full sm:w-auto">
-                Not Yet
+                Cancel
               </Button>
               <Button
                 onClick={() => {
@@ -288,7 +328,7 @@ function QuizRenderer({
                 }}
                 className="w-full bg-supperagent text-white hover:bg-supperagent/90 sm:w-auto"
               >
-                Yes, Start Quiz
+                {isAdmin ? 'Start Preview' : 'Yes, Start Quiz'}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </DialogFooter>
@@ -308,7 +348,6 @@ function QuizRenderer({
 
     return (
       <Card className="overflow-hidden border-slate-200 shadow-sm">
-        {/* Quiz Header */}
         <div className="border-b border-slate-100 bg-white px-8 py-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -316,7 +355,9 @@ function QuizRenderer({
                 <HelpCircle className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Quiz in Progress</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  {isAdmin ? 'Quiz Preview' : 'Quiz in Progress'}
+                </p>
                 <h2 className="text-sm font-bold text-slate-800">{lesson.title}</h2>
               </div>
             </div>
@@ -332,7 +373,6 @@ function QuizRenderer({
         </div>
 
         <CardContent className="p-8 sm:p-10">
-          {/* Question */}
           <div className="mb-8">
             <div className="mb-2 flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-supperagent text-xs font-bold text-white">
@@ -347,7 +387,6 @@ function QuizRenderer({
             </h3>
           </div>
 
-          {/* Options */}
           <div className="grid grid-cols-1 gap-3">
             {currentQuestion.options?.map((opt, optIndex) => {
               const isSelected = currentSelected.includes(opt);
@@ -383,7 +422,6 @@ function QuizRenderer({
             })}
           </div>
 
-          {/* Navigation */}
           <div className="mt-10 flex items-center justify-between border-t border-slate-100 pt-6">
             <Button
               variant="outline"
@@ -416,7 +454,7 @@ function QuizRenderer({
                 disabled={isSubmitting || !isCurrentAnswered}
                 className="gap-2 bg-supperagent text-white hover:bg-supperagent/90 disabled:opacity-50"
               >
-                {isSubmitting ? 'Submitting...' : 'Finish & Submit'}
+                {isSubmitting ? 'Submitting...' : isAdmin ? 'Finish Preview' : 'Finish & Submit'}
                 <CheckCircle2 className="h-4 w-4" />
               </Button>
             ) : (
@@ -442,7 +480,6 @@ function QuizRenderer({
     return (
       <>
         <Card className="overflow-hidden border-slate-200 shadow-sm">
-          {/* Result Hero */}
           <div
             className={`relative px-10 py-14 text-center text-white ${
               quizResult.isPassed
@@ -471,7 +508,7 @@ function QuizRenderer({
                 {quizResult.isPassed ? 'Congratulations!' : 'Keep Pushing!'}
               </h2>
               <p className={`mb-8 text-lg ${quizResult.isPassed ? 'text-emerald-200' : 'text-red-300'}`}>
-                {quizResult.isPassed ? 'You passed the quiz!' : 'You did not pass this time.'}
+                {quizResult.isPassed ? 'Quiz passed!' : 'Did not meet pass mark.'}
               </p>
 
               <div className="mx-auto mb-8 grid max-w-xs grid-cols-2 gap-4">
@@ -483,10 +520,8 @@ function QuizRenderer({
                   <p className="text-2xl font-bold">{allQuestions.length}</p>
                   <p className="mt-0.5 text-xs text-white/60">Total</p>
                 </div>
-                
               </div>
 
-              {/* Score bar */}
               <div className="mx-auto max-w-sm">
                 <div className="mb-1.5 flex justify-between text-xs text-white/60">
                   <span>0%</span>
@@ -499,17 +534,21 @@ function QuizRenderer({
                     style={{ width: `${scorePercent}%` }}
                   />
                 </div>
-               
               </div>
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex flex-col items-center gap-4 bg-white p-8 sm:flex-row sm:justify-center">
-            {quizResult.isPassed ? (
+            {isAdmin ? (
+              <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 ring-1 ring-blue-200">
+                <Eye className="h-4 w-4" />
+                Admin preview — no progress recorded.
+              </div>
+            ) : quizResult.isPassed ? (
               <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200">
                 <CheckCircle2 className="h-4 w-4" />
-Quiz completed. Your progress has been updated.              </div>
+                Quiz completed. Your progress has been updated.
+              </div>
             ) : (
               <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 ring-1 ring-red-200">
                 <XCircle className="h-4 w-4" />
@@ -519,7 +558,7 @@ Quiz completed. Your progress has been updated.              </div>
 
             <Button
               onClick={() => setShowAnswerDialog(true)}
-              className="gap-2 !h-11 !rounded-md border-slate-300 hover:border-supperagent "
+              className="gap-2 !h-11 !rounded-md border-slate-300 hover:border-supperagent"
             >
               <Eye className="h-4 w-4" />
               Review Answers
@@ -555,7 +594,6 @@ Quiz completed. Your progress has been updated.              </div>
                       isCorrect ? 'border-emerald-200' : 'border-red-200'
                     }`}
                   >
-                    {/* Question header */}
                     <div className="mb-4 flex items-start gap-3">
                       <div
                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${
@@ -589,33 +627,25 @@ Quiz completed. Your progress has been updated.              </div>
                       </div>
                     </div>
 
-                    {/* Options */}
                     <div className="space-y-2">
                       {q.options?.map((opt, oIdx) => {
                         const isGiven = givenAnswers.includes(opt);
                         const isCorrectOpt = correctAnswers.includes(opt);
 
-                        let containerClass =
-                          'border-slate-200 bg-slate-50 text-slate-500';
-                        let icon = (
-                          <div className="h-4 w-4 rounded-full border-2 border-slate-300" />
-                        );
+                        let containerClass = 'border-slate-200 bg-slate-50 text-slate-500';
+                        let icon = <div className="h-4 w-4 rounded-full border-2 border-slate-300" />;
                         let label = null;
 
                         if (isGiven && isCorrectOpt) {
-                          containerClass =
-                            'border-emerald-300 bg-emerald-50 text-emerald-900';
-                          icon = (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                          );
+                          containerClass = 'border-emerald-300 bg-emerald-50 text-emerald-900';
+                          icon = <CheckCircle2 className="h-4 w-4 text-emerald-600" />;
                           label = (
                             <span className="ml-auto rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
                               Correct
                             </span>
                           );
                         } else if (isGiven && !isCorrectOpt) {
-                          containerClass =
-                            'border-red-300 bg-red-50 text-red-900';
+                          containerClass = 'border-red-300 bg-red-50 text-red-900';
                           icon = <XCircle className="h-4 w-4 text-red-500" />;
                           label = (
                             <span className="ml-auto rounded-md bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-700">
@@ -623,11 +653,8 @@ Quiz completed. Your progress has been updated.              </div>
                             </span>
                           );
                         } else if (!isGiven && isCorrectOpt) {
-                          containerClass =
-                            'border-emerald-200 bg-emerald-50/50 text-emerald-800 border-dashed';
-                          icon = (
-                            <div className="h-4 w-4 rounded-full border-2 border-emerald-400 bg-emerald-100" />
-                          );
+                          containerClass = 'border-emerald-200 bg-emerald-50/50 text-emerald-800 border-dashed';
+                          icon = <div className="h-4 w-4 rounded-full border-2 border-emerald-400 bg-emerald-100" />;
                           label = (
                             <span className="ml-auto rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
                               Correct Answer
@@ -658,7 +685,6 @@ Quiz completed. Your progress has been updated.              </div>
                       })}
                     </div>
 
-                    {/* Missed correct answers callout */}
                     {!isCorrect && correctAnswers.length > 0 && (
                       <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
                         <p className="text-xs font-bold text-amber-900 mb-1.5 flex items-center gap-1.5">
@@ -720,7 +746,6 @@ export function EnrollCourseDetails() {
   const [currentLesson, setCurrentLesson] = useState<LessonData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Per-lesson quiz results fetched from backend (keyed by lessonId)
   const [lessonQuizResults, setLessonQuizResults] = useState<Record<string, QuizResult>>({});
 
   const location = useLocation();
@@ -741,6 +766,9 @@ export function EnrollCourseDetails() {
   const storedEnrollCourseId = localStorage.getItem('currentEnrollCourseId');
 
   const { user } = useSelector((state: any) => state.auth);
+
+  // ── Derived admin flag ────────────────────────────────────────────────────
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -769,61 +797,82 @@ export function EnrollCourseDetails() {
         );
         setSections(modulesWithLessons);
 
-        const enrollRes = await axiosInstance.get('/enrolled-courses', { params: { courseId: courseData._id } });
-        const enrollments = enrollRes.data.data?.result || [enrollRes.data.data];
-        const targetEnrollId = storedEnrollCourseId || enrollCourseIdFromState;
-        const enrollment = targetEnrollId
-          ? enrollments.find((e: any) => e._id === targetEnrollId)
-          : enrollments[0];
+        // Admins skip enrollment lookup entirely
+        if (!isAdmin) {
+          const enrollRes = await axiosInstance.get('/enrolled-courses', { params: { courseId: courseData._id } });
+          const enrollments = enrollRes.data.data?.result || [enrollRes.data.data];
+          const targetEnrollId = storedEnrollCourseId || enrollCourseIdFromState;
+          const enrollment = targetEnrollId
+            ? enrollments.find((e: any) => e._id === targetEnrollId)
+            : enrollments[0];
 
-        const completedLessonIds: string[] = enrollment?.completedLessons?.map((l: any) => l._id || l) || [];
-        const completedModuleIds: string[] = enrollment?.completedModules?.map((m: any) => m._id || m) || [];
+          const completedLessonIds: string[] = enrollment?.completedLessons?.map((l: any) => l._id || l) || [];
+          const completedModuleIds: string[] = enrollment?.completedModules?.map((m: any) => m._id || m) || [];
 
-        if (enrollment) {
-          setEnrolledCourseId(enrollment._id);
-          setCompletedLessons(new Set(completedLessonIds));
-          setCompletedModules(new Set(completedModuleIds));
-        }
-
-        // Fetch existing quiz submissions for completed quiz lessons
-        try {
-          const allLsn = modulesWithLessons.flatMap((m) => m.lessonsList);
-          const quizLessons = allLsn.filter((l) => l.type === 'quiz' && completedLessonIds.includes(l._id));
-          if (quizLessons.length > 0 && user?._id) {
-            const submissionsRes = await axiosInstance.get('/quiz-submission', {
-              params: { studentId: user._id, courseId: courseData._id },
-            });
-            const submissions = submissionsRes.data.data?.result || [];
-            const resultMap: Record<string, QuizResult> = {};
-            submissions.forEach((sub: any) => {
-              resultMap[sub.lessonId] = {
-                totalScore: sub.totalScore,
-                isPassed: sub.isPassed,
-                answers: (sub.answers || []).map((a: any) => ({
-                  questionId: a.questionId,
-                  providedAnswer: a.providedAnswer || [],
-                  correctAnswers: a.correctAnswers || [],
-                  isCorrect: a.isCorrect,
-                  marksAwarded: a.marksAwarded,
-                })),
-              };
-            });
-            setLessonQuizResults(resultMap);
+          if (enrollment) {
+            setEnrolledCourseId(enrollment._id);
+            setCompletedLessons(new Set(completedLessonIds));
+            setCompletedModules(new Set(completedModuleIds));
           }
-        } catch (_) {
-          // Non-critical — quiz results may not exist yet
+
+          // Fetch existing quiz submissions for students only
+          try {
+            const allLsn = modulesWithLessons.flatMap((m) => m.lessonsList);
+            const quizLessons = allLsn.filter((l) => l.type === 'quiz' && completedLessonIds.includes(l._id));
+            if (quizLessons.length > 0 && user?._id) {
+              const submissionsRes = await axiosInstance.get('/quiz-submission', {
+                params: { studentId: user._id, courseId: courseData._id },
+              });
+              const submissions = submissionsRes.data.data?.result || [];
+              const resultMap: Record<string, QuizResult> = {};
+              submissions.forEach((sub: any) => {
+                resultMap[sub.lessonId] = {
+                  totalScore: sub.totalScore,
+                  isPassed: sub.isPassed,
+                  answers: (sub.answers || []).map((a: any) => ({
+                    questionId: a.questionId,
+                    providedAnswer: a.providedAnswer || [],
+                    correctAnswers: a.correctAnswers || [],
+                    isCorrect: a.isCorrect,
+                    marksAwarded: a.marksAwarded,
+                  })),
+                };
+              });
+              setLessonQuizResults(resultMap);
+            }
+          } catch (_) {
+            // Non-critical
+          }
         }
 
         if (modulesWithLessons.length > 0) {
           const firstModule = modulesWithLessons[0];
           setExpandedModules(new Set([firstModule._id]));
-          const allLsn = modulesWithLessons.flatMap((m) => m.lessonsList);
-          const firstUncompleted = allLsn.find((l) => !completedLessonIds.includes(l._id));
-          if (firstUncompleted) {
-            setCurrentLesson(firstUncompleted);
-            setExpandedModules(new Set([firstUncompleted.moduleId]));
-          } else if (firstModule.lessonsList.length > 0) {
-            setCurrentLesson(firstModule.lessonsList[0]);
+
+          if (isAdmin) {
+            // Admin always starts at the very first lesson, nothing locked
+            setCurrentLesson(firstModule.lessonsList[0] ?? null);
+          } else {
+            const allLsn = modulesWithLessons.flatMap((m) => m.lessonsList);
+            const completedIds = new Set(
+              (await axiosInstance.get('/enrolled-courses', { params: { courseId: courseData._id } })
+                .then((r) => {
+                  const enrollments = r.data.data?.result || [r.data.data];
+                  const targetEnrollId = storedEnrollCourseId || enrollCourseIdFromState;
+                  const enrollment = targetEnrollId
+                    ? enrollments.find((e: any) => e._id === targetEnrollId)
+                    : enrollments[0];
+                  return enrollment?.completedLessons?.map((l: any) => l._id || l) || [];
+                })
+                .catch(() => []))
+            );
+            const firstUncompleted = allLsn.find((l) => !completedIds.has(l._id));
+            if (firstUncompleted) {
+              setCurrentLesson(firstUncompleted);
+              setExpandedModules(new Set([firstUncompleted.moduleId]));
+            } else if (firstModule.lessonsList.length > 0) {
+              setCurrentLesson(firstModule.lessonsList[0]);
+            }
           }
         }
       } catch (err) {
@@ -834,7 +883,7 @@ export function EnrollCourseDetails() {
       }
     };
     fetchData();
-  }, [slug, storedEnrollCourseId, enrollCourseIdFromState]);
+  }, [slug, storedEnrollCourseId, enrollCourseIdFromState, isAdmin]);
 
   useEffect(() => {
     return () => { localStorage.removeItem('currentEnrollCourseId'); };
@@ -847,7 +896,9 @@ export function EnrollCourseDetails() {
     return allLessons.findIndex((l) => l._id === currentLesson._id);
   }, [currentLesson, allLessons]);
 
+  // Admin: everything unlocked; Student: sequential unlock logic
   const isLessonUnlocked = (lessonId: string) => {
+    if (isAdmin) return true;
     const index = allLessons.findIndex((l) => l._id === lessonId);
     if (index === 0) return true;
     if (completedLessons.has(lessonId)) return true;
@@ -856,8 +907,11 @@ export function EnrollCourseDetails() {
     return false;
   };
 
+  // Admin: skip PATCH entirely; Student: update progress as before
   const markAsCompleted = async (lessonToComplete: LessonData) => {
+    if (isAdmin) return; // No-op for admin
     if (!enrolledCourseId) return;
+
     const curr = completedLessonsRef.current;
     const currMods = completedModulesRef.current;
 
@@ -922,7 +976,7 @@ export function EnrollCourseDetails() {
   }, [searchQuery, filteredSections]);
 
   const handleLessonClick = (lesson: LessonData, forceBypass = false) => {
-    if (forceBypass || isLessonUnlocked(lesson._id)) {
+    if (isAdmin || forceBypass || isLessonUnlocked(lesson._id)) {
       if (!expandedModules.has(lesson.moduleId)) {
         setExpandedModules((prev) => new Set(prev).add(lesson.moduleId));
       }
@@ -933,14 +987,19 @@ export function EnrollCourseDetails() {
 
   const handleNextLesson = async () => {
     if (!currentLesson) return;
-    if (currentLesson.type === 'quiz') {
-      if (!completedLessons.has(currentLesson._id)) {
+
+    if (!isAdmin) {
+      // Students must complete quiz before proceeding
+      if (currentLesson.type === 'quiz' && !completedLessons.has(currentLesson._id)) {
         alert('Please complete the quiz before moving to the next lesson.');
         return;
       }
-    } else {
-      await markAsCompleted(currentLesson);
+      // Mark non-quiz lessons as completed for students
+      if (currentLesson.type !== 'quiz') {
+        await markAsCompleted(currentLesson);
+      }
     }
+
     if (currentIndex >= 0 && currentIndex < allLessons.length - 1) {
       handleLessonClick(allLessons[currentIndex + 1], true);
     }
@@ -949,7 +1008,8 @@ export function EnrollCourseDetails() {
   const handlePrevLesson = () => {
     if (currentIndex > 0) {
       const prev = allLessons[currentIndex - 1];
-      if (isLessonUnlocked(prev._id)) handleLessonClick(prev);
+      // Admin can always go back; students check unlock
+      if (isAdmin || isLessonUnlocked(prev._id)) handleLessonClick(prev);
     }
   };
 
@@ -972,6 +1032,14 @@ export function EnrollCourseDetails() {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}` : url;
+  };
+
+  const isNextDisabled = () => {
+    if (isAdmin) return currentIndex === allLessons.length - 1; // Admin: only disable on very last lesson
+    if (!currentLesson) return true;
+    if (currentLesson.type === 'quiz' && !completedLessons.has(currentLesson._id)) return true;
+    if (currentIndex === allLessons.length - 1 && completedLessons.has(currentLesson._id)) return true;
+    return false;
   };
 
   // ── Content Renderer ───────────────────────────────────────────────────────
@@ -1050,6 +1118,7 @@ export function EnrollCourseDetails() {
           alreadyCompleted={alreadyCompleted}
           existingResult={existingResult}
           onQuizPassed={() => markAsCompleted(currentLesson)}
+          isAdmin={isAdmin}
         />
       );
     }
@@ -1083,13 +1152,6 @@ export function EnrollCourseDetails() {
     </div>
   );
 
-  const isNextDisabled = () => {
-    if (!currentLesson) return true;
-    if (currentLesson.type === 'quiz' && !completedLessons.has(currentLesson._id)) return true;
-    if (currentIndex === allLessons.length - 1 && completedLessons.has(currentLesson._id)) return true;
-    return false;
-  };
-
   return (
     <div className="min-h-screen bg-slate-50/80 text-slate-900">
       {/* Top Header */}
@@ -1109,10 +1171,21 @@ export function EnrollCourseDetails() {
                 {course?.title}
               </h1>
               <p className="hidden text-xs text-slate-500 sm:block">
-                {currentLesson?.title ? `Current: ${currentLesson.title}` : 'Course Overview'}
+                {isAdmin
+                  ? `Admin Preview${currentLesson?.title ? ` — ${currentLesson.title}` : ''}`
+                  : currentLesson?.title ? `Current: ${currentLesson.title}` : 'Course Overview'
+                }
               </p>
             </div>
           </div>
+
+          {/* Admin badge in header */}
+          {isAdmin && (
+            <Badge className="bg-blue-100 text-blue-700 border-blue-200 font-semibold">
+              <Eye className="h-3 w-3 mr-1" />
+              Admin Preview
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -1126,7 +1199,7 @@ export function EnrollCourseDetails() {
             <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-6">
               <Button
                 onClick={handlePrevLesson}
-                disabled={currentIndex <= 0 || (currentIndex > 0 && !isLessonUnlocked(allLessons[currentIndex - 1]._id))}
+                disabled={currentIndex <= 0}
                 className="gap-2 rounded-full bg-supperagent px-6 text-white hover:bg-slate-800 disabled:opacity-50"
               >
                 <ChevronLeft className="h-4 w-4" /> Previous Lesson
@@ -1138,7 +1211,7 @@ export function EnrollCourseDetails() {
                 className="gap-2 rounded-full bg-supperagent px-6 text-white hover:bg-slate-800 disabled:opacity-50"
               >
                 {currentIndex === allLessons.length - 1
-                  ? <><span>Complete</span> <CheckCircle2 className="h-4 w-4" /></>
+                  ? <><span>{isAdmin ? 'Last Lesson' : 'Complete'}</span> <CheckCircle2 className="h-4 w-4" /></>
                   : <><span>Next Lesson</span> <ChevronRight className="h-4 w-4" /></>
                 }
               </Button>
@@ -1156,23 +1229,32 @@ export function EnrollCourseDetails() {
                   <div className="relative z-10">
                     <div className="mb-4 flex flex-row items-end justify-between gap-4">
                       <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Current Progress</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          {isAdmin ? 'Admin Preview' : 'Current Progress'}
+                        </span>
                         <h3 className="line-clamp-1 text-base font-bold tracking-wide text-white">
                           {currentModule ? currentModule.title : ''}
                         </h3>
                       </div>
-                      <div className="flex items-center gap-1 rounded-md bg-slate-800 px-2 py-1">
-                        <span className="text-xs font-bold text-supperagent">{moduleStats.completed}</span>
-                        <span className="text-[10px] text-slate-500">/</span>
-                        <span className="text-xs font-bold text-slate-400">{moduleStats.total}</span>
+                      {/* Hide progress counter for admin since it's not meaningful */}
+                      {!isAdmin && (
+                        <div className="flex items-center gap-1 rounded-md bg-slate-800 px-2 py-1">
+                          <span className="text-xs font-bold text-supperagent">{moduleStats.completed}</span>
+                          <span className="text-[10px] text-slate-500">/</span>
+                          <span className="text-xs font-bold text-slate-400">{moduleStats.total}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Progress bar: only meaningful for students */}
+                    {!isAdmin && (
+                      <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                        <div
+                          className="absolute h-full rounded-full bg-supperagent shadow-[0_0_15px_currentColor] text-supperagent transition-all duration-700 ease-out"
+                          style={{ width: `${moduleStats.percentage}%` }}
+                        />
                       </div>
-                    </div>
-                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                      <div
-                        className="absolute h-full rounded-full bg-supperagent shadow-[0_0_15px_currentColor] text-supperagent transition-all duration-700 ease-out"
-                        style={{ width: `${moduleStats.percentage}%` }}
-                      />
-                    </div>
+                    )}
 
                     <div className="group relative mt-6">
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -1224,7 +1306,8 @@ export function EnrollCourseDetails() {
                             <div className="flex flex-col bg-slate-50/50 pb-2 pt-1">
                               {section.lessonsList.map((lesson, idx) => {
                                 const isActive = currentLesson?._id === lesson._id;
-                                const isLocked = !isLessonUnlocked(lesson._id);
+                                // Admin: never locked; Student: sequential unlock
+                                const isLocked = !isAdmin && !isLessonUnlocked(lesson._id);
                                 const isCompleted = completedLessons.has(lesson._id);
 
                                 return (
@@ -1244,8 +1327,9 @@ export function EnrollCourseDetails() {
                                     >
                                       {isCompleted
                                         ? <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                        : isLocked ? <Lock className="h-3.5 w-3.5" />
-                                        : <span>{idx + 1}</span>
+                                        : isLocked
+                                          ? <Lock className="h-3.5 w-3.5" />
+                                          : <span>{idx + 1}</span>
                                       }
                                     </div>
 
