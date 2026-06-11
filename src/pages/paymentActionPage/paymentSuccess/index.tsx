@@ -301,17 +301,7 @@ export function PaymentSuccessPage() {
             >
               Your enrollment is complete! You now have full access to your course materials.
             </motion.p>
-            {orderId && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-50 border border-slate-200/60 mt-4"
-              >
-                <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Order Ref</span>
-                <span className="text-xs font-mono text-slate-600">{orderId}</span>
-              </motion.div>
-            )}
+           
           </motion.div>
 
          
