@@ -788,7 +788,7 @@ export function EnrollCourseDetails() {
 
         const modulesWithLessons = await Promise.all(
           modules.map(async (mod) => {
-            const lessonsRes = await axiosInstance.get('/course-lesson', { params: { moduleId: mod._id } });
+            const lessonsRes = await axiosInstance.get('/course-lesson?isQuiz=true', { params: { moduleId: mod._id } });
             const rawLessons: LessonData[] = lessonsRes.data.data.result || [];
             const sortedLessons = rawLessons.sort((a, b) => a.index - b.index);
             const totalDuration = sortedLessons.reduce((acc, l) => acc + (parseInt(l.duration) || 0), 0);

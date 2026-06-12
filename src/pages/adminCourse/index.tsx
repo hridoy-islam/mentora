@@ -117,24 +117,24 @@ export default function AdminCoursesPage() {
               </Button>
             </div>
           </div>
-            <div className="flex flex-row items-center gap-4">
-              <Button
-                size="default"
-                onClick={() => navigate(-1)}
-                variant="outline"
-              >
-                <MoveLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-              <Button
-                size="default"
-                onClick={() => navigate('create')}
-                className="bg-supperagent hover:bg-supperagent/90"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                New Course
-              </Button>
-            </div>
+          <div className="flex flex-row items-center gap-4">
+            <Button
+              size="default"
+              onClick={() => navigate(-1)}
+              variant="outline"
+            >
+              <MoveLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <Button
+              size="default"
+              onClick={() => navigate('create')}
+              className="bg-supperagent hover:bg-supperagent/90"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Course
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="pt-4">
           {loading ? (
@@ -167,12 +167,27 @@ export default function AdminCoursesPage() {
               <TableBody>
                 {courses.map((course: any) => (
                   <TableRow key={course._id}>
-                    <TableCell className="font-medium">
+                    <TableCell
+                      className="font-medium cursor-pointer"
+                      onClick={() => navigate(`${course._id}/course-modules`)}
+                    >
                       {course.title}
                     </TableCell>
-                    <TableCell>{course.categoryId?.name}</TableCell>
-                    <TableCell>{course.instructorId?.name}</TableCell>
-                    <TableCell>${course.price}</TableCell>
+                    <TableCell  className='cursor-pointer'               
+                      onClick={() => navigate(`${course._id}/course-modules`)}
+                    >
+                      {course.categoryId?.name}
+                    </TableCell>
+                    <TableCell className='cursor-pointer'
+                      onClick={() => navigate(`${course._id}/course-modules`)}
+                    >
+                      {course.instructorId?.name}
+                    </TableCell>
+                    <TableCell className='cursor-pointer'
+                      onClick={() => navigate(`${course._id}/course-modules`)}
+                    >
+                      ${course.price}
+                    </TableCell>
                     <TableCell className="text-center">
                       <div className="flex flex-row items-center justify-center gap-2">
                         <Switch

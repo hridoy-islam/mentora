@@ -38,7 +38,6 @@ const signUpSchema = z
     state: z.string().optional(),
     address: z.string().optional(),
     expertise: z.string().optional(),
-    dateOfBirth: z.string().optional(),
     password: z.string().min(6, 'Min 6 chars'),
     confirmPassword: z.string(),
   })
@@ -46,16 +45,7 @@ const signUpSchema = z
     message: "Mismatch",
     path: ['confirmPassword']
   })
-  .refine(
-    (data) =>
-      data.role === 'student' || data.role === 'instructor'
-        ? !!data.dateOfBirth
-        : true,
-    {
-      message: 'DOB required',
-      path: ['dateOfBirth']
-    }
-  );
+  
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 
@@ -77,7 +67,6 @@ export function SignUpForm({ className, user = {}, ...props }: SignUpFormProps) 
       state:  '',
       address:  '',
       expertise: '',
-      dateOfBirth: '',
       password: '',
       confirmPassword: ''
     }
