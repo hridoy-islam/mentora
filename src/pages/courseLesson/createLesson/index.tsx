@@ -36,6 +36,7 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 import { DataTablePagination } from '@/components/shared/data-table-pagination';
+import { cn } from '@/lib/utils';
 
 // --- Interfaces ---
 interface LessonOption {
@@ -55,6 +56,10 @@ interface QuizConfig {
   totalMarks: number;
   passMarks: number;
 }
+interface UploadedFile {
+  name: string;
+  url: string;
+}
 interface FormData {
   title: string;
   videoUrl: string;
@@ -65,6 +70,7 @@ interface FormData {
   additionalNote?: string;
   duration: number;
   importedQuestions: string[]; // Store imported question IDs separately
+  videoFile?: UploadedFile; // Add video file upload
 }
 
 // Question Bank Interface
@@ -474,7 +480,19 @@ export default function CreateLessonPage() {
   const [selectedPrerequisite, setSelectedPrerequisite] =
     useState<LessonOption | null>(null);
 
-  const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
+  // Document Upload States
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Video Upload States
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
+  const [videoFile, setVideoFile] = useState<UploadedFile | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const videoFileInputRef = useRef<HTMLInputElement>(null);
+
   const [additionalNote, setAdditionalNote] = useState<string>('');
   const { toast } = useToast();
 
@@ -489,15 +507,9 @@ export default function CreateLessonPage() {
       passMarks: 0
     },
     duration: 0,
-    importedQuestions: [] // Store IDs separately for submission
+    importedQuestions: [], // Store IDs separately for submission
+    videoFile: undefined // Store video file upload
   });
-
-  const [videoPreview, setVideoPreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const additionalFileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch Prerequisites
   useEffect(() => {
@@ -522,6 +534,135 @@ export default function CreateLessonPage() {
     };
     fetchLessons();
   }, [mid]);
+
+  // --- Document Upload Handlers ---
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    // Validate all files first
+    for (const file of files) {
+      if (file.size > 20 * 1024 * 1024) {
+        setUploadError(`File too large: ${file.name}. Must be less than 20MB.`);
+        return;
+      }
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const uploadPromises = files.map(async (file) => {
+        const formData = new FormData();
+        formData.append('entityId', mid || '');
+        formData.append('file_type', 'document');
+        formData.append('file', file);
+
+        const res = await axiosInstance.post('/documents', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return { name: file.name, url: res.data?.data?.fileUrl };
+      });
+
+      const uploadedResults = await Promise.all(uploadPromises);
+      setUploadedFiles((prev) => [...prev, ...uploadedResults]);
+      
+      toast({
+        title: 'Files Uploaded',
+        description: `Successfully uploaded ${uploadedResults.length} file(s).`
+      });
+    } catch (err) {
+      setUploadError('Failed to upload one or more documents.');
+      toast({
+        title: 'Upload Failed',
+        description: 'Failed to upload one or more documents.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+    }
+  };
+
+  const handleRemoveFile = (indexToRemove: number) => {
+    setUploadedFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
+  };
+
+  // --- Video Upload Handler ---
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate video file
+    if (!file.type.startsWith('video/')) {
+      setVideoUploadError('Please select a valid video file!');
+      return;
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      setVideoUploadError('File size exceeds 100MB.');
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => setVideoPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+
+    setIsVideoUploading(true);
+    setVideoUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('entityId', mid || '');
+      formData.append('file_type', 'video');
+      formData.append('file', file);
+
+      const res = await axiosInstance.post('/documents', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const uploadedVideo = {
+        name: file.name,
+        url: res.data?.data?.fileUrl
+      };
+
+      setVideoFile(uploadedVideo);
+      setFormData((prev) => ({
+        ...prev,
+        videoUrl: uploadedVideo.url,
+        videoFile: uploadedVideo
+      }));
+
+      toast({
+        title: 'Video Uploaded',
+        description: 'Video uploaded successfully.'
+      });
+    } catch (err) {
+      setVideoUploadError('Failed to upload video.');
+      toast({
+        title: 'Upload Failed',
+        description: 'Failed to upload video.',
+        variant: 'destructive'
+      });
+      // Clear preview on error
+      setVideoPreview(null);
+    } finally {
+      setIsVideoUploading(false);
+      if (videoFileInputRef.current) videoFileInputRef.current.value = ''; // Reset input
+    }
+  };
+
+  const handleRemoveVideo = () => {
+    setVideoFile(null);
+    setVideoPreview(null);
+    setFormData((prev) => ({
+      ...prev,
+      videoUrl: '',
+      videoFile: undefined
+    }));
+    setVideoUploadError(null);
+    if (videoFileInputRef.current) videoFileInputRef.current.value = '';
+  };
 
   // Handlers
   const handleSubmit = async (e: React.FormEvent) => {
@@ -553,13 +694,10 @@ export default function CreateLessonPage() {
       type: lessonType,
       prerequisiteLesson: selectedPrerequisite?.value || null,
       additionalNote: additionalNote || undefined,
-      duration: formData.duration || 0
+      duration: formData.duration || 0,
+      additionalFiles: uploadedFiles.map((file) => file.url),
+      videoUrl: formData.videoUrl || undefined // Will be the uploaded video URL if direct upload
     };
-
-    // Handle file uploads if any
-    if (additionalFiles.length > 0) {
-      payload.additionalFiles = additionalFiles.map((f) => f.name);
-    }
 
     try {
       await axiosInstance.post('/course-lesson', payload);
@@ -598,39 +736,6 @@ export default function CreateLessonPage() {
       ...prev,
       questions: prev.questions.filter((_, i) => i !== index)
     }));
-  };
-
-  // --- Video Handler ---
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('video/')) {
-      window.alert('Please select a valid video file!');
-      return;
-    }
-    if (file.size > 100 * 1024 * 1024) {
-      window.alert('File size exceeds 100MB.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => setVideoPreview(e.target?.result as string);
-    reader.readAsDataURL(file);
-
-    setUploading(true);
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      setUploadProgress(progress);
-      if (progress >= 100) {
-        clearInterval(interval);
-        setFormData((prev) => ({
-          ...prev,
-          videoUrl: URL.createObjectURL(file)
-        }));
-        setUploading(false);
-      }
-    }, 100);
   };
 
   // --- Quiz Questions Logic ---
@@ -910,14 +1015,25 @@ export default function CreateLessonPage() {
                       <div className="flex rounded-lg border-2 border-gray-300 bg-gray-200 p-1">
                         <button
                           type="button"
-                          onClick={() => setVideoMethod('link')}
+                          onClick={() => {
+                            setVideoMethod('link');
+                            // Clear video upload state when switching to link
+                            if (videoFile) handleRemoveVideo();
+                          }}
                           className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${videoMethod === 'link' ? 'bg-white text-gray-900 shadow' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                           External Link
                         </button>
                         <button
                           type="button"
-                          onClick={() => setVideoMethod('upload')}
+                          onClick={() => {
+                            setVideoMethod('upload');
+                            // Clear video URL when switching to upload
+                            setFormData((prev) => ({
+                              ...prev,
+                              videoUrl: ''
+                            }));
+                          }}
                           className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${videoMethod === 'upload' ? 'bg-white text-gray-900 shadow' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                           Direct Upload
@@ -942,62 +1058,85 @@ export default function CreateLessonPage() {
                         />
                       </div>
                     ) : (
-                      <div
-                        onClick={() => fileInputRef.current?.click()}
-                        className="group relative cursor-pointer rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 transition-all hover:border-blue-500 hover:bg-blue-50/50"
-                      >
-                        {videoPreview ? (
-                          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
-                            <video
-                              src={videoPreview}
-                              className="h-full w-full object-contain"
-                              controls
-                            />
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setVideoPreview(null);
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  videoUrl: ''
-                                }));
-                              }}
-                              className="absolute right-2 top-2 rounded-full bg-black/50 p-1.5 text-white backdrop-blur-sm transition-colors hover:bg-red-500"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center justify-center space-y-3 text-center">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm transition-transform group-hover:scale-110">
-                              <Upload className="h-6 w-6 text-supperagent" />
+                      <div className="space-y-3">
+                        {/* Video Upload Dropzone */}
+                        <div
+                          onClick={() => videoFileInputRef.current?.click()}
+                          className={cn(
+                            'group relative cursor-pointer rounded-xl border-2 border-dashed p-8 transition-all',
+                            isVideoUploading
+                              ? 'border-blue-500 bg-blue-50'
+                              : videoFile
+                              ? 'border-green-500 bg-green-50'
+                              : 'border-gray-300 bg-gray-50 hover:border-blue-500 hover:bg-blue-50/50'
+                          )}
+                        >
+                          {videoPreview ? (
+                            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black">
+                              <video
+                                src={videoPreview}
+                                className="h-full w-full object-contain"
+                                controls
+                              />
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveVideo();
+                                }}
+                                className="absolute right-2 top-2 rounded-full bg-black/50 p-1.5 text-white backdrop-blur-sm transition-colors hover:bg-red-500"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                              {videoFile && (
+                                <div className="absolute bottom-2 left-2 rounded-full bg-black/70 px-3 py-1 text-xs text-white">
+                                  {videoFile.name}
+                                </div>
+                              )}
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                Click to upload video
-                              </p>
-                              <p className="mt-1 text-xs text-gray-500">
-                                MP4, WebM or Ogg (Max 100MB)
+                          ) : (
+                            <div className="flex flex-col items-center justify-center space-y-3 text-center">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm transition-transform group-hover:scale-110">
+                                <Upload className="h-6 w-6 text-supperagent" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">
+                                  Click to upload video
+                                </p>
+                                <p className="mt-1 text-xs text-gray-500">
+                                  MP4, WebM or Ogg (Max 100MB)
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          {isVideoUploading && (
+                            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/90 backdrop-blur-[1px]">
+                              <div className="mb-3 h-16 w-16 animate-spin rounded-full border-4 border-blue-100 border-t-supperagent"></div>
+                              <p className="text-sm font-medium text-supperagent">
+                                Uploading video...
                               </p>
                             </div>
+                          )}
+                          <input
+                            type="file"
+                            ref={videoFileInputRef}
+                            className="hidden"
+                            onChange={handleVideoUpload}
+                            accept="video/*"
+                          />
+                        </div>
+                        {videoUploadError && (
+                          <p className="text-sm text-red-500">{videoUploadError}</p>
+                        )}
+                        {videoFile && (
+                          <div className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 p-2">
+                            <Video className="h-5 w-5 text-green-600" />
+                            <span className="text-sm font-medium text-green-700">
+                              {videoFile.name}
+                            </span>
+                            <span className="text-xs text-green-600">✓ Uploaded</span>
                           </div>
                         )}
-                        {uploading && (
-                          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/90 backdrop-blur-[1px]">
-                            <div className="mb-3 h-16 w-16 animate-spin rounded-full border-4 border-blue-100 border-t-supperagent"></div>
-                            <p className="text-sm font-medium text-supperagent">
-                              Uploading {uploadProgress}%
-                            </p>
-                          </div>
-                        )}
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          className="hidden"
-                          onChange={handleVideoUpload}
-                          accept="video/*"
-                        />
                       </div>
                     )}
                   </div>
@@ -1215,55 +1354,74 @@ export default function CreateLessonPage() {
                 Lesson Settings
               </h3>
               <div className="space-y-4">
-                {/* Additional Files */}
+                {/* Additional Files - Updated with new upload logic */}
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-gray-700">
                     Additional Resources
                   </label>
-                  <div className="space-y-2">
-                    {additionalFiles.map((file, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between rounded border border-gray-200 bg-gray-50 p-2"
-                      >
-                        <span className="max-w-[150px] truncate text-xs text-gray-700">
-                          {file.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setAdditionalFiles((f) =>
-                              f.filter((_, i) => i !== idx)
-                            )
-                          }
-                          className="text-gray-400 hover:text-red-500"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                    <div
-                      onClick={() => additionalFileInputRef.current?.click()}
-                      className="flex cursor-pointer items-center justify-center rounded border border-dashed border-gray-300 py-3 hover:bg-gray-50"
-                    >
-                      <span className="flex items-center gap-1 text-xs text-gray-500">
-                        <Plus className="h-3 w-3" /> Add File
-                      </span>
+                  
+                  {/* Uploaded Files List */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="space-y-2 max-h-32 overflow-y-auto pr-1 mb-3">
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="flex w-full items-center justify-between rounded-md border border-green-200 bg-green-50 p-2">
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <FileText className="h-5 w-5 flex-shrink-0 text-green-600" />
+                            <p className="truncate text-xs font-medium text-green-700" title={file.name}>
+                              {file.name}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => { e.stopPropagation(); handleRemoveFile(index); }}
+                            className="h-8 w-8 flex-shrink-0 hover:bg-red-100 hover:text-red-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
+                  )}
+
+                  {/* Upload Dropzone */}
+                  <div
+                    className={cn(
+                      'relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors',
+                      isUploading
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+                    )}
+                  >
                     <input
+                      ref={fileInputRef}
                       type="file"
-                      ref={additionalFileInputRef}
-                      className="hidden"
-                      onChange={(e) => {
-                        if (e.target.files)
-                          setAdditionalFiles([
-                            ...additionalFiles,
-                            ...Array.from(e.target.files)
-                          ]);
-                      }}
                       multiple
+                      onChange={handleFileSelect}
+                      className="absolute inset-0 cursor-pointer opacity-0"
+                      disabled={isUploading}
                     />
+
+                    {isUploading ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                        <p className="text-xs text-blue-600">Uploading...</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-center">
+                        <Upload className="h-6 w-6 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-600">
+                          Add Documents
+                        </span>
+                        <span className="text-xs text-gray-400">PDF/Images (Max 20MB each)</span>
+                      </div>
+                    )}
                   </div>
+                  
+                  {uploadError && (
+                    <p className="mt-2 text-xs text-red-500">{uploadError}</p>
+                  )}
                 </div>
 
                 {/* Additional Note - ReactQuill */}

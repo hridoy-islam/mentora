@@ -18,6 +18,8 @@ import {
   Eye,
   ArrowRight,
   ClipboardList,
+  Download,
+  File,
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -62,6 +64,8 @@ interface LessonData {
     totalMarks: number;
     passMarks: number;
   };
+  additionalFiles?: string[];
+  additionalNote?: string;
 }
 
 interface CourseModule {
@@ -1117,6 +1121,11 @@ export function EnrollCourseDetails() {
     return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}` : url;
   };
 
+  // Helper function to handle document download/view
+  const handleViewDocument = (url: string) => {
+    window.open(url, '_blank');
+  };
+
   const isNextDisabled = () => {
     if (isAdmin) return currentIndex === allLessons.length - 1; // Admin: only disable on very last lesson
     if (!currentLesson) return true;
@@ -1161,6 +1170,42 @@ export function EnrollCourseDetails() {
               </p>
             </div>
           </div>
+          {currentLesson.additionalFiles && currentLesson.additionalFiles.length > 0 && (
+              <div className="mt-8 border-t border-slate-200 pt-6">
+                <h3 className="mb-3 text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <File className="h-4 w-4" />
+                  Additional Resources
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {currentLesson.additionalFiles.map((url, idx) => {
+                    let fileName = url.split('/').pop()?.split('?')[0] || `Document ${idx + 1}`;
+                    fileName = fileName.replace(/^\d+-/, '');
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleViewDocument(url)}
+                        title={`View ${fileName}`}
+                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 hover:border-supperagent transition-all duration-200"
+                      >
+                        <Download className="h-3.5 w-3.5 text-supperagent" />
+                        <span className="truncate max-w-[200px]">{fileName}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Display Additional Note */}
+            {currentLesson.additionalNote && (
+              <div className="mt-6 border-t border-slate-200 pt-6">
+                <h3 className="mb-2 text-sm font-semibold text-slate-700">Additional Note</h3>
+                <div
+                  className="prose prose-slate max-w-none prose-p:text-sm prose-p:text-slate-600 prose-p:leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: currentLesson.additionalNote }}
+                />
+              </div>
+            )}
         </div>
       );
     }
@@ -1182,6 +1227,44 @@ export function EnrollCourseDetails() {
               className="prose prose-slate max-w-none prose-headings:font-bold prose-p:text-slate-600 prose-a:text-blue-600 prose-img:rounded-xl"
               dangerouslySetInnerHTML={{ __html: currentLesson.content || '<p>No content available.</p>' }}
             />
+
+            {/* Display Additional Resources (Files) */}
+            {currentLesson.additionalFiles && currentLesson.additionalFiles.length > 0 && (
+              <div className="mt-8 border-t border-slate-200 pt-6">
+                <h3 className="mb-3 text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <File className="h-4 w-4" />
+                  Additional Resources
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {currentLesson.additionalFiles.map((url, idx) => {
+                    let fileName = url.split('/').pop()?.split('?')[0] || `Document ${idx + 1}`;
+                    fileName = fileName.replace(/^\d+-/, '');
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleViewDocument(url)}
+                        title={`View ${fileName}`}
+                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 hover:border-supperagent transition-all duration-200"
+                      >
+                        <Download className="h-3.5 w-3.5 text-supperagent" />
+                        <span className="truncate max-w-[200px]">{fileName}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Display Additional Note */}
+            {currentLesson.additionalNote && (
+              <div className="mt-6 border-t border-slate-200 pt-6">
+                <h3 className="mb-2 text-sm font-semibold text-slate-700">Additional Note</h3>
+                <div
+                  className="prose prose-slate max-w-none prose-p:text-sm prose-p:text-slate-600 prose-p:leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: currentLesson.additionalNote }}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       );
