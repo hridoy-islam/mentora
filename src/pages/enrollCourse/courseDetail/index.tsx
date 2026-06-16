@@ -1293,6 +1293,8 @@ export function EnrollCourseDetails() {
     }
   };
 
+
+  
   if (loading) return (
     <div className="container mx-auto space-y-6 py-8">
       <Skeleton className="h-8 w-1/3 rounded-md" />
