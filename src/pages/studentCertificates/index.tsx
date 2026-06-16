@@ -52,7 +52,7 @@ export default function StudentCertificatePage() {
         const response = await axiosInstance.get('/enrolled-courses', {
           params: {
             studentId: user._id,
-            limit: 100, 
+            limit: 1000, 
           }
         });
 

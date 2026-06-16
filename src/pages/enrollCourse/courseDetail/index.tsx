@@ -111,6 +111,7 @@ interface QuizRendererProps {
   alreadyCompleted: boolean;
   existingResult: QuizResult | null;
   onQuizPassed: () => void;
+  onResultUpdate: (lessonId: string, result: QuizResult) => void;
   isAdmin: boolean;
 }
 
@@ -122,12 +123,12 @@ function QuizRenderer({
   alreadyCompleted,
   existingResult,
   onQuizPassed,
+  onResultUpdate,
   isAdmin,
 }: QuizRendererProps) {
-  const allQuestions: QuestionOption[] = useMemo(
-    () => [...(lesson.questions || []), ...(lesson.importedQuestions || [])],
-    [lesson]
-  );
+  // New local state to store the dynamic/shuffled list of questions
+  const [activeQuestions, setActiveQuestions] = useState<QuestionOption[]>([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
   const [step, setStep] = useState<QuizStep>(
     alreadyCompleted && existingResult ? 'result' : 'ready'
@@ -139,13 +140,58 @@ function QuizRenderer({
   const [showConfirmStart, setShowConfirmStart] = useState(false);
   const [showAnswerDialog, setShowAnswerDialog] = useState(false);
 
+  // Tracks whether the user just submitted in this mounted session, so the
+  // sync effect below never overwrites a fresh result with stale parent props.
+  const justSubmittedRef = useRef(false);
+  // Tracks whether the current quizResult came from a submission made in
+  // this session (vs. being hydrated from a past completed attempt on
+  // mount/revisit). Review Answers should only show after submitting.
+  const [justSubmitted, setJustSubmitted] = useState(false);
+
+  // Fetch unique rotated/shuffled questions from backend when lesson mounts
   useEffect(() => {
+    const fetchQuizQuestions = async () => {
+      setIsLoadingQuestions(true);
+      try {
+        if (isAdmin) {
+          // Admins view the full array of core and imported questions
+          setActiveQuestions([...(lesson.questions || []), ...(lesson.importedQuestions || [])]);
+        } else {
+          // Students fetch a unique slice rotated away from seen choices
+          const res = await axiosInstance.get(`/course-lesson/${lesson._id}/quiz-questions`);
+          setActiveQuestions(res.data.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch quiz questions from dynamic endpoint", err);
+        // Fallback to locally provided values if API endpoint experiences failures
+        setActiveQuestions([...(lesson.questions || []), ...(lesson.importedQuestions || [])]);
+      } finally {
+        setIsLoadingQuestions(false);
+      }
+    };
+
+    fetchQuizQuestions();
+
+    // Do not re-sync step/quizResult from parent props if the user already
+    // submitted this lesson during the current mount. Passing triggers
+    // markAsCompleted -> setCompletedLessons in the parent, which flips
+    // `alreadyCompleted` to true and re-runs this effect; without this guard
+    // that re-run would call setQuizResult(existingResult) with a stale
+    // (still null) prop and snap the UI back to 'ready', hiding the result
+    // and retake/review buttons right after submission.
+    if (justSubmittedRef.current) return;
+
     setStep(alreadyCompleted && existingResult ? 'result' : 'ready');
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
     setQuizResult(existingResult);
     setShowAnswerDialog(false);
-  }, [lesson._id]);
+    setJustSubmitted(false); // hydrating a past attempt — not a fresh submission
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson._id, isAdmin, alreadyCompleted]);
+
+  // Bind active questions list
+  const allQuestions = activeQuestions;
 
   const currentQuestion = allQuestions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === allQuestions.length - 1;
@@ -173,85 +219,114 @@ function QuizRenderer({
     if (currentQuestionIndex > 0) setCurrentQuestionIndex((i) => i - 1);
   };
 
- const handleSubmitQuiz = async () => {
-  const unansweredCount = allQuestions.filter(
-    (_, idx) => !selectedAnswers[idx] || selectedAnswers[idx].length === 0
-  ).length;
+  const handleSubmitQuiz = async () => {
+    const unansweredCount = allQuestions.filter(
+      (_, idx) => !selectedAnswers[idx] || selectedAnswers[idx].length === 0
+    ).length;
 
-  if (unansweredCount > 0) {
-    alert(`Please answer all questions. ${unansweredCount} question(s) remaining.`);
-    return;
-  }
-
-  // ── Admin: evaluate locally, no API call ─────────────────────────────────
-  if (isAdmin) {
-    let totalScore = 0;
-    const answers: EvaluatedAnswer[] = allQuestions.map((q, idx) => {
-      const provided = selectedAnswers[idx] || [];
-      const correct = q.correctAnswers || [];
-      const isCorrect =
-        provided.length === correct.length &&
-        provided.every((a) => correct.includes(a));
-      const marksAwarded = isCorrect ? 1 : 0;
-      if (isCorrect) totalScore++;
-      return {
-        questionId: q._id ?? String(idx),
-        providedAnswer: provided,
-        correctAnswers: correct,
-        isCorrect,
-        marksAwarded,
-      };
-    });
-
-    const passMarks = lesson.quizConfig?.passMarks ?? Math.ceil(allQuestions.length * 0.5);
-    const result: QuizResult = {
-      totalScore,
-      isPassed: totalScore >= passMarks,
-      answers,
-    };
-    setQuizResult(result);
-    setStep('result');
-    return; // done — no onQuizPassed, no PATCH
-  }
-
-  // ── Student: submit to backend ────────────────────────────────────────────
-  const answersPayload = allQuestions.map((q, idx) => ({
-    questionId: q._id,
-    providedAnswer: selectedAnswers[idx] || [],
-  }));
-
-  setIsSubmitting(true);
-  try {
-    const res = await axiosInstance.post('/quiz-submission', {
-      courseId: course._id,
-      lessonId: lesson._id,
-      answers: answersPayload,
-      studentId: user._id,
-    });
-    const data = res.data.data;
-    const result: QuizResult = {
-      totalScore: data.totalScore,
-      isPassed: data.isPassed,
-      answers: (data.answers || []).map((a: any) => ({
-        questionId: a.questionId,
-        providedAnswer: a.providedAnswer || [],
-        correctAnswers: a.correctAnswers || [],
-        isCorrect: a.isCorrect,
-        marksAwarded: a.marksAwarded,
-      })),
-    };
-    setQuizResult(result);
-    setStep('result');
-    if (result.isPassed) {
-      onQuizPassed();
+    if (unansweredCount > 0) {
+      alert(`Please answer all questions. ${unansweredCount} question(s) remaining.`);
+      return;
     }
-  } catch (err: any) {
-    const msg = err.response?.data?.message || 'Failed to submit quiz. Please try again.';
-    alert(msg);
-  } finally {
-    setIsSubmitting(false);
+
+    // Mark that a submission is happening in this mount, so the sync effect
+    // never overwrites the result we're about to set, even if a later prop
+    // change (e.g. alreadyCompleted flipping true after onQuizPassed) re-runs it.
+    justSubmittedRef.current = true;
+
+    // ── Admin: evaluate locally, no API call ─────────────────────────────────
+    if (isAdmin) {
+      let totalScore = 0;
+      const answers: EvaluatedAnswer[] = allQuestions.map((q, idx) => {
+        const provided = selectedAnswers[idx] || [];
+        const correct = q.correctAnswers || [];
+        const isCorrect =
+          provided.length === correct.length &&
+          provided.every((a) => correct.includes(a));
+        const marksAwarded = isCorrect ? 1 : 0;
+        if (isCorrect) totalScore++;
+        return {
+          questionId: q._id ?? String(idx),
+          providedAnswer: provided,
+          correctAnswers: correct,
+          isCorrect,
+          marksAwarded,
+        };
+      });
+
+      const passMarks = lesson.quizConfig?.passMarks ?? Math.ceil(allQuestions.length * 0.5);
+      const result: QuizResult = {
+        totalScore,
+        isPassed: totalScore >= passMarks,
+        answers,
+      };
+      setQuizResult(result);
+      setStep('result');
+      setJustSubmitted(true);
+      return;
+    }
+
+    // ── Student: submit to backend ────────────────────────────────────────────
+    const answersPayload = allQuestions.map((q, idx) => ({
+      questionId: q._id,
+      providedAnswer: selectedAnswers[idx] || [],
+    }));
+
+    setIsSubmitting(true);
+    try {
+      const res = await axiosInstance.post('/quiz-submission', {
+        courseId: course._id,
+        lessonId: lesson._id,
+        answers: answersPayload,
+        studentId: user._id,
+      });
+      const data = res.data.data;
+      const result: QuizResult = {
+        totalScore: data.totalScore,
+        isPassed: data.isPassed,
+        answers: (data.answers || []).map((a: any) => ({
+          questionId: a.questionId,
+          providedAnswer: a.providedAnswer || [],
+          correctAnswers: a.correctAnswers || [],
+          isCorrect: a.isCorrect,
+          marksAwarded: a.marksAwarded,
+        })),
+      };
+      setQuizResult(result);
+      setStep('result');
+      setJustSubmitted(true);
+      // Push the fresh result up to the parent immediately so
+      // lessonQuizResults[lesson._id] is in sync right away. Without this,
+      // navigating to another module and back would read the stale
+      // pre-retake result from lessonQuizResults until a full page refresh
+      // re-fetched submissions from the backend.
+      onResultUpdate(lesson._id, result);
+      // IMPORTANT: only mark the lesson complete (and therefore only let
+      // it count toward the module's completedModules) when the student
+      // actually passed. On failure, lessonToComplete._id is never added
+      // to completedLessons, so the module-complete check in
+      // markAsCompleted (`mod.lessonsList.every(l => newLessons.has(l._id))`)
+      // can never succeed either — a failed quiz cannot complete its module.
+      if (result.isPassed) {
+        onQuizPassed();
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Failed to submit quiz. Please try again.';
+      alert(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ── LOADING screen ────────────────────────────────────────────────────────
+  if (isLoadingQuestions) {
+    return (
+      <Card className="p-12 text-center border-slate-200 shadow-sm">
+        <Skeleton className="mx-auto h-12 w-12 rounded-full mb-4 animate-pulse" />
+        <p className="text-sm font-medium text-slate-500">Preparing your quiz session...</p>
+      </Card>
+    );
   }
-};
 
   // ── READY screen ──────────────────────────────────────────────────────────
   if (step === 'ready') {
@@ -274,8 +349,8 @@ function QuizRenderer({
               <div className="mb-6 mx-auto max-w-md rounded-xl border border-amber-500/20 bg-amber-500/10 px-5 py-4 text-left">
                 <p className="text-sm font-semibold text-amber-300 mb-1">⚠ Before you start</p>
                 <ul className="space-y-1 text-xs text-amber-200/80 list-disc list-inside">
-                  <li>You can only attempt this quiz once — no retakes.</li>
-                  <li>Answer every question before submitting.</li>
+                  <li>You will receive a randomized selection of questions.</li>
+                  <li>Answer every question before submitting your evaluation.</li>
                 </ul>
               </div>
             )}
@@ -312,7 +387,7 @@ function QuizRenderer({
               <DialogDescription className="pt-1">
                 {isAdmin
                   ? `You are previewing this quiz as an admin. Your answers won't be saved. The quiz has ${allQuestions.length} question(s).`
-                  : `Once you start, the quiz timer begins. You cannot retake this quiz after submitting. Make sure you have enough time to complete all `}
+                  : `Once you start, you must finish the attempt. Make sure you have enough time to complete all `}
                 {!isAdmin && <strong>{allQuestions.length} questions</strong>}
                 {!isAdmin && '.'}
               </DialogDescription>
@@ -368,7 +443,6 @@ function QuizRenderer({
           <Progress value={progressPercent} className="h-2" />
           <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-400">
             <span>Question {currentQuestionIndex + 1} of {allQuestions.length}</span>
-            <span>{progressPercent}% complete</span>
           </div>
         </div>
 
@@ -471,11 +545,21 @@ function QuizRenderer({
     );
   }
 
-  // ── RESULT screen ─────────────────────────────────────────────────────────
-  if (step === 'result' && quizResult) {
+  // ── RESULT screen with Pass Percentage and Progress Metrics ──────────────
+ if (step === 'result' && quizResult) {
     const scorePercent = allQuestions.length > 0
-      ? Math.round((quizResult.totalScore / allQuestions.length) * 100)
+      ? Math.round((quizResult.totalScore / allQuestions.length) * 10000) / 100
       : 0;
+
+    const handleRetake = () => {
+      justSubmittedRef.current = false;
+      setJustSubmitted(false);
+      setCurrentQuestionIndex(0);
+      setSelectedAnswers({});
+      setQuizResult(null);
+      setShowAnswerDialog(false);
+      setStep('ready');
+    };
 
     return (
       <>
@@ -507,38 +591,22 @@ function QuizRenderer({
               <h2 className="mb-1 text-3xl font-bold tracking-tight">
                 {quizResult.isPassed ? 'Congratulations!' : 'Keep Pushing!'}
               </h2>
-              <p className={`mb-8 text-lg ${quizResult.isPassed ? 'text-emerald-200' : 'text-red-300'}`}>
-                {quizResult.isPassed ? 'Quiz passed!' : 'Did not meet pass mark.'}
+              <p className={`mb-6 text-lg ${quizResult.isPassed ? 'text-emerald-200' : 'text-red-300'}`}>
+                {quizResult.isPassed ? 'Quiz passed successfully!' : 'Did not meet the pass mark requirement.'}
               </p>
 
-              <div className="mx-auto mb-8 grid max-w-xs grid-cols-2 gap-4">
-                <div className="rounded-xl bg-white/10 px-4 py-4 ring-1 ring-white/10">
-                  <p className="text-2xl font-bold">{quizResult.totalScore}</p>
-                  <p className="mt-0.5 text-xs text-white/60">Score</p>
-                </div>
-                <div className="rounded-xl bg-white/10 px-4 py-4 ring-1 ring-white/10">
-                  <p className="text-2xl font-bold">{allQuestions.length}</p>
-                  <p className="mt-0.5 text-xs text-white/60">Total</p>
-                </div>
-              </div>
-
-              <div className="mx-auto max-w-sm">
-                <div className="mb-1.5 flex justify-between text-xs text-white/60">
-                  <span>0%</span>
-                  <span className="font-semibold text-white/80">Your score: {scorePercent}%</span>
-                  <span>100%</span>
-                </div>
-                <div className="h-3 w-full overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className={`h-full rounded-full transition-all duration-700 ${quizResult.isPassed ? 'bg-emerald-400' : 'bg-red-400'}`}
-                    style={{ width: `${scorePercent}%` }}
-                  />
-                </div>
+              {/* Simple result: just the percentage */}
+              <div className="mx-auto mb-2 inline-flex flex-col items-center rounded-2xl bg-white/10 px-10 py-6 ring-1 ring-white/10">
+                <p className="text-5xl font-bold">{scorePercent}%</p>
+                <p className="mt-1 text-xs uppercase tracking-wider text-white/60">
+                  {quizResult.totalScore} / {allQuestions.length} Correct
+                </p>
               </div>
             </div>
           </div>
+          
 
-          <div className="flex flex-col items-center gap-4 bg-white p-8 sm:flex-row sm:justify-center">
+          <div className="flex flex-col items-center gap-4 bg-white p-8 sm:flex-row sm:justify-center mt-4">
             {isAdmin ? (
               <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 ring-1 ring-blue-200">
                 <Eye className="h-4 w-4" />
@@ -552,17 +620,32 @@ function QuizRenderer({
             ) : (
               <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 ring-1 ring-red-200">
                 <XCircle className="h-4 w-4" />
-                You did not pass. This quiz cannot be retaken.
+                You did not pass. You can retake this quiz.
               </div>
             )}
 
-            <Button
-              onClick={() => setShowAnswerDialog(true)}
-              className="gap-2 !h-11 !rounded-md border-slate-300 hover:border-supperagent"
-            >
-              <Eye className="h-4 w-4" />
-              Review Answers
-            </Button>
+            {/* Review Answers — only after a fresh submission in this session,
+                not when simply revisiting an already-completed quiz lesson. */}
+            {justSubmitted && (
+              <Button
+                onClick={() => setShowAnswerDialog(true)}
+                className="gap-2 !h-11 !rounded-md border-slate-300 hover:border-supperagent"
+              >
+                <Eye className="h-4 w-4" />
+                Review Answers
+              </Button>
+            )}
+
+            {/* Retake button — shown for non-admin until score is 100% */}
+            {!isAdmin && scorePercent < 100 && (
+              <Button
+                onClick={handleRetake}
+                className="gap-2 !h-11 !rounded-md bg-supperagent text-white hover:bg-supperagent/90"
+              >
+                <ArrowRight className="h-4 w-4" />
+                Retake Quiz
+              </Button>
+            )}
           </div>
         </Card>
 
@@ -634,7 +717,7 @@ function QuizRenderer({
 
                         let containerClass = 'border-slate-200 bg-slate-50 text-slate-500';
                         let icon = <div className="h-4 w-4 rounded-full border-2 border-slate-300" />;
-                        let label = null;
+                        let label: JSX.Element | null = null;
 
                         if (isGiven && isCorrectOpt) {
                           containerClass = 'border-emerald-300 bg-emerald-50 text-emerald-900';
@@ -689,7 +772,7 @@ function QuizRenderer({
                       <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
                         <p className="text-xs font-bold text-amber-900 mb-1.5 flex items-center gap-1.5">
                           <AlertCircle className="h-3.5 w-3.5" />
-                          Correct Answer{correctAnswers.length > 1 ? 's' : ''} You Missed:
+                          Correct Answer{correctAnswers.length > 1 ? 's' : ''}:
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {correctAnswers.map((ans, i) => (
@@ -855,7 +938,7 @@ export function EnrollCourseDetails() {
           } else {
             const allLsn = modulesWithLessons.flatMap((m) => m.lessonsList);
             const completedIds = new Set(
-              (await axiosInstance.get('/enrolled-courses', { params: { courseId: courseData._id } })
+              await axiosInstance.get('/enrolled-courses', { params: { courseId: courseData._id } })
                 .then((r) => {
                   const enrollments = r.data.data?.result || [r.data.data];
                   const targetEnrollId = storedEnrollCourseId || enrollCourseIdFromState;
@@ -864,7 +947,7 @@ export function EnrollCourseDetails() {
                     : enrollments[0];
                   return enrollment?.completedLessons?.map((l: any) => l._id || l) || [];
                 })
-                .catch(() => []))
+                .catch(() => [])
             );
             const firstUncompleted = allLsn.find((l) => !completedIds.has(l._id));
             if (firstUncompleted) {
@@ -1118,6 +1201,9 @@ export function EnrollCourseDetails() {
           alreadyCompleted={alreadyCompleted}
           existingResult={existingResult}
           onQuizPassed={() => markAsCompleted(currentLesson)}
+          onResultUpdate={(lessonId, result) =>
+            setLessonQuizResults((prev) => ({ ...prev, [lessonId]: result }))
+          }
           isAdmin={isAdmin}
         />
       );

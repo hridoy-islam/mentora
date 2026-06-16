@@ -10,6 +10,8 @@ import {
   Building,
   ChevronDown,
   CreditCard,
+  BookKey,
+  FileKey,
 } from 'lucide-react';
 import { NavLink as RouterNavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -395,6 +397,7 @@ export function StudentNav() {
                             {[
                               { icon: User,       label: 'My Profile',        to: '/student/profile' },
                               { icon: BookOpen,   label: 'My Learning',       to: '/student/my-courses' },
+                              { icon: FileKey,   label: 'Certificates',       to: '/student/certificates' },
                               { icon: CreditCard, label: 'Billing & History', to: '/student/transactions' },
                             ].map(({ icon: Icon, label, to }) => (
                               <button
