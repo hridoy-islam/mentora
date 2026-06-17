@@ -18,6 +18,8 @@ import { StudentDashboard } from '@/pages/dashboard/rolewise-dashboard/student-d
 import {  EnrollCourseDetails } from '@/pages/enrollCourse/courseDetail';
 import { MyCourses } from '@/pages/myCourse';
 import CoursesPage from '@/pages/adminCourse';
+
+
 import AdminCoursesPage from '@/pages/adminCourse';
 import CreateCoursePage from '@/pages/adminCourse/createCourse';
 import CourseModulesPage from '@/pages/courseModule';
