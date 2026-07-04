@@ -32,6 +32,7 @@ interface EnrolledCourse {
   progress: number;
   completedDate?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export default function StudentCertificatePage() {
@@ -148,9 +149,10 @@ export default function StudentCertificatePage() {
                         <PDFDownloadLink
                           document={
                             <CertificatePDF
-                              studentName={user.name}
+                              studentName={item.studentId.name}
                               courseTitle={item.courseId.title}
-                              date={moment(item.updatedAt).format('LL')}
+                              date={moment(item.completedDate).format('LL')}
+                              certificateNo={item.refId || ''}
                             />
                           }
                           fileName={`${item.courseId.title}-Certificate.pdf`}
