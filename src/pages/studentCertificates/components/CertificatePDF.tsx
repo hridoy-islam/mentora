@@ -91,6 +91,7 @@ const PAGE_H = 595;
 
 const C = {
   navy: '#22346E',
+  lightnavy: '#b5bece',
   lightBlue: '#329BD4',
   green: '#6CB042',
   white: '#FFFFFF',
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
     left: 8,
     right: 8,
     bottom: 41, // Stop before the footer
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: '#7A86A8',
   },
   // Inner border - slightly smaller (creates the double border effect)
@@ -126,17 +127,17 @@ const styles = StyleSheet.create({
     left: 14,
     right: 14,
     bottom: 49, // Stop before the footer
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#CCCCCC',
   },
   wavesWrap: {
     position: 'absolute',
-    bottom: 35,
-    right: -130,
+    bottom: 40,
+    right: -125,
     width: 600,
     height: 480,
-    opacity: 0.25,
-    scale: 1.5,
+    // opacity: 0.25,
+    scale: 1.2,
   },
   wavesImage: {
     width: '100%',
@@ -246,8 +247,8 @@ const styles = StyleSheet.create({
   },
   nameLine: {
     width: 320,
-    height: 1,
-    backgroundColor: C.borderGray,
+    height: 1.5,
+    backgroundColor: C.lightnavy,
     marginBottom: 16,
   },
   bodyText: {
@@ -270,7 +271,7 @@ const styles = StyleSheet.create({
   bottomBox: {
     position: 'absolute',
     bottom: 80,
-    left: 170,
+    left: 130,
     width: 610,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -281,11 +282,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 10,
   },
   bottomColumnCenter: {
     flex: 1.2,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 20,
   },
   iconTextWrap: {
     marginLeft: 8,
@@ -305,22 +308,22 @@ const styles = StyleSheet.create({
     color: C.textDark,
   },
 signatureName: {
-  fontSize: 22, // Slightly larger to match the style
+  fontSize: 14, // Slightly larger to match the style
   fontFamily: 'Great Vibes',
   fontWeight: 400,
   color: C.navy,
-  marginBottom: 4,
+  marginBottom: 2,
 },
   signatureLine: {
     width: 140,
-    height: 1,
+    height: 2,
     backgroundColor: C.textDark,
     marginBottom: 4,
   },
   verticalDivider: {
-    width: 1,
-    height: 35,
-    backgroundColor: C.borderGray,
+    width: 2,
+    height: 45,
+    backgroundColor: C.textDark,
   },
   footerBox: {
     position: 'absolute',
@@ -429,7 +432,7 @@ export const CertificatePDF = ({
 
         {/* Background Graphic */}
         <View style={styles.wavesWrap}>
-          <Image src="/pattern.png" style={styles.wavesImage} />
+          <Image src="/pattern1.png" style={styles.wavesImage} />
         </View>
 
         {/* Header Logo Box */}
