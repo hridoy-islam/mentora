@@ -35,16 +35,16 @@ export default function PublicLayout({
           {/* Email */}
           <div className="flex items-center space-x-2 text-sm">
             <Mail className="h-4 w-4" />
-            <a href="mailto:info@example.com" className="hover:text-gray-100">
-              info@edulab.com
+            <a href="mailto:support@medicaretraining.co.uk" className="hover:text-gray-100">
+              support@medicaretraining.co.uk
             </a>
           </div>
 
           {/* Phone Number */}
           <div className="flex items-center space-x-2 text-sm">
             <Phone className="h-4 w-4" />
-            <a href="tel:+123456789" className="hover:text-gray-100 ">
-              +1 (234) 567-890
+            <a href="tel:07914829155" className="hover:text-gray-100 ">
+              07914829155
             </a>
           </div>
           

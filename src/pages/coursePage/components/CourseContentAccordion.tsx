@@ -3,12 +3,12 @@ import { ChevronDown, PlayCircle, FileText, HelpCircle, CircleHelp } from 'lucid
 
 // 1. Updated Helper: Handles "100" (minutes) strings correctly
 const formatDuration = (durationInput: string | number) => {
-  if (!durationInput) return '—';
+  if (!durationInput) return '0';
   
   // Parse the input as an integer (handling "100" string)
   const totalMinutes = parseInt(String(durationInput), 10);
 
-  if (isNaN(totalMinutes)) return '—';
+  if (isNaN(totalMinutes)) return '0';
 
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;

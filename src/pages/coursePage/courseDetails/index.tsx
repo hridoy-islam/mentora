@@ -396,7 +396,7 @@ export default function CourseDetailPage() {
                       Course Content
                     </h2>
                   </div>
-                  <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <div className="overflow-hidden ">
                     <CourseContentAccordion sections={sections} />
                   </div>
                 </div>

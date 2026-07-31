@@ -106,7 +106,7 @@ export function Footer() {
                     <Phone className="w-4 h-4 text-supperagent" />
                   </div>
                   <span className="group-hover:text-supperagent transition-colors">
-                    +1 (555) 123-4567
+                    07914829155
                   </span>
                 </li>
                 <li className="flex items-center gap-3 group">
@@ -114,7 +114,7 @@ export function Footer() {
                     <Mail className="w-4 h-4 text-supperagent" />
                   </div>
                   <span className="group-hover:text-supperagent transition-colors">
-                    support@MedicareTraining.com
+                    support@medicaretraining.co.uk
                   </span>
                 </li>
                 <li className="flex items-start gap-3 group">
@@ -122,9 +122,9 @@ export function Footer() {
                     <MapPin className="w-4 h-4 text-supperagent" />
                   </div>
                   <span className="group-hover:text-supperagent transition-colors leading-tight">
-                    123 Learning Ave #100
+                    Mardyke Works, St. Marys Ln
                     <br />
-                    San Francisco, CA 94101
+                    Upminster RM14 3PA
                   </span>
                 </li>
               </ul>

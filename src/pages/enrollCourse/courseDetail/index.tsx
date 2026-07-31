@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { VideoPlayer } from './components/VideoPlayer';
 import {
   Play,
   Lock,
@@ -1114,22 +1115,15 @@ export function EnrollCourseDetails() {
     setExpandedModules(next);
   };
 
-  const getYoutubeEmbedUrl = (url?: string) => {
-    if (!url) return '';
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}` : url;
-  };
-
   // Helper function to handle document download/view
   const handleViewDocument = (url: string) => {
     window.open(url, '_blank');
   };
 
   const isNextDisabled = () => {
-    if (isAdmin) return currentIndex === allLessons.length - 1; // Admin: only disable on very last lesson
+    if (isAdmin) return currentIndex === allLessons.length - 1;
     if (!currentLesson) return true;
-    if (currentLesson.type === 'quiz' && !completedLessons.has(currentLesson._id)) return true;
+    if (currentLesson.type !== 'doc' && !completedLessons.has(currentLesson._id)) return true;
     if (currentIndex === allLessons.length - 1 && completedLessons.has(currentLesson._id)) return true;
     return false;
   };
@@ -1143,24 +1137,12 @@ export function EnrollCourseDetails() {
       return (
         <div className="space-y-6">
           <Card className="overflow-hidden rounded-xl border-none bg-black shadow-xl ring-1 ring-slate-900/5">
-            <div className="relative aspect-video w-full">
-              {currentLesson.videoUrl ? (
-                <iframe
-                  width="100%" height="100%"
-                  src={getYoutubeEmbedUrl(currentLesson.videoUrl)}
-                  title={currentLesson.title}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="absolute inset-0"
-                />
-              ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-slate-900 text-slate-400">
-                  <Play className="mb-2 h-12 w-12 opacity-50" />
-                  <p>Video Source Unavailable</p>
-                </div>
-              )}
-            </div>
+            <VideoPlayer
+              key={currentLesson._id}
+              src={currentLesson.videoUrl || ''}
+              title={currentLesson.title}
+              onComplete={() => markAsCompleted(currentLesson)}
+            />
           </Card>
           <div className="px-1 flex justify-between items-center">
             <div>
