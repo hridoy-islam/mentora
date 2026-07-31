@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { MediaPlayer, MediaProvider, isYouTubeProvider, useMediaStore, type MediaProviderAdapter } from '@vidstack/react';
-import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
+import {
+  MediaPlayer,
+  MediaProvider,
+  isYouTubeProvider,
+  useMediaStore,
+  type MediaProviderAdapter
+} from '@vidstack/react';
+import {
+  DefaultVideoLayout,
+  defaultLayoutIcons
+} from '@vidstack/react/player/layouts/default';
 import '@vidstack/react/player/styles/default/theme.css';
 import '@vidstack/react/player/styles/default/layouts/video.css';
 
@@ -25,7 +34,7 @@ function ProgressTracker({ onComplete }: { onComplete?: () => void }) {
 
   useEffect(() => {
     if (completedRef.current || !duration || duration <= 0) return;
-    if (getPlayedDuration(played) / duration >= 0.95) {
+    if (getPlayedDuration(played) / duration >= 0.98) {
       completedRef.current = true;
       onComplete?.();
     }
@@ -34,7 +43,12 @@ function ProgressTracker({ onComplete }: { onComplete?: () => void }) {
   return null;
 }
 
-export function VideoPlayer({ src, title, poster, onComplete }: VideoPlayerProps) {
+export function VideoPlayer({
+  src,
+  title,
+  poster,
+  onComplete
+}: VideoPlayerProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const onProviderSetup = useCallback((provider: MediaProviderAdapter) => {
@@ -49,7 +63,9 @@ export function VideoPlayer({ src, title, poster, onComplete }: VideoPlayerProps
     if (!wrapperRef.current) return;
 
     const id = setInterval(() => {
-      const iframe = wrapperRef.current?.querySelector('iframe[src*="youtube"]');
+      const iframe = wrapperRef.current?.querySelector(
+        'iframe[src*="youtube"]'
+      );
       if (iframe) {
         const src = iframe.getAttribute('src') || '';
         if (src.includes('modestbranding=1')) {
@@ -70,10 +86,7 @@ export function VideoPlayer({ src, title, poster, onComplete }: VideoPlayerProps
   }, [src]);
 
   return (
-    <div
-      ref={wrapperRef}
-      onContextMenu={(e) => e.preventDefault()}
-    >
+    <div ref={wrapperRef} onContextMenu={(e) => e.preventDefault()}>
       <style>{`
         [data-media-provider] iframe {
           pointer-events: none;
@@ -86,6 +99,7 @@ export function VideoPlayer({ src, title, poster, onComplete }: VideoPlayerProps
         aspectRatio="16/9"
         crossorigin
         load="visible"
+        autoplay
         onProviderSetup={onProviderSetup}
       >
         <MediaProvider />
@@ -94,7 +108,7 @@ export function VideoPlayer({ src, title, poster, onComplete }: VideoPlayerProps
           download={false}
           noKeyboardAnimations
           slots={{
-            settingsMenu: null,
+            settingsMenu: null
           }}
         />
         {onComplete && <ProgressTracker onComplete={onComplete} />}
