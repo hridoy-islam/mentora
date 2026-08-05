@@ -27,11 +27,13 @@ interface Lesson {
   title: string;
   duration?: string;
   type: 'video' | 'doc' | 'quiz';
+  index?: number;
 }
 
 interface CourseModule {
   _id: string;
   title: string;
+  index?: number;
 }
 
 interface Instructor {
@@ -141,17 +143,23 @@ export default function CourseDetailPage() {
           params: { courseId: courseData?._id } // Use courseData here to avoid closure staleness
         });
         const modules: CourseModule[] = modulesRes.data.data.result;
+        const sortedModules = [...modules].sort(
+          (a, b) => (a.index ?? 0) - (b.index ?? 0)
+        );
 
         const modulesWithLessons = await Promise.all(
-          modules.map(async (mod) => {
+          sortedModules.map(async (mod) => {
             const lessonsRes = await axiosInstance.get(
-              '/course-lesson?fields=title,type,duration',
+              '/course-lesson?fields=title,type,duration,index',
               {
                 params: { moduleId: mod._id }
               }
             );
             const lessons: Lesson[] = lessonsRes.data.data.result;
-            return { module: mod, lessons };
+            const sortedLessons = [...lessons].sort(
+              (a, b) => (a.index ?? 0) - (b.index ?? 0)
+            );
+            return { module: mod, lessons: sortedLessons };
           })
         );
 
