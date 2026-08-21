@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoveLeft, Save, Trash2, Loader2, Image as ImageIcon } from 'lucide-react';
+import { MoveLeft, Save, Trash2, Loader2, Image as ImageIcon, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +26,11 @@ interface Option {
   label: string;
 }
 
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 interface FormErrors {
   title?: string;
   categoryId?: string;
@@ -34,17 +39,22 @@ interface FormErrors {
   originalPrice?: string;
   description?: string;
   image?: string;
+  courseOverview?: string;
 }
 
 export default function CreateCoursePage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
+    courseOverview: '',
     description: '',
     price: '',
     originalPrice: '',
     image: ''
   });
+
+  // FAQ initially empty - shows Add FAQ button
+  const [faq, setFaq] = useState<FaqItem[]>([]);
 
   // Validation State
   const [errors, setErrors] = useState<FormErrors>({});
@@ -102,15 +112,15 @@ export default function CreateCoursePage() {
       isValid = false;
     }
 
+    if (!formData.courseOverview.trim()) {
+      newErrors.courseOverview = 'Course overview is required.';
+      isValid = false;
+    }
+
     if (!selectedCategory) {
       newErrors.categoryId = 'Please select a category.';
       isValid = false;
     }
-
-    // if (!selectedInstructor) {
-    //   newErrors.instructorId = 'Please select an instructor.';
-    //   isValid = false;
-    // }
 
     if (!formData.price) {
       newErrors.price = 'Price is required.';
@@ -119,13 +129,6 @@ export default function CreateCoursePage() {
       newErrors.price = 'Price cannot be negative.';
       isValid = false;
     }
-
-    // Basic check to see if description is empty or just has empty HTML tags
-    const strippedDescription = formData.description.replace(/<[^>]+>/g, '').trim();
-    // if (!strippedDescription) {
-    //   newErrors.description = 'Course description is required.';
-    //   isValid = false;
-    // }
 
     if (!formData.image) {
       newErrors.image = 'Course banner image is required.';
@@ -152,7 +155,6 @@ export default function CreateCoursePage() {
       return;
     }
 
-    // Local Preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreview(e.target?.result as string);
@@ -165,7 +167,6 @@ export default function CreateCoursePage() {
   const uploadFile = async (file: File) => {
     setUploading(true);
     setUploadProgress(0);
-    // Clear image error if upload starts
     setErrors(prev => ({ ...prev, image: undefined }));
 
     try {
@@ -217,23 +218,30 @@ export default function CreateCoursePage() {
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error for this field when user types
     if (errors[field as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [field as keyof FormErrors]: undefined }));
     }
   };
 
+  const handleFaqChange = (index: number, field: 'question' | 'answer', value: string) => {
+    setFaq(prev => {
+      const newFaq = [...prev];
+      newFaq[index] = { ...newFaq[index], [field]: value };
+      return newFaq;
+    });
+  };
+
+  const addFaq = () => setFaq([...faq, { question: '', answer: '' }]);
+  const removeFaq = (index: number) => setFaq(faq.filter((_, i) => i !== index));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
-      // Ideally scroll to top or first error here
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-   
-    
     setLoading(true);
 
     try {
@@ -243,6 +251,7 @@ export default function CreateCoursePage() {
         instructorId: selectedInstructor?.value,
         learningPoints,
         requirements,
+        faq,
         totalLessons: 0,
         resources: 0,
         rating: 0,
@@ -343,8 +352,8 @@ export default function CreateCoursePage() {
               </div>
             </div>
 
-            {/* Price & Original Price */}
-            <div className="grid gap-4 md:grid-cols-2">
+            {/* Price, Original Price & Instructor */}
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label className={errors.price ? "text-red-500" : ""}>Price <span className="text-red-500">*</span></Label>
                 <Input
@@ -368,7 +377,7 @@ export default function CreateCoursePage() {
               </div>
 
               <div className="space-y-2">
-                <Label className={errors.instructorId ? "text-red-500" : ""}>Instructor </Label>
+                <Label className={errors.instructorId ? "text-red-500" : ""}>Instructor</Label>
                 <Select
                   options={instructors}
                   value={selectedInstructor}
@@ -382,7 +391,7 @@ export default function CreateCoursePage() {
                     placeholder: () => "text-muted-foreground"
                   }}
                 />
-                 {errors.instructorId && <p className="text-xs text-red-500 font-medium">{errors.instructorId}</p>}
+                {errors.instructorId && <p className="text-xs text-red-500 font-medium">{errors.instructorId}</p>}
               </div>
             </div>
 
@@ -448,15 +457,32 @@ export default function CreateCoursePage() {
               {errors.image && <p className="text-xs text-red-500 font-medium">{errors.image}</p>}
             </div>
 
-            {/* Description */}
+            {/* Course Overview (Short Summary) */}
             <div className="space-y-2">
-              <Label className={errors.description ? "text-red-500" : ""}>About This Course </Label>
-              <div className={errors.description ? "border border-red-500 " : ""}>
+              <Label className={errors.courseOverview ? "text-red-500" : ""}>
+                Course Overview <span className="text-red-500">*</span>
+              </Label>
+              <textarea
+                value={formData.courseOverview}
+                onChange={(e) => handleInputChange('courseOverview', e.target.value)}
+                placeholder="A concise summary highlighting what this course is about..."
+                rows={3}
+                className={`flex w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                  errors.courseOverview ? "border-red-500 focus-visible:ring-red-500" : "border-input"
+                }`}
+              />
+              {errors.courseOverview && (
+                <p className="text-xs text-red-500 font-medium">{errors.courseOverview}</p>
+              )}
+            </div>
+
+            {/* Course Description */}
+            <div className="space-y-2">
+              <Label className={errors.description ? "text-red-500" : ""}>About This Course</Label>
+              <div className={errors.description ? "border border-red-500 rounded-md" : ""}>
                 <ReactQuill
                   value={formData.description}
-                  onChange={(value) => {
-                    handleInputChange('description', value);
-                  }}
+                  onChange={(value) => handleInputChange('description', value)}
                   placeholder="Write a detailed course description..."
                   className="h-[250px] pb-10"
                   modules={quillModules}
@@ -464,6 +490,73 @@ export default function CreateCoursePage() {
                 />
               </div>
               {errors.description && <p className="text-xs text-red-500 font-medium mt-1">{errors.description}</p>}
+            </div>
+
+            {/* Frequently Asked Questions */}
+            <div className="space-y-3 pt-2">
+              <div>
+                <Label className="block text-lg font-medium">
+                  Frequently Asked Questions
+                </Label>
+                <p className="text-sm text-gray-500">
+                  Add common questions and answers about the course to inform prospective students.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {faq.map((item, index) => (
+                  <div
+                    key={index}
+                    className="relative p-4 rounded-lg border bg-gray-50/50 space-y-3 shadow-sm transition-all"
+                  >
+                    <div className="flex items-center justify-between pb-1 border-b">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        FAQ #{index + 1}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFaq(index)}
+                        className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        title="Delete Question"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Question</Label>
+                      <Input
+                        value={item.question}
+                        onChange={(e) => handleFaqChange(index, 'question', e.target.value)}
+                        placeholder="e.g. What prerequisites are required?"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Answer</Label>
+                      <textarea
+                        value={item.answer}
+                        onChange={(e) => handleFaqChange(index, 'answer', e.target.value)}
+                        placeholder="e.g. Basic HTML and JavaScript knowledge is recommended."
+                        rows={3}
+                        className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-dashed flex items-center gap-1.5"
+                onClick={addFaq}
+              >
+                <Plus className="h-4 w-4" /> Add FAQ
+              </Button>
             </div>
 
             {/* Learning Outcomes */}
@@ -561,7 +654,7 @@ export default function CreateCoursePage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading} >
+              <Button type="submit" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...

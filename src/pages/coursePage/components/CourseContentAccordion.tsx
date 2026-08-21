@@ -1,14 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { ChevronDown, PlayCircle, FileText, HelpCircle, CircleHelp } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
-// 1. Updated Helper: Handles "100" (minutes) strings correctly
 const formatDuration = (durationInput: string | number) => {
-  if (!durationInput) return '0';
+  if (!durationInput) return '0m';
   
-  // Parse the input as an integer (handling "100" string)
   const totalMinutes = parseInt(String(durationInput), 10);
 
-  if (isNaN(totalMinutes)) return '0';
+  if (isNaN(totalMinutes)) return '0m';
 
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
@@ -19,25 +17,17 @@ const formatDuration = (durationInput: string | number) => {
   return `${minutes}m`;
 };
 
-// 2. New Helper: Returns the correct icon based on lesson type
-const getLessonIcon = (type: string) => {
-  switch (type?.toLowerCase()) {
-    case 'doc':
-      return <FileText size={18} className="text-emerald-600" />;
-    case 'quiz':
-      return <CircleHelp size={18} className="text-orange-500" />;
-    case 'video':
-    default:
-      return <PlayCircle size={18} className="text-blue-600" />;
-  }
+// Capitalize the first letter of the lesson type
+const formatType = (type: string) => {
+  if (!type) return '';
+  return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
 };
 
 export default function CourseContentAccordion({ sections = [] }) {
-  // Initialize with the first section open
-  const [openSections, setOpenSections] = useState(new Set([0])); 
+  const [openSections, setOpenSections] = useState(new Set()); 
   const sectionRefs = useRef([]);
 
-  const toggleSection = (index) => {
+  const toggleSection = (index: number) => {
     const newOpenSections = new Set(openSections);
     let justOpened = false;
 
@@ -64,12 +54,11 @@ export default function CourseContentAccordion({ sections = [] }) {
       <div className="space-y-3">
         {sections.map((section, index) => {
           const isOpen = openSections.has(index);
-          
-          // Determine the list of lessons (handling potential naming differences)
           const lessons = section.lessonsList || section.items || [];
-          
-          // Calculate total duration for the Section Header automatically
-          const sectionTotalMinutes = lessons.reduce((acc, curr) => acc + (parseInt(curr.duration) || 0), 0);
+          const sectionTotalMinutes = lessons.reduce(
+            (acc, curr) => acc + (parseInt(curr.duration) || 0), 
+            0
+          );
 
           return (
             <div 
@@ -102,18 +91,18 @@ export default function CourseContentAccordion({ sections = [] }) {
                   <ul className="space-y-1">
                     {lessons.map((lesson) => (
                       <li 
-                        key={lesson._id} // Using _id from your JSON
-                        className="flex justify-between items-center p-3 rounded-lg hover:bg-white hover:shadow-sm transition-all cursor-pointer group"
+                        key={lesson._id || lesson.id} 
+                        className="flex justify-between items-center p-3 rounded-lg hover:bg-theme/5 hover:shadow-sm transition-all cursor-pointer group"
                       >
                         <div className="flex items-center gap-3 overflow-hidden">
-                          <div className="text-xs text-gray-400 font-semibold flex-shrink-0 ml-4 bg-gray-100 px-2 py-1 rounded">
-                            {lesson.type}
-                          </div>
-                          <span className="text-gray-700 font-medium truncate group-hover:text-supperagent transition-colors">
+                          <span className="text-xs font-semibold  bg-gray-100 px-2 py-1 rounded shrink-0">
+                            {formatType(lesson.type)}
+                          </span>
+                          <span className=" font-medium   transition-colors">
                             {lesson.title}
                           </span>
                         </div>
-                        <span className="text-xs text-gray-400 font-semibold flex-shrink-0 ml-4 bg-gray-100 px-2 py-1 rounded">
+                        <span className="text-xs font-semibold flex-shrink-0 ml-4 bg-gray-100 px-2 py-1 rounded">
                           {formatDuration(lesson.duration)}
                         </span>
                       </li>

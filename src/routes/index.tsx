@@ -15,7 +15,7 @@ import CourseDetailPage from '@/pages/coursePage/courseDetails';
 import { ContactPage } from '@/pages/contactPage';
 import StudentLayout from '@/components/layout/student-layout';
 import { StudentDashboard } from '@/pages/dashboard/rolewise-dashboard/student-dashboard';
-import {  EnrollCourseDetails } from '@/pages/enrollCourse/courseDetail';
+import {  EnrollCourseDetails } from '@/pages/enrollCourse';
 import { MyCourses } from '@/pages/myCourse';
 import CoursesPage from '@/pages/adminCourse';
 

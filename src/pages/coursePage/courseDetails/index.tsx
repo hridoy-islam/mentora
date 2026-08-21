@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   Star,
-  Download,
   Award,
   Share2,
   Zap,
@@ -11,13 +10,17 @@ import {
   MonitorPlay,
   Sparkles,
   Calendar,
-  Check
+  Check,
+  ChevronDown,
+  ChevronUp,
+  HelpCircle
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '@/lib/axios';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '@/redux/features/cartSlice';
 import CourseContentAccordion from '../components/CourseContentAccordion';
+import CourseCard from '../components/CourseCard';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -46,9 +49,15 @@ interface Instructor {
   image?: string;
 }
 
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 interface Course {
   _id: string;
   title: string;
+  slug?: string;
   description: string;
   image?: string;
   price: number;
@@ -60,11 +69,51 @@ interface Course {
   resources: number;
   learningPoints: string[];
   requirements: string[];
-  aboutDescription: string;
+  faq?: FaqItem[];
+  courseOverview: string;
   instructorId: Instructor;
   updatedAt?: string;
   language?: string;
 }
+
+const FaqAccordionItem = ({ item }: { item: FaqItem }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex w-full items-center justify-between p-5 text-left font-bold text-slate-900 transition-colors hover:bg-slate-50/80 focus:outline-none"
+      >
+        <div className="flex items-center gap-2 pr-4">
+          <HelpCircle size={18} className="shrink-0 text-blue-600" />
+          <span>{item.question}</span>
+        </div>
+        <ChevronDown
+          size={18}
+          className={cn(
+            'shrink-0 text-slate-400 transition-transform duration-300',
+            isOpen && 'rotate-180'
+          )}
+        />
+      </button>
+
+      <div
+        className={cn(
+          'grid transition-all duration-300 ease-in-out',
+          isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        )}
+      >
+        <div className="overflow-hidden">
+          <p className="border-t border-slate-100 px-5 pb-5 pt-3 text-sm leading-relaxed text-slate-600 sm:pl-11">
+            {item.answer}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // --- Skeleton Component ---
 const CourseSkeleton = () => (
@@ -95,12 +144,16 @@ export default function CourseDetailPage() {
   const { toast } = useToast();
 
   const [moreCourses, setMoreCourses] = useState<Course[]>([]);
-  const [moreLoading, setMoreLoading] = useState(true); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [moreLoading, setMoreLoading] = useState(true);
   const [course, setCourse] = useState<Course | null>(null);
   const [sections, setSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // New UI States
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<'learn' | 'content' | 'requirements'>('learn');
 
   const handleShare = async () => {
     try {
@@ -140,7 +193,7 @@ export default function CourseDetailPage() {
         setCourse(courseData);
 
         const modulesRes = await axiosInstance.get('/course-modules', {
-          params: { courseId: courseData?._id } // Use courseData here to avoid closure staleness
+          params: { courseId: courseData?._id }
         });
         const modules: CourseModule[] = modulesRes.data.data.result;
         const sortedModules = [...modules].sort(
@@ -205,23 +258,21 @@ export default function CourseDetailPage() {
 
   useEffect(() => {
     const fetchMoreCourses = async () => {
-      if (!course?.instructorId?._id) return;
+      if (!course?._id) return;
       try {
         setMoreLoading(true);
-        const res = await axiosInstance.get('/courses', {
-          params: { instructorId: course.instructorId._id, limit: 5 }
-        });
+        const res = await axiosInstance.get('/courses?limit=4');
         setMoreCourses(
           res.data.data.result.filter((c: Course) => c._id !== course._id)
         );
       } catch (err) {
-        console.error('Failed to fetch more courses:', err);
+        console.error('Failed to fetch recommended courses:', err);
       } finally {
         setMoreLoading(false);
       }
     };
     fetchMoreCourses();
-  }, [course?.instructorId?._id, course?._id]);
+  }, [course?._id]);
 
   const handleBackToCourses = () => navigate('/courses');
 
@@ -263,7 +314,6 @@ export default function CourseDetailPage() {
       </div>
     );
 
-  // Calculate discount percentage (Only if original price exists and is greater than price)
   const hasDiscount =
     course.originalPrice && course.originalPrice > course.price;
   const discountPercent = hasDiscount
@@ -273,7 +323,7 @@ export default function CourseDetailPage() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50  selection:bg-blue-100">
+    <div className="min-h-screen bg-slate-50 selection:bg-blue-100">
       {/* --- HERO SECTION --- */}
       <div className="relative overflow-hidden bg-slate-900 pb-32 pt-10 lg:pb-40">
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
@@ -290,57 +340,49 @@ export default function CourseDetailPage() {
             <span>Back to Courses</span>
           </button>
 
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
-            <div className="space-y-6 lg:col-span-2">
-              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white ">
-                {course.title}
-              </h1>
+          <div className="space-y-6">
+            <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white lg:text-4xl">
+              {course.title}
+            </h1>
 
-              {/* Description - Strip HTML and truncate */}
-              {course.description && (
-                <p className="line-clamp-2 max-w-2xl text-lg leading-relaxed text-slate-300">
-                  {course.description
-                    .replace(/<[^>]*>?/gm, '')
-                    .substring(0, 150)}
-                  ...
-                </p>
+            {/* FULL-WIDTH COURSE OVERVIEW */}
+            {course.courseOverview && (
+              <p className="w-full text-lg leading-relaxed text-slate-200">
+                {course.courseOverview}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-6 pt-2 text-sm text-white">
+              {course.rating > 0 && (
+                <div className="flex items-center gap-1.5 text-yellow-400">
+                  <span className="text-base font-bold">{course.rating}</span>
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={14}
+                        className={
+                          i < Math.floor(course.rating)
+                            ? 'fill-current'
+                            : 'text-slate-600'
+                        }
+                      />
+                    ))}
+                  </div>
+                  {course.reviews > 0 && (
+                    <span className="ml-1 text-slate-400 underline decoration-slate-600 underline-offset-4">
+                      ({course.reviews} reviews)
+                    </span>
+                  )}
+                </div>
               )}
 
-              {/* Stats Row */}
-              <div className="flex flex-wrap items-center gap-6 pt-2 text-sm text-slate-300">
-                {/* Rating - Only show if valid rating exists */}
-                {course.rating > 0 && (
-                  <div className="flex items-center gap-1.5 text-yellow-400">
-                    <span className="text-base font-bold">{course.rating}</span>
-                    <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          size={14}
-                          className={
-                            i < Math.floor(course.rating)
-                              ? 'fill-current'
-                              : 'text-slate-600'
-                          }
-                        />
-                      ))}
-                    </div>
-                    {course.reviews > 0 && (
-                      <span className="ml-1 text-slate-400 underline decoration-slate-600 underline-offset-4">
-                        ({course.reviews} reviews)
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Students - Only show if > 0 */}
-                {course.students > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <MonitorPlay size={16} className="text-slate-400" />
-                    <span>{course.students.toLocaleString()} Students</span>
-                  </div>
-                )}
-              </div>
+              {course.students > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <MonitorPlay size={16} className="text-slate-400" />
+                  <span>{course.students.toLocaleString()} Students</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -349,9 +391,9 @@ export default function CourseDetailPage() {
       {/* --- MAIN CONTENT LAYOUT --- */}
       <div className="container relative z-20 mx-auto -mt-24 px-6 pb-24">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
-          {/* LEFT COLUMN (Content) */}
+          {/* LEFT COLUMN */}
           <div className="space-y-10 lg:col-span-2">
-            {/* Course Cover Image */}
+            {/* 1. Course Cover Image */}
             {course.image && (
               <div className="group relative aspect-video select-none overflow-hidden rounded-2xl bg-slate-900 shadow-2xl ring-1 ring-slate-900/10">
                 <img
@@ -369,182 +411,219 @@ export default function CourseDetailPage() {
               </div>
             )}
 
-            <div className="space-y-10">
-              {/* What you'll learn - CONDITIONAL RENDER */}
-              {course.learningPoints && course.learningPoints.length > 0 && (
-                <div className="rounded-2xl border-2 border-slate-200 bg-white p-8">
-                  <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-slate-900">
-                    <Zap
-                      className="fill-amber-500 text-amber-500"
-                      size={20}
-                    />
-                    What you'll learn
-                  </h2>
-                  <div className="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
-                    {course.learningPoints.map((point, i) => (
-                      <div key={i} className="flex items-start gap-3">
-                        <CheckCircle2
-                          size={18}
-                          className="mt-1 shrink-0 text-emerald-600"
-                        />
-                        <span className="text-sm font-medium leading-relaxed text-slate-700">
-                          {point}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            {/* 2. Expandable Course Description */}
+            {course.description && (() => {
+              const textOnly = course.description.replace(/<[^>]*>/g, '').trim();
+              const wordCount = textOnly ? textOnly.split(/\s+/).filter(Boolean).length : 0;
+              const isLongDescription = wordCount > 300;
 
-              {/* Course Content - CONDITIONAL RENDER */}
-              {sections && sections.length > 0 && (
-                <div>
-                  <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-                    <h2 className="text-2xl font-bold text-slate-900">
-                      Course Content
-                    </h2>
-                  </div>
-                  <div className="overflow-hidden ">
-                    <CourseContentAccordion sections={sections} />
-                  </div>
-                </div>
-              )}
-
-              {/* Requirements - CONDITIONAL RENDER */}
-              {course.requirements && course.requirements.length > 0 && (
-                <div>
+              return (
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                   <h2 className="mb-4 text-2xl font-bold text-slate-900">
-                    Requirements
+                    Course Description
                   </h2>
-                  <div className="rounded-xl border-2 border-slate-200 bg-white p-6 shadow-sm">
-                    <ul className="space-y-3">
-                      {course.requirements.map((req, i) => (
-                        <li
-                          key={i}
-                          className="flex gap-3 text-sm leading-relaxed text-slate-700"
-                        >
-                          <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400"></div>
-                          <span>{req}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-
-              {/* Description - CONDITIONAL RENDER */}
-              {course.description && (
-                <div>
-                  <h2 className="mb-4 text-2xl font-bold text-slate-900">
-                    Description
-                  </h2>
-                  <div className="rounded-xl border-2 border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="relative overflow-hidden">
                     <div
-                      className="prose prose-sm prose-slate max-w-none md:prose-base prose-headings:font-bold prose-p:text-slate-600 prose-a:text-blue-600 prose-img:rounded-xl"
+                      className={cn(
+                        'prose prose-sm prose-slate max-w-none md:prose-base transition-all duration-300 prose-headings:font-bold prose-p:text-slate-600 prose-a:text-blue-600 prose-img:rounded-xl',
+                        isLongDescription && !isDescriptionExpanded && 'max-h-36 overflow-hidden'
+                      )}
                       dangerouslySetInnerHTML={{ __html: course.description }}
                     />
+                    {isLongDescription && !isDescriptionExpanded && (
+                      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent" />
+                    )}
                   </div>
-                </div>
-              )}
 
-              {/* Instructor - CONDITIONAL RENDER */}
-              {course.instructorId && (
-                <div>
-                  <h2 className="mb-4 text-2xl font-bold text-slate-900">
-                    Instructor
-                  </h2>
-                  <div className="rounded-xl border-2 border-slate-200 bg-white p-6 shadow-sm">
-                    <div className="flex flex-col gap-6 sm:flex-row">
-                      {/* Avatar */}
-                      <div className="shrink-0">
-                        <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-2xl font-bold text-slate-500 ring-2 ring-slate-100">
-                          {course.instructorId.image ? (
-                            <img
-                              src={course.instructorId.image}
-                              alt={course.instructorId.name}
-                              className="h-full w-full object-cover"
+                  {isLongDescription && (
+                    <button
+                      onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                      className="mt-4 flex items-center gap-1.5 text-sm font-bold text-theme hover:text-theme/90 focus:outline-none"
+                    >
+                      {isDescriptionExpanded ? (
+                        <>
+                          Show Less <ChevronUp size={16} />
+                        </>
+                      ) : (
+                        <>
+                          Read More <ChevronDown size={16} />
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* 3. Tabbed Container */}
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex overflow-x-auto border-b border-slate-200 bg-slate-50/60 p-2">
+                <button
+                  onClick={() => setActiveTab('learn')}
+                  className={cn(
+                    'flex-1 whitespace-nowrap rounded-xl px-5 py-3 text-sm font-bold transition-all',
+                    activeTab === 'learn'
+                      ? 'bg-theme text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
+                  )}
+                >
+                  What You'll Learn
+                </button>
+                <button
+                  onClick={() => setActiveTab('content')}
+                  className={cn(
+                    'flex-1 whitespace-nowrap rounded-xl px-5 py-3 text-sm font-bold transition-all',
+                    activeTab === 'content'
+                      ? 'bg-theme text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
+                  )}
+                >
+                  Course Content
+                </button>
+                <button
+                  onClick={() => setActiveTab('requirements')}
+                  className={cn(
+                    'flex-1 whitespace-nowrap rounded-xl px-5 py-3 text-sm font-bold transition-all',
+                    activeTab === 'requirements'
+                      ? 'bg-theme text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
+                  )}
+                >
+                  Requirements
+                </button>
+              </div>
+
+              <div className="p-6">
+                {activeTab === 'learn' && (
+                  <div>
+                    <h3 className="mb-6 flex items-center gap-2 text-xl font-bold text-slate-900">
+                      <Zap className="fill-amber-500 text-amber-500" size={20} />
+                      Key Learning Outcomes
+                    </h3>
+                    {course.learningPoints && course.learningPoints.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
+                        {course.learningPoints.map((point, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <CheckCircle2
+                              size={18}
+                              className="mt-1 shrink-0 text-emerald-600"
                             />
-                          ) : (
-                            course.instructorId.name?.charAt(0)
-                          )}
-                        </div>
+                            <span className="text-sm font-medium leading-relaxed text-slate-700">
+                              {point}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-
-                      {/* Info */}
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-slate-900">
-                          {course.instructorId.name}
-                        </h3>
-                        {course.instructorId.title && (
-                          <p className="mb-4 text-sm font-medium text-blue-600">
-                            {course.instructorId.title}
-                          </p>
-                        )}
-                        {course.instructorId.bio && (
-                          <p className="line-clamp-4 text-sm leading-relaxed text-slate-600 transition-all duration-300 hover:line-clamp-none">
-                            {course.instructorId.bio}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        No specific learning outcomes listed for this course.
+                      </p>
+                    )}
                   </div>
-                </div>
-              )}
+                )}
+
+                {activeTab === 'content' && (
+                  <div>
+                    <h3 className="mb-4 text-xl font-bold text-slate-900">
+                      Course Curriculum
+                    </h3>
+                    {sections && sections.length > 0 ? (
+                      <CourseContentAccordion sections={sections} />
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        No modules available yet.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'requirements' && (
+                  <div>
+                    <h3 className="mb-4 text-xl font-bold text-slate-900">
+                      Prerequisites
+                    </h3>
+                    {course.requirements && course.requirements.length > 0 ? (
+                      <ul className="space-y-3">
+                        {course.requirements.map((req, i) => (
+                          <li
+                            key={i}
+                            className="flex gap-3 text-sm leading-relaxed text-slate-700"
+                          >
+                            <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400"></div>
+                            <span>{req}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        There are no specialized prerequisites for taking this course.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* More Courses - CONDITIONAL RENDER (Already present, kept safe) */}
-            {moreCourses.length > 0 && (
-              <div className="border-t border-slate-200 pt-8">
-                <h3 className="mb-6 text-xl font-bold text-slate-900">
-                  More courses by {course.instructorId?.name}
-                </h3>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {moreCourses.map((c) => (
-                    <div
-                      key={c._id}
-                      className="group flex cursor-pointer gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-slate-300 hover:shadow-md"
-                      onClick={() => navigate(`/courses/${c._id}`)}
-                    >
-                      <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-200">
-                        <img
-                          src={c.image || '/placeholder-course.jpg'}
-                          alt={c.title}
-                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                        />
-                      </div>
-                      <div className="flex flex-col justify-between">
-                        <h4 className="line-clamp-2 text-sm font-semibold text-slate-900 transition-colors group-hover:text-blue-600">
-                          {c.title}
-                        </h4>
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="font-bold text-slate-900">
-                            ${c.price}
-                          </span>
-                          {/* Inner Loop Conditional for More Courses discount */}
-                          {c.originalPrice > c.price && (
-                            <span className="text-slate-400 line-through">
-                              ${c.originalPrice}
-                            </span>
-                          )}
-                          {c.rating > 0 && (
-                            <span className="flex items-center gap-0.5 text-amber-500">
-                              <Star size={10} fill="currentColor" />
-                              {c.rating}
-                            </span>
-                          )}
-                        </div>
+          {/* 4. FAQ Section */}
+{course.faq && course.faq.length > 0 && (
+  <div className="space-y-4">
+    <h2 className="text-2xl font-bold text-slate-900">
+      Frequently Asked Questions
+    </h2>
+    <div className="space-y-3">
+      {course.faq.map((item, index) => (
+        <FaqAccordionItem key={index} item={item} />
+      ))}
+    </div>
+  </div>
+)}
+
+            {/* 5. Instructor Section */}
+            {course.instructorId && (
+              <div>
+                <h2 className="mb-4 text-2xl font-bold text-slate-900">
+                  Instructor
+                </h2>
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="flex flex-col gap-6 sm:flex-row">
+                    <div className="shrink-0">
+                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-2xl font-bold text-slate-500 ring-2 ring-slate-100">
+                        {course.instructorId.image ? (
+                          <img
+                            src={course.instructorId.image}
+                            alt={course.instructorId.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          course.instructorId.name?.charAt(0)
+                        )}
                       </div>
                     </div>
-                  ))}
+
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-slate-900">
+                        {course.instructorId.name}
+                      </h3>
+                      {course.instructorId.title && (
+                        <p className="mb-4 text-sm font-medium text-blue-600">
+                          {course.instructorId.title}
+                        </p>
+                      )}
+                      {course.instructorId.bio && (
+                        <p className="line-clamp-4 text-sm leading-relaxed text-slate-600 transition-all duration-300 hover:line-clamp-none">
+                          {course.instructorId.bio}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* RIGHT SIDEBAR (Sticky) */}
+          {/* RIGHT SIDEBAR (Sticky Pricing Card) */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-6">
-              {/* Pricing Card */}
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
                 <div className="p-6">
                   <div className="mb-6">
@@ -552,14 +631,12 @@ export default function CourseDetailPage() {
                       <span className="text-4xl font-extrabold text-slate-900">
                         ${course.price}
                       </span>
-                      {/* Conditional Original Price */}
                       {hasDiscount && (
                         <span className="mb-1.5 text-lg text-slate-400 line-through">
                           ${course.originalPrice}
                         </span>
                       )}
                     </div>
-                    {/* Conditional Discount Badge */}
                     {hasDiscount && (
                       <div className="flex items-center gap-2">
                         <span className="inline-flex items-center rounded-md bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/10">
@@ -605,7 +682,6 @@ export default function CourseDetailPage() {
                   </div>
                 </div>
 
-                {/* Footer Actions */}
                 <div className="border-t border-slate-100 bg-slate-50 p-4">
                   <button
                     onClick={handleShare}
@@ -640,6 +716,33 @@ export default function CourseDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* --- RECOMMENDED COURSES SECTION --- */}
+        {moreCourses.length > 0 && (
+          <div className="mt-16 border-t border-slate-200 pt-12">
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-extrabold text-slate-900">
+                  Recommended Courses
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Explore top-rated courses picked for you
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {moreCourses.map((c, index) => (
+                <CourseCard
+                  key={c._id}
+                  course={c}
+                  index={index}
+                  onClick={() => navigate(`/courses/slug/${c.slug || c._id}`)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

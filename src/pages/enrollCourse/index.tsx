@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { VideoPlayer } from './components/VideoPlayer';
 import {
@@ -36,6 +36,15 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import axiosInstance from '@/lib/axios';
 import { useSelector } from 'react-redux';
 
@@ -118,6 +127,8 @@ interface QuizRendererProps {
   onQuizPassed: () => void;
   onResultUpdate: (lessonId: string, result: QuizResult) => void;
   isAdmin: boolean;
+  /** Whether the whole course has reached 100% — quizzes are then locked. */
+  courseCompleted?: boolean;
 }
 
 function QuizRenderer({
@@ -130,6 +141,7 @@ function QuizRenderer({
   onQuizPassed,
   onResultUpdate,
   isAdmin,
+  courseCompleted = false,
 }: QuizRendererProps) {
   // New local state to store the dynamic/shuffled list of questions
   const [activeQuestions, setActiveQuestions] = useState<QuestionOption[]>([]);
@@ -144,6 +156,7 @@ function QuizRenderer({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmStart, setShowConfirmStart] = useState(false);
   const [showAnswerDialog, setShowAnswerDialog] = useState(false);
+  const [alertInfo, setAlertInfo] = useState<{ title: string; message: string } | null>(null);
 
   // Tracks whether the user just submitted in this mounted session, so the
   // sync effect below never overwrites a fresh result with stale parent props.
@@ -153,30 +166,40 @@ function QuizRenderer({
   // mount/revisit). Review Answers should only show after submitting.
   const [justSubmitted, setJustSubmitted] = useState(false);
 
-  // Fetch unique rotated/shuffled questions from backend when lesson mounts
-  useEffect(() => {
-    const fetchQuizQuestions = async () => {
-      setIsLoadingQuestions(true);
-      try {
-        if (isAdmin) {
-          // Admins view the full array of core and imported questions
-          setActiveQuestions([...(lesson.questions || []), ...(lesson.importedQuestions || [])]);
-        } else {
-          // Students fetch a unique slice rotated away from seen choices
-          const res = await axiosInstance.get(`/course-lesson/${lesson._id}/quiz-questions`);
-          setActiveQuestions(res.data.data || []);
-        }
-      } catch (err) {
-        console.error("Failed to fetch quiz questions from dynamic endpoint", err);
-        // Fallback to locally provided values if API endpoint experiences failures
+  // Fetch unique rotated/shuffled questions from backend. Runs when the quiz
+  // lesson mounts (or admin mode changes), and again on retake so a new
+  // attempt always gets a fresh/rotated question set.
+  const fetchQuizQuestions = useCallback(async () => {
+    setIsLoadingQuestions(true);
+    try {
+      if (isAdmin) {
+        // Admins view the full array of core and imported questions
         setActiveQuestions([...(lesson.questions || []), ...(lesson.importedQuestions || [])]);
-      } finally {
-        setIsLoadingQuestions(false);
+      } else {
+        // Students fetch a unique slice rotated away from seen choices
+        const res = await axiosInstance.get(`/course-lesson/${lesson._id}/quiz-questions`);
+        setActiveQuestions(res.data.data || []);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch quiz questions from dynamic endpoint", err);
+      // Fallback to locally provided values if API endpoint experiences failures
+      setActiveQuestions([...(lesson.questions || []), ...(lesson.importedQuestions || [])]);
+    } finally {
+      setIsLoadingQuestions(false);
+    }
+  }, [isAdmin, lesson]);
 
+  // Fetch questions ONLY when the quiz lesson (or admin mode) changes — never
+  // on `alreadyCompleted` flips (which happen right after a submission), so the
+  // exact question set that was submitted is preserved for Answer Review.
+  useEffect(() => {
     fetchQuizQuestions();
+  }, [fetchQuizQuestions]);
 
+  // Sync step/quizResult from parent props when revisiting an attempt. This
+  // does NOT re-fetch questions (that happens above), so a pass that flips
+  // `alreadyCompleted` cannot replace the submitted question set.
+  useEffect(() => {
     // Do not re-sync step/quizResult from parent props if the user already
     // submitted this lesson during the current mount. Passing triggers
     // markAsCompleted -> setCompletedLessons in the parent, which flips
@@ -230,7 +253,10 @@ function QuizRenderer({
     ).length;
 
     if (unansweredCount > 0) {
-      alert(`Please answer all questions. ${unansweredCount} question(s) remaining.`);
+      setAlertInfo({
+        title: 'Incomplete Quiz',
+        message: `Please answer all questions. ${unansweredCount} question(s) remaining.`,
+      });
       return;
     }
 
@@ -259,10 +285,14 @@ function QuizRenderer({
         };
       });
 
-      const passMarks = lesson.quizConfig?.passMarks ?? Math.ceil(allQuestions.length * 0.5);
+      // Scores below 60% are always a fail; a higher configured passMarks still applies.
+      const passThreshold = Math.max(
+        lesson.quizConfig?.passMarks ?? 0,
+        Math.ceil(allQuestions.length * 0.6)
+      );
       const result: QuizResult = {
         totalScore,
-        isPassed: totalScore >= passMarks,
+        isPassed: totalScore >= passThreshold,
         answers,
       };
       setQuizResult(result);
@@ -317,11 +347,39 @@ function QuizRenderer({
       }
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Failed to submit quiz. Please try again.';
-      alert(msg);
+      setAlertInfo({ title: 'Submission Failed', message: msg });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // ── ALERT dialog (replaces native alert()) ───────────────────────────────
+  const renderAlertDialog = () => (
+    <AlertDialog
+      open={!!alertInfo}
+      onOpenChange={(open) => {
+        if (!open) setAlertInfo(null);
+      }}
+    >
+      <AlertDialogContent className="sm:max-w-md">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-supperagent" />
+            {alertInfo?.title}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="pt-1">{alertInfo?.message}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction
+            onClick={() => setAlertInfo(null)}
+            className="bg-supperagent text-white hover:bg-supperagent/90"
+          >
+            OK
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 
   // ── LOADING screen ────────────────────────────────────────────────────────
   if (isLoadingQuestions) {
@@ -371,14 +429,26 @@ function QuizRenderer({
               </div>
             )}
 
-            <Button
-              size="lg"
-              onClick={() => setShowConfirmStart(true)}
-              className="min-w-[200px] bg-supperagent text-white font-semibold shadow-lg shadow-supperagent/30 hover:bg-supperagent/90 transition-all duration-200"
-            >
-              <Play className="mr-2 h-4 w-4 fill-white" />
-              {isAdmin ? 'Preview Quiz' : 'Start Quiz'}
-            </Button>
+            {!isAdmin && courseCompleted ? (
+              <div className="mx-auto max-w-md rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-4 text-left">
+                <p className="text-sm font-semibold text-emerald-300 mb-1 flex items-center gap-2">
+                  <Trophy className="h-4 w-4" />
+                  Course Completed
+                </p>
+                <p className="text-xs text-emerald-200/80">
+                  You have already completed this course. Quizzes can no longer be taken.
+                </p>
+              </div>
+            ) : (
+              <Button
+                size="lg"
+                onClick={() => setShowConfirmStart(true)}
+                className="min-w-[200px] bg-supperagent text-white font-semibold shadow-lg shadow-supperagent/30 hover:bg-supperagent/90 transition-all duration-200"
+              >
+                <Play className="mr-2 h-4 w-4 fill-white" />
+                {isAdmin ? 'Preview Quiz' : 'Start Quiz'}
+              </Button>
+            )}
           </div>
         </Card>
 
@@ -427,7 +497,8 @@ function QuizRenderer({
     ).length;
 
     return (
-      <Card className="overflow-hidden border-slate-200 shadow-sm">
+      <>
+        <Card className="overflow-hidden border-slate-200 shadow-sm">
         <div className="border-b border-slate-100 bg-white px-8 py-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -546,7 +617,9 @@ function QuizRenderer({
             )}
           </div>
         </CardContent>
-      </Card>
+        </Card>
+        {renderAlertDialog()}
+      </>
     );
   }
 
@@ -564,6 +637,9 @@ function QuizRenderer({
       setQuizResult(null);
       setShowAnswerDialog(false);
       setStep('ready');
+      // Fetch a fresh/rotated question set for the new attempt instead of
+      // reusing the questions from the previous (failed) attempt.
+      fetchQuizQuestions();
     };
 
     return (
@@ -629,9 +705,11 @@ function QuizRenderer({
               </div>
             )}
 
-            {/* Review Answers — only after a fresh submission in this session,
-                not when simply revisiting an already-completed quiz lesson. */}
-            {justSubmitted && (
+            {/* Review Answers — only after a fresh submission in this session
+                AND only when the quiz was passed (>= 60%). Failed quizzes cannot
+                be reviewed, and revisiting an already-completed quiz doesn't
+                show it either. */}
+            {justSubmitted && quizResult.isPassed && (
               <Button
                 onClick={() => setShowAnswerDialog(true)}
                 className="gap-2 !h-11 !rounded-md border-slate-300 hover:border-supperagent"
@@ -641,8 +719,10 @@ function QuizRenderer({
               </Button>
             )}
 
-            {/* Retake button — shown for non-admin until score is 100% */}
-            {!isAdmin && scorePercent < 100 && (
+            {/* Retake button — shown for non-admin only when the quiz was failed.
+                Once passed, or once the whole course is complete, the quiz can
+                no longer be taken again. */}
+            {!isAdmin && !quizResult.isPassed && !courseCompleted && (
               <Button
                 onClick={handleRetake}
                 className="gap-2 !h-11 !rounded-md bg-supperagent text-white hover:bg-supperagent/90"
@@ -807,6 +887,8 @@ function QuizRenderer({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {renderAlertDialog()}
       </>
     );
   }
@@ -833,6 +915,12 @@ export function EnrollCourseDetails() {
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [currentLesson, setCurrentLesson] = useState<LessonData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showQuizRequiredDialog, setShowQuizRequiredDialog] = useState(false);
+  const [showSeekDialog, setShowSeekDialog] = useState(false);
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false);
+  // For the last lesson, completion is manual: the user must watch the video
+  // first (98%) and then click the "Complete" button — no auto-complete.
+  const [lastLessonReady, setLastLessonReady] = useState(false);
 
   const [lessonQuizResults, setLessonQuizResults] = useState<Record<string, QuizResult>>({});
 
@@ -954,10 +1042,18 @@ export function EnrollCourseDetails() {
                 })
                 .catch(() => [])
             );
-            const firstUncompleted = allLsn.find((l) => !completedIds.has(l._id));
-            if (firstUncompleted) {
-              setCurrentLesson(firstUncompleted);
-              setExpandedModules(new Set([firstUncompleted.moduleId]));
+            // Select the last unlocked lesson as the resume point: index 0,
+            // any completed lesson, or any lesson whose predecessor is completed.
+            const lastUnlocked = allLsn.reduce<LessonData | null>((acc, l, i) => {
+              const isUnlocked =
+                i === 0 ||
+                completedIds.has(l._id) ||
+                completedIds.has(allLsn[i - 1]._id);
+              return isUnlocked ? l : acc;
+            }, null);
+            if (lastUnlocked) {
+              setCurrentLesson(lastUnlocked);
+              setExpandedModules(new Set([lastUnlocked.moduleId]));
             } else if (firstModule.lessonsList.length > 0) {
               setCurrentLesson(firstModule.lessonsList[0]);
             }
@@ -1036,13 +1132,48 @@ export function EnrollCourseDetails() {
     return sections.find((s) => s._id === currentLesson.moduleId);
   }, [sections, currentLesson]);
 
-  const moduleStats = useMemo(() => {
-    if (!currentModule) return { total: 0, completed: 0, percentage: 0 };
-    const total = currentModule.lessonsList.length;
-    const completed = currentModule.lessonsList.filter((l) => completedLessons.has(l._id)).length;
-    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
-    return { total, completed, percentage };
-  }, [currentModule, completedLessons]);
+  // Overall course progress (no longer module-wise)
+  const overallProgress = useMemo(() => {
+    if (allLessons.length === 0) return 0;
+    return Math.round((completedLessons.size / allLessons.length) * 100);
+  }, [completedLessons, allLessons]);
+
+  // Course is 100% complete
+  const isCourseComplete = useMemo(
+    () => allLessons.length > 0 && completedLessons.size >= allLessons.length,
+    [completedLessons, allLessons]
+  );
+
+  // Show the congratulation dialog exactly once per in-session completion.
+  // If the course was already complete when the page loaded, don't pop it up.
+  const completionShownRef = useRef(false);
+  const initialCourseCompleteRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (initialCourseCompleteRef.current === null) {
+      if (loading) return;
+      initialCourseCompleteRef.current = isCourseComplete;
+      return;
+    }
+    if (isCourseComplete && !initialCourseCompleteRef.current && !completionShownRef.current) {
+      completionShownRef.current = true;
+      setShowCompletionDialog(true);
+    }
+  }, [isCourseComplete, loading]);
+
+  // Reset the "last lesson ready to complete" flag whenever the lesson changes
+  useEffect(() => {
+    setLastLessonReady(false);
+  }, [currentLesson?._id]);
+
+  // Allow closing the custom completion dialog with the Escape key
+  useEffect(() => {
+    if (!showCompletionDialog) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowCompletionDialog(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [showCompletionDialog]);
 
   const filteredSections = useMemo(() => {
     if (!searchQuery.trim()) return sections;
@@ -1079,7 +1210,7 @@ export function EnrollCourseDetails() {
     if (!isAdmin) {
       // Students must complete quiz before proceeding
       if (currentLesson.type === 'quiz' && !completedLessons.has(currentLesson._id)) {
-        alert('Please complete the quiz before moving to the next lesson.');
+        setShowQuizRequiredDialog(true);
         return;
       }
       // Mark non-quiz lessons as completed for students
@@ -1123,8 +1254,17 @@ export function EnrollCourseDetails() {
   const isNextDisabled = () => {
     if (isAdmin) return currentIndex === allLessons.length - 1;
     if (!currentLesson) return true;
+    // Quizzes always need to be passed before moving on
+    if (currentLesson.type === 'quiz' && !completedLessons.has(currentLesson._id)) return true;
+    // Last lesson: completion is manual — the user must click "Complete".
+    // Videos require watching first (lastLessonReady), docs are always clickable.
+    if (currentIndex === allLessons.length - 1) {
+      if (completedLessons.has(currentLesson._id)) return true;
+      if (currentLesson.type === 'video') return !lastLessonReady;
+      return false;
+    }
+    // Non-last lessons keep existing behaviour: video must be watched, doc is free
     if (currentLesson.type !== 'doc' && !completedLessons.has(currentLesson._id)) return true;
-    if (currentIndex === allLessons.length - 1 && completedLessons.has(currentLesson._id)) return true;
     return false;
   };
 
@@ -1141,7 +1281,16 @@ export function EnrollCourseDetails() {
               key={currentLesson._id}
               src={currentLesson.videoUrl || ''}
               title={currentLesson.title}
-              onComplete={() => markAsCompleted(currentLesson)}
+              onComplete={() => {
+                if (!isAdmin && currentIndex === allLessons.length - 1) {
+                  // Last lesson: don't auto-complete — just enable the
+                  // "Complete" button so the user can finish manually.
+                  setLastLessonReady(true);
+                } else {
+                  markAsCompleted(currentLesson);
+                }
+              }}
+              onSeekAttempt={() => setShowSeekDialog(true)}
             />
           </Card>
           <div className="px-1 flex justify-between items-center">
@@ -1199,14 +1348,14 @@ export function EnrollCourseDetails() {
             <div className="mb-8 border-b border-slate-100 pb-6 flex justify-between items-start">
               <div>
                 <h1 className="mb-2 text-3xl font-bold tracking-tight text-slate-900">{currentLesson.title}</h1>
-                <div className="flex items-center gap-2 text-sm text-slate-500">
+                <div className="flex items-center gap-2 text-sm text-black">
                   <FileText className="h-4 w-4" />
                   <span>Reading Material • {currentLesson.duration} min read</span>
                 </div>
               </div>
             </div>
             <div
-              className="prose prose-slate max-w-none prose-headings:font-bold prose-p:text-slate-600 prose-a:text-blue-600 prose-img:rounded-xl"
+              className="prose prose-slate max-w-none prose-headings:font-bold prose-p:text-black prose-a:text-blue-600 prose-img:rounded-xl text-justify"
               dangerouslySetInnerHTML={{ __html: currentLesson.content || '<p>No content available.</p>' }}
             />
 
@@ -1242,7 +1391,7 @@ export function EnrollCourseDetails() {
               <div className="mt-6 border-t border-slate-200 pt-6">
                 <h3 className="mb-2 text-sm font-semibold text-slate-700">Additional Note</h3>
                 <div
-                  className="prose prose-slate max-w-none prose-p:text-sm prose-p:text-slate-600 prose-p:leading-relaxed"
+                  className="prose prose-slate max-w-none prose-p:text-sm prose-p:text-black prose-p:leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: currentLesson.additionalNote }}
                 />
               </div>
@@ -1270,6 +1419,7 @@ export function EnrollCourseDetails() {
             setLessonQuizResults((prev) => ({ ...prev, [lessonId]: result }))
           }
           isAdmin={isAdmin}
+          courseCompleted={isCourseComplete}
         />
       );
     }
@@ -1355,7 +1505,7 @@ export function EnrollCourseDetails() {
                 disabled={currentIndex <= 0}
                 className="gap-2 rounded-full bg-supperagent px-6 text-white hover:bg-slate-800 disabled:opacity-50"
               >
-                <ChevronLeft className="h-4 w-4" /> Previous Lesson
+                <ChevronLeft className="h-4 w-4" /> Previous
               </Button>
 
               <Button
@@ -1364,8 +1514,8 @@ export function EnrollCourseDetails() {
                 className="gap-2 rounded-full bg-supperagent px-6 text-white hover:bg-slate-800 disabled:opacity-50"
               >
                 {currentIndex === allLessons.length - 1
-                  ? <><span>{isAdmin ? 'Last Lesson' : 'Complete'}</span> <CheckCircle2 className="h-4 w-4" /></>
-                  : <><span>Next Lesson</span> <ChevronRight className="h-4 w-4" /></>
+                  ? <><span>{isAdmin ? 'Next' : 'Complete'}</span> <CheckCircle2 className="h-4 w-4" /></>
+                  : <><span>Next</span> <ChevronRight className="h-4 w-4" /></>
                 }
               </Button>
             </div>
@@ -1392,19 +1542,18 @@ export function EnrollCourseDetails() {
                       {/* Hide progress counter for admin since it's not meaningful */}
                       {!isAdmin && (
                         <div className="flex items-center gap-1 rounded-md bg-slate-800 px-2 py-1">
-                          <span className="text-xs font-bold text-supperagent">{moduleStats.completed}</span>
-                          <span className="text-[10px] text-slate-500">/</span>
-                          <span className="text-xs font-bold text-slate-400">{moduleStats.total}</span>
+                          <span className="text-xs font-bold text-supperagent">{overallProgress}</span>
+                          <span className="text-[10px] text-slate-500">%</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Progress bar: only meaningful for students */}
+                    {/* Progress bar: overall course progress, only for students */}
                     {!isAdmin && (
                       <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-800">
                         <div
                           className="absolute h-full rounded-full bg-supperagent shadow-[0_0_15px_currentColor] text-supperagent transition-all duration-700 ease-out"
-                          style={{ width: `${moduleStats.percentage}%` }}
+                          style={{ width: `${overallProgress}%` }}
                         />
                       </div>
                     )}
@@ -1443,10 +1592,10 @@ export function EnrollCourseDetails() {
                                 <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                               </div>
                               <div className="flex-1">
-                                <h4 className={`text-sm font-bold leading-tight ${isActiveModule ? 'text-black' : 'text-slate-600 group-hover/module:text-slate-900'}`}>
+                                <h4 className="text-base font-bold leading-tight text-black">
                                   {section.title}
                                 </h4>
-                                <p className="mt-1.5 flex items-center gap-2 text-[11px] font-semibold">
+                                <p className="mt-1.5 flex items-center gap-2 text-xs font-semibold text-black">
                                   <span>{section.lessonsList.length} Lessons</span>
                                   <span className="h-1 w-1 rounded-full bg-black" />
                                   <span>{formatDuration(section.totalDurationMinutes)}</span>
@@ -1487,15 +1636,15 @@ export function EnrollCourseDetails() {
                                     </div>
 
                                     <div className="min-w-0 flex-1">
-                                      <p className={`truncate text-xs ${isActive ? 'font-bold text-black' : 'font-medium text-slate-600'}`}>
+                                      <p className="truncate text-sm font-bold text-black">
                                         {lesson.title}
                                       </p>
                                       <div className="mt-0.5 flex items-center gap-2 font-bold">
-                                        <span className="text-[10px] text-black font-bold">
+                                        <span className="text-xs text-black font-bold">
                                           {lesson.type === 'video' ? 'Video' : lesson.type === 'quiz' ? 'Quiz' : 'Reading'}
                                         </span>
-                                        <span className="text-[10px] text-black font-bold">•</span>
-                                        <span className="text-[10px] text-black font-bold">{formatDuration(Number(lesson.duration))}</span>
+                                        <span className="text-xs text-black font-bold">•</span>
+                                        <span className="text-xs text-black font-bold">{formatDuration(Number(lesson.duration))}</span>
                                       </div>
                                     </div>
 
@@ -1521,6 +1670,99 @@ export function EnrollCourseDetails() {
           </div>
         </div>
       </div>
+
+      {/* Alert: quiz must be completed before moving on */}
+      <AlertDialog open={showQuizRequiredDialog} onOpenChange={setShowQuizRequiredDialog}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-supperagent" />
+              Quiz Not Completed
+            </AlertDialogTitle>
+            <AlertDialogDescription className="pt-1">
+              Please complete the quiz before moving to the next lesson.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setShowQuizRequiredDialog(false)}
+              className="bg-supperagent text-white hover:bg-supperagent/90"
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Alert: video cannot be skipped via timeline */}
+      <AlertDialog open={showSeekDialog} onOpenChange={setShowSeekDialog}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-supperagent" />
+              Can't Skip Video
+            </AlertDialogTitle>
+            <AlertDialogDescription className="pt-1">
+Please complete the required video content before proceeding. Skipping ahead is currently disabled.        </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setShowSeekDialog(false)}
+              className="bg-supperagent text-white hover:bg-supperagent/90"
+            >
+              Got it
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Congratulation dialog — custom overlay, full-width gradient background,
+          shown once when the course reaches 100% */}
+      {showCompletionDialog && (
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          onClick={() => setShowCompletionDialog(false)}
+        >
+          <div
+            className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-gradient-to-br from-theme via-theme/70 to-theme shadow-2xl ring-1 ring-theme"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-theme blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-theme blur-3xl" />
+            <div className="relative px-8 py-10 text-center text-white">
+              <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white/10 ring-4 ring-white">
+                <Trophy className="h-10 w-10 text-white" />
+              </div>
+              <h2 className="mb-2 text-3xl font-bold tracking-tight">Congratulations!</h2>
+              <p className="mb-1 text-lg text-white">
+                You have completed the entire course successfully.
+              </p>
+              <p className="mx-auto max-w-md text-sm text-white">
+                Your certificate is now available. You can view or download it anytime from your certificates page.
+              </p>
+              <div className="mt-8 flex flex-col items-center gap-3">
+                <Button
+                  onClick={() => {
+                    setShowCompletionDialog(false);
+                    navigate('/student/certificates');
+                  }}
+                  className="w-full gap-2 text-black bg-white hover:bg-white/90"
+                >
+                  <Trophy className="h-4 w-4" />
+                  View Certificate
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCompletionDialog(false)}
+                  className="w-full "
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

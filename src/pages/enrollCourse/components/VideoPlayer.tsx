@@ -4,6 +4,7 @@ import {
   MediaProvider,
   isYouTubeProvider,
   useMediaStore,
+  useMediaPlayer,
   type MediaProviderAdapter
 } from '@vidstack/react';
 import {
@@ -18,6 +19,8 @@ interface VideoPlayerProps {
   title?: string;
   poster?: string;
   onComplete?: () => void;
+  /** Fired when the user tries to skip ahead past the watched portion. */
+  onSeekAttempt?: () => void;
 }
 
 function getPlayedDuration(played: TimeRanges): number {
@@ -43,11 +46,52 @@ function ProgressTracker({ onComplete }: { onComplete?: () => void }) {
   return null;
 }
 
+// Blocks forward seeks past the furthest point the user has actually watched.
+// Rewinding within the watched portion stays allowed.
+function SeekGuard({ onSeekAttempt }: { onSeekAttempt?: () => void }) {
+  const player = useMediaPlayer();
+  const { played } = useMediaStore();
+  const maxWatchedRef = useRef(0);
+  const onSeekAttemptRef = useRef(onSeekAttempt);
+  onSeekAttemptRef.current = onSeekAttempt;
+
+  useEffect(() => {
+    let max = 0;
+    for (let i = 0; i < played.length; i++) max = Math.max(max, played.end(i));
+    if (max > maxWatchedRef.current) maxWatchedRef.current = max;
+  }, [played]);
+
+  useEffect(() => {
+    const el = player?.el;
+    if (!el) return;
+
+    const handler = (event: Event) => {
+      const targetTime = (event as unknown as { detail?: number }).detail;
+      if (typeof targetTime !== 'number') return;
+      if (targetTime > maxWatchedRef.current + 1.5) {
+        event.preventDefault();
+        if (player) player.currentTime = maxWatchedRef.current;
+        onSeekAttemptRef.current?.();
+      }
+    };
+
+    el.addEventListener('media-seek-request', handler, true);
+    el.addEventListener('media-seeking-request', handler, true);
+    return () => {
+      el.removeEventListener('media-seek-request', handler, true);
+      el.removeEventListener('media-seeking-request', handler, true);
+    };
+  }, [player]);
+
+  return null;
+}
+
 export function VideoPlayer({
   src,
   title,
   poster,
-  onComplete
+  onComplete,
+  onSeekAttempt
 }: VideoPlayerProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -112,6 +156,7 @@ export function VideoPlayer({
           }}
         />
         {onComplete && <ProgressTracker onComplete={onComplete} />}
+        {onSeekAttempt && <SeekGuard onSeekAttempt={onSeekAttempt} />}
       </MediaPlayer>
     </div>
   );
