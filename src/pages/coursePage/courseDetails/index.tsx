@@ -87,7 +87,7 @@ const FaqAccordionItem = ({ item }: { item: FaqItem }) => {
         className="flex w-full items-center justify-between p-5 text-left font-bold text-slate-900 transition-colors hover:bg-slate-50/80 focus:outline-none"
       >
         <div className="flex items-center gap-2 pr-4">
-          <HelpCircle size={18} className="shrink-0 text-blue-600" />
+          <HelpCircle size={18} className="shrink-0 text-theme" />
           <span>{item.question}</span>
         </div>
         <ChevronDown
