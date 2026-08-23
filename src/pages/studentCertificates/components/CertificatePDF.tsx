@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   },
   courseTitle: {
     fontSize: 28,
-    fontFamily: 'Cinzel',
+    fontFamily: 't',
     fontWeight: 400,
     color: C.navy,
     marginBottom: 12,
@@ -351,6 +351,11 @@ signatureName: {
     width: 1,
     height: 14,
     backgroundColor: 'rgba(255,255,255,0.4)',
+  },signatureImage: {
+    width: 120,
+    height: 35,
+    objectFit: 'contain',
+    marginBottom: 2,
   },
 });
 
@@ -480,11 +485,13 @@ export const CertificatePDF = ({
           <View style={styles.verticalDivider} />
 
           <View style={styles.bottomColumnCenter}>
-            <Text style={styles.signatureName}>Medicare Training</Text>
-            <View style={styles.signatureLine} />
-            <Text style={styles.colLabel}>AUTHORISED BY</Text>
-            <Text style={{ ...styles.colLabel, fontSize: 7, marginTop: 1, letterSpacing: 0 }}>Director / Course Director</Text>
-          </View>
+  <Image src="/sign.png" style={styles.signatureImage} />
+  <View style={styles.signatureLine} />
+  <Text style={styles.colLabel}>AUTHORISED BY</Text>
+  <Text style={{ ...styles.colLabel, fontSize: 7, marginTop: 1, letterSpacing: 0 }}>
+    Director / Course Director
+  </Text>
+</View>
 
           <View style={styles.verticalDivider} />
 

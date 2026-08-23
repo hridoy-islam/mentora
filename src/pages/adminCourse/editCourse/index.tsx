@@ -1,6 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MoveLeft, Save, Trash2, Loader2, Image as ImageIcon, Plus } from 'lucide-react';
+import {
+  MoveLeft,
+  Save,
+  Trash2,
+  Loader2,
+  Image as ImageIcon,
+  Plus,
+  FileText,
+  Upload,
+  ExternalLink,
+  CheckCircle2
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,6 +44,11 @@ interface FaqItem {
   answer: string;
 }
 
+interface TestimonialItem {
+  name: string;
+  review: string;
+}
+
 interface FormState {
   title: string;
   courseOverview: string;
@@ -40,6 +56,7 @@ interface FormState {
   price: string | number;
   originalPrice: string | number;
   image: string;
+  courseGuideUrl: string;
 }
 
 interface FormErrors {
@@ -64,9 +81,11 @@ export default function EditCoursePage() {
     price: '',
     originalPrice: '',
     image: '',
+    courseGuideUrl: '',
   });
 
   const [faq, setFaq] = useState<FaqItem[]>([{ question: '', answer: '' }]);
+  const [testimonial, setTestimonial] = useState<TestimonialItem[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [learningPoints, setLearningPoints] = useState<string[]>([]);
   const [requirements, setRequirements] = useState<string[]>([]);
@@ -83,6 +102,12 @@ export default function EditCoursePage() {
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Document Upload State
+  const [docUploading, setDocUploading] = useState(false);
+  const [docUploadProgress, setDocUploadProgress] = useState(0);
+  const [docFileName, setDocFileName] = useState<string | null>(null);
+  const docFileInputRef = useRef<HTMLInputElement>(null);
 
   // --- Fetch Initial Data ---
   useEffect(() => {
@@ -119,12 +144,14 @@ export default function EditCoursePage() {
           price: course.price ?? '',
           originalPrice: course.originalPrice ?? '',
           image: course.image || '',
+          courseGuideUrl: course.courseGuideUrl || '',
         });
 
         setImagePreview(course.image || null);
         setLearningPoints(course.learningPoints || []);
         setRequirements(course.requirements || []);
         setFaq(course.faq && course.faq.length > 0 ? course.faq : [{ question: '', answer: '' }]);
+        setTestimonial(course.testimonial && course.testimonial.length > 0 ? course.testimonial : []);
 
         const activeCategory = categoryOptions.find((c: Option) => c.value === course.categoryId);
         const activeInstructor = instructorOptions.find((i: Option) => i.value === course.instructorId);
@@ -252,6 +279,82 @@ export default function EditCoursePage() {
     }
   };
 
+  // --- Document Upload Handlers (PDF / DOCX Max 20MB) ---
+
+  const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const isValidExt = ['pdf', 'doc', 'docx'].includes(ext || '');
+
+    if (!allowedTypes.includes(file.type) && !isValidExt) {
+      alert('Only PDF and DOCX documents are allowed!');
+      return;
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      alert('File size exceeds the 20MB limit.');
+      return;
+    }
+
+    setDocFileName(file.name);
+    uploadDocFile(file);
+  };
+
+  const uploadDocFile = async (file: File) => {
+    setDocUploading(true);
+    setDocUploadProgress(0);
+
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('entityId', id || '');
+      formDataUpload.append('file_type', 'courseGuide');
+      formDataUpload.append('file', file);
+
+      const response = await axiosInstance.post('/documents', formDataUpload, {
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round(
+            (progressEvent.loaded / (progressEvent.total || 100)) * 100
+          );
+          setDocUploadProgress(percent);
+        }
+      });
+
+      if (response.data?.success && response.data.data?.fileUrl) {
+        setFormData((prev) => ({ ...prev, courseGuideUrl: response.data.data.fileUrl }));
+      } else {
+        throw new Error('Document upload failed');
+      }
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      alert('Error uploading document. Please try again.');
+      setDocFileName(null);
+    } finally {
+      setDocUploading(false);
+      setDocUploadProgress(0);
+    }
+  };
+
+  const handleRemoveDoc = () => {
+    setDocFileName(null);
+    setFormData((prev) => ({ ...prev, courseGuideUrl: '' }));
+    if (docFileInputRef.current) {
+      docFileInputRef.current.value = '';
+    }
+  };
+
+  const handleViewDoc = () => {
+    if (formData.courseGuideUrl) {
+      window.open(formData.courseGuideUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   // --- Form Handlers ---
   const handleInputChange = (field: keyof FormState, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -260,6 +363,7 @@ export default function EditCoursePage() {
     }
   };
 
+  // --- FAQ Handlers ---
   const handleFaqChange = (index: number, field: 'question' | 'answer', value: string) => {
     setFaq((prev) => {
       const newFaq = [...prev];
@@ -270,6 +374,18 @@ export default function EditCoursePage() {
 
   const addFaq = () => setFaq([...faq, { question: '', answer: '' }]);
   const removeFaq = (index: number) => setFaq(faq.filter((_, i) => i !== index));
+
+  // --- Testimonial Handlers ---
+  const handleTestimonialChange = (index: number, field: 'name' | 'review', value: string) => {
+    setTestimonial((prev) => {
+      const newTestimonial = [...prev];
+      newTestimonial[index] = { ...newTestimonial[index], [field]: value };
+      return newTestimonial;
+    });
+  };
+
+  const addTestimonial = () => setTestimonial([...testimonial, { name: '', review: '' }]);
+  const removeTestimonial = (index: number) => setTestimonial(testimonial.filter((_, i) => i !== index));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -291,6 +407,7 @@ export default function EditCoursePage() {
         learningPoints: learningPoints.filter((lp) => lp.trim() !== ''),
         requirements: requirements.filter((req) => req.trim() !== ''),
         faq: faq.filter((f) => f.question.trim() !== '' || f.answer.trim() !== ''),
+        testimonial: testimonial.filter((t) => t.name.trim() !== '' || t.review.trim() !== ''),
       };
 
       await axiosInstance.patch(`/courses/${id}`, payload);
@@ -481,74 +598,156 @@ export default function EditCoursePage() {
               </div>
             </div>
 
-            {/* Course Banner Image */}
-            <div className="space-y-2">
-              <Label className={`mb-2 block ${errors.image ? 'text-red-500' : ''}`}>
-                Course Banner Image <span className="text-red-500">*</span>
-              </Label>
-              <div
-                onClick={triggerFileInput}
-                className={`relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg transition-all md:w-[400px] ${
-                  errors.image
-                    ? 'border-red-500 bg-red-50'
-                    : imagePreview
-                    ? 'border-transparent'
-                    : 'border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer'
-                }`}
-              >
-                {uploading ? (
-                  <div className="flex flex-col items-center justify-center text-gray-500">
-                    <Loader2 className="h-10 w-10 animate-spin text-supperagent mb-2" />
-                    <p className="text-sm font-medium">Uploading... {uploadProgress}%</p>
+            {/* Course Banner Image & Course Guide Document */}
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Course Banner Image */}
+              <div className="space-y-2">
+                <Label className={`mb-2 block ${errors.image ? 'text-red-500' : ''}`}>
+                  Course Banner Image <span className="text-red-500">*</span>
+                </Label>
+                <div
+                  onClick={triggerFileInput}
+                  className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl transition-all ${
+                    errors.image
+                      ? 'border-red-500 bg-red-50'
+                      : imagePreview
+                      ? 'border-transparent'
+                      : 'border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer'
+                  }`}
+                >
+                  {uploading ? (
+                    <div className="flex flex-col items-center justify-center text-gray-500">
+                      <Loader2 className="h-8 w-8 animate-spin mb-2" />
+                      <p className="text-sm font-medium">Uploading... {uploadProgress}%</p>
+                    </div>
+                  ) : imagePreview ? (
+                    <div className="relative w-full h-full group">
+                      <img
+                        src={imagePreview}
+                        alt="Course Preview"
+                        className="w-full h-full object-cover rounded-xl shadow-sm"
+                      />
+                      <div className="absolute top-2 right-2">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={handleRemoveImage}
+                          className="h-8 w-8 shadow-sm transition-opacity"
+                          title="Remove Image"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-gray-500">
+                      <div className={`p-2.5 rounded-full mb-2 ${errors.image ? 'bg-red-100' : 'bg-gray-100'}`}>
+                        <ImageIcon className={`w-5 h-5 ${errors.image ? 'text-red-500' : 'text-gray-400'}`} />
+                      </div>
+                      <p className={`mb-1 text-sm font-semibold ${errors.image ? 'text-red-500' : ''}`}>
+                        Click to upload course image
+                      </p>
+                      <p className="text-xs text-gray-400">SVG, PNG, JPG or GIF (max. 5MB)</p>
+                    </div>
+                  )}
+
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                  />
+                </div>
+                {errors.image && <p className="text-xs text-red-500 font-medium">{errors.image}</p>}
+              </div>
+
+              {/* Course Guide Document Upload */}
+              <div className="space-y-2">
+                <Label className="mb-2 block font-medium">
+                  Course Guide Document <span className="text-gray-400 text-xs font-normal">(Optional)</span>
+                </Label>
+
+                {docUploading ? (
+                  <div className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50 p-6 text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                    <p className="text-sm font-medium text-gray-700">Uploading document...</p>
+                    <p className="text-xs text-gray-400 mt-1">{docUploadProgress}% completed</p>
                   </div>
-                ) : imagePreview ? (
-                  <div className="relative w-full h-full group">
-                    <img
-                      src={imagePreview}
-                      alt="Course Preview"
-                      className="w-full h-full object-cover rounded-lg shadow-sm"
-                    />
-                    <div className="absolute top-2 right-2">
+                ) : formData.courseGuideUrl ? (
+                  <div className="flex flex-col justify-between w-full h-48 p-4 border border-emerald-200 bg-emerald-50/40 rounded-xl shadow-sm transition-all hover:border-emerald-300">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <div className="p-3 bg-emerald-100 text-emerald-700 rounded-lg shrink-0">
+                          <FileText className="h-6 w-6" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {docFileName || 'Course Guide Document'}
+                          </p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className="inline-flex items-center text-xs font-medium text-emerald-700">
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                              Ready
+                            </span>
+                            <span className="text-gray-300">•</span>
+                            <span className="text-xs text-gray-500 uppercase font-mono">
+                              {formData.courseGuideUrl.split('.').pop() || 'FILE'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end space-x-2 pt-3 border-t border-emerald-100">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleViewDoc}
+                        className="h-8 text-xs font-medium rounded-sm"
+                      >
+                        <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                        View
+                      </Button>
                       <Button
                         type="button"
                         variant="destructive"
-                        size="icon"
-                        onClick={handleRemoveImage}
-                        className="h-8 w-8 shadow-sm transition-opacity"
-                        title="Remove Image"
+                        size="sm"
+                        onClick={handleRemoveDoc}
+                        className="h-8 text-xs font-medium rounded-sm"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                        Delete
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6 text-gray-500">
-                    <div
-                      className={`p-3 rounded-full mb-3 ${
-                        errors.image ? 'bg-red-100' : 'bg-gray-100'
-                      }`}
-                    >
-                      <ImageIcon
-                        className={`w-6 h-6 ${errors.image ? 'text-red-500' : 'text-gray-400'}`}
-                      />
+                  <div
+                    onClick={() => docFileInputRef.current?.click()}
+                    className="group relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 hover:border-gray-400 rounded-xl transition-all bg-gray-50/50 hover:bg-gray-100/50 cursor-pointer p-6 text-center"
+                  >
+                    <div className="p-2.5 bg-white rounded-full shadow-sm border mb-2 group-hover:scale-105 transition-transform">
+                      <Upload className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
                     </div>
-                    <p className={`mb-1 text-sm font-semibold ${errors.image ? 'text-red-500' : ''}`}>
-                      Click to upload course image
+                    <p className="text-sm font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">
+                      Click to upload Course Guide
                     </p>
-                    <p className="text-xs text-gray-400">SVG, PNG, JPG or GIF (max. 5MB)</p>
+                    <p className="text-xs text-gray-400 mt-1">PDF or DOCX format (Max 20MB)</p>
                   </div>
                 )}
 
                 <input
                   type="file"
-                  ref={fileInputRef}
+                  ref={docFileInputRef}
                   className="hidden"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={uploading}
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={handleDocUpload}
+                  disabled={docUploading}
                 />
               </div>
-              {errors.image && <p className="text-xs text-red-500 font-medium">{errors.image}</p>}
             </div>
 
             {/* Description */}
@@ -705,6 +904,71 @@ export default function EditCoursePage() {
                 onClick={addFaq}
               >
                 <Plus className="mr-1 h-4 w-4" /> Add FAQ
+              </Button>
+            </div>
+
+            {/* Testimonials Section */}
+            <div className="space-y-3 pt-2">
+              <div>
+                <Label className="block text-lg font-medium">Student Testimonials</Label>
+                <p className="text-sm text-gray-500">
+                  Add reviews or feedback from students who completed this course.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {testimonial.map((item, index) => (
+                  <div
+                    key={index}
+                    className="relative p-4 rounded-lg border bg-gray-50/50 space-y-3 shadow-sm transition-all"
+                  >
+                    <div className="flex items-center justify-between pb-1 border-b">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        Testimonial #{index + 1}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeTestimonial(index)}
+                        className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        title="Delete Testimonial"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Student Name</Label>
+                      <Input
+                        value={item.name}
+                        onChange={(e) => handleTestimonialChange(index, 'name', e.target.value)}
+                        placeholder="e.g. John Doe"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Review / Feedback</Label>
+                      <textarea
+                        value={item.review}
+                        onChange={(e) => handleTestimonialChange(index, 'review', e.target.value)}
+                        placeholder="e.g. This course helped me land my dream job!"
+                        rows={3}
+                        className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-dashed flex items-center gap-1.5"
+                onClick={addTestimonial}
+              >
+                <Plus className="h-4 w-4" /> Add Testimonial
               </Button>
             </div>
 
