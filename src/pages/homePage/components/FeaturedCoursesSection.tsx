@@ -21,8 +21,6 @@ const FeaturedCoursesSection = () => {
     try {
       const response = await axiosInstance.get('/courses?limit=4');
       const result = response.data.data?.result || response.data.data || [];
-      
-      // FIX 2: actually update the state!
       setCourses(result); 
     } catch (err) {
       console.error('Failed to fetch courses:', err);
@@ -37,8 +35,7 @@ const FeaturedCoursesSection = () => {
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-white py-24">
-      {/* --- Background Texture --- */}
+    <section className="relative overflow-hidden bg-white py-16">
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
@@ -47,12 +44,10 @@ const FeaturedCoursesSection = () => {
         }}
       ></div>
 
-      {/* --- Ambient Blobs --- */}
       <div className="pointer-events-none absolute left-1/4 top-0 h-96 w-96 rounded-full bg-teal-200/20 blur-3xl" />
       <div className="pointer-events-none absolute bottom-0 right-1/4 h-96 w-96 rounded-full bg-blue-200/20 blur-3xl" />
 
       <div className="container relative z-10 mx-auto px-6">
-        {/* --- Section Header --- */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -62,21 +57,18 @@ const FeaturedCoursesSection = () => {
         >
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-supperagent/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-supperagent">
             <HeartPulse className="h-3.5 w-3.5" />
-            Top Rated Training
+            Popular Courses
           </div>
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-mentora md:text-5xl">
-            Master Essential{' '}
-            <span className="bg-gradient-to-r from-supperagent to-teal-600 bg-clip-text text-transparent">
-              Care Skills
+            Explore Our <span className="bg-gradient-to-r from-supperagent to-teal-600 bg-clip-text text-transparent">
+              Popular Courses
             </span>
           </h2>
-          <p className="text-lg text-gray-500">
-            Explore our most popular CPD accredited courses, designed by medical
-            professionals to advance your career.
+          <p className="text-lg text-gray-800">
+            Build your knowledge across essential areas of health and social care.
           </p>
         </motion.div>
 
-        {/* --- Course Grid --- */}
         {loading ? (
            <><Loader/></>
         ) : (
@@ -86,12 +78,12 @@ const FeaturedCoursesSection = () => {
                 <CourseCard
                   key={course._id || index}
                   course={course}
-                  index={index} // Pass index for animation stagger
+                  index={index}
                   onClick={() => navigate(`/courses/${course?.slug}`)}
                 />
               ))
             ) : (
-              <div className="col-span-4 text-center text-gray-500">
+              <div className="col-span-4 text-center text-gray-800">
                 No courses found.
               </div>
             )}

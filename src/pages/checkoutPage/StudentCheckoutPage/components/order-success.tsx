@@ -7,7 +7,7 @@ export function OrderSuccess() {
   const user = useSelector((state: any) => state.auth.user); // Get user from Redux state
 
   return (
-    <div className="container mx-auto py-24 text-center">
+    <div className="container mx-auto py-16 text-center">
       <div className="mx-auto max-w-lg rounded-lg border border-gray-200 bg-white p-10 shadow-xl">
         <div className="mb-6 flex justify-center">
           <CheckCircle className="h-20 w-20 text-green-500" />

@@ -11,7 +11,7 @@ import {
   ArrowUp,
   ChevronRight,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 export function Footer() {
   const [isVisible, setIsVisible] = useState(false);
@@ -83,19 +83,13 @@ export function Footer() {
 
         {/* --- Main Content --- */}
         <div className="container relative z-10 mx-auto px-6">
-          {/* GRID ADJUSTMENT:
-              - Changed to lg:grid-cols-4 
-              - First item spans 2 columns (lg:col-span-2)
-              - Remaining 2 items take 1 column each
-              - This creates a balanced [ 50% | 25% | 25% ] layout
-          */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
             
-            {/* Column 1: Brand & Contact (Takes up 2 slots width) */}
+            {/* Column 1: Brand & Contact */}
             <div className="space-y-6 lg:col-span-2">
               <Logo />
 
-              <p className="text-gray-500 text-sm leading-relaxed max-w-sm">
+              <p className="text-black text-sm leading-relaxed max-w-sm">
                 Empowering learners worldwide with accessible, high quality
                 education. Join the revolution today.
               </p>
@@ -131,31 +125,33 @@ export function Footer() {
             </div>
 
             {/* Column 2: Company Links */}
-            {/* Removed lg:pl-8 to fix alignment */}
             <div>
               <h3 className="font-bold text-gray-900 text-lg mb-6">Company</h3>
               <ul className="space-y-3">
                 {[
-                  "About Us",
-                  "All Courses",
-                  "Our Instructors",
-                  "Upcoming Events",
-                  "Become a Teacher",
-                ].map((item) => (
-                  <li key={item}>
-                    <a
-                      href="#"
-                      className="group flex items-center text-sm text-gray-500 hover:text-supperagent transition-colors"
+                  { name: "Home", path: "/" },
+                  { name: "Courses", path: "/courses" },
+                  { name: "About Us", path: "/about-us" },
+                  { name: "Contact", path: "/contact" },
+                ].map((link) => (
+                  <li key={link.path}>
+                    <NavLink
+                      to={link.path}
+                      className={({ isActive }) =>
+                        `group flex items-center text-sm transition-colors duration-300 hover:text-supperagent ${
+                          "text-black"
+                        }`
+                      }
                     >
                       <ChevronRight className="w-3 h-3 mr-2 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
-                      {item}
-                    </a>
+                      {link.name}
+                    </NavLink>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Column 3: Useful Links */}
+            {/* Column 3: Support Links */}
             <div>
               <h3 className="font-bold text-gray-900 text-lg mb-6">Support</h3>
               <ul className="space-y-3">
@@ -170,7 +166,7 @@ export function Footer() {
                   <li key={item}>
                     <a
                       href="#"
-                      className="group flex items-center text-sm text-gray-500 hover:text-supperagent transition-colors"
+                      className="group flex items-center text-sm text-black hover:text-supperagent transition-colors"
                     >
                       <ChevronRight className="w-3 h-3 mr-2 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
                       {item}
@@ -185,7 +181,7 @@ export function Footer() {
         {/* --- Bottom Bar --- */}
         <div className="relative z-10 mt-16 pt-8 border-t border-gray-200/60">
           <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-gray-500 text-center md:text-left">
+            <p className="text-xs text-black text-center md:text-left">
               © {new Date().getFullYear()} Medicare Training Inc. All Rights
               Reserved.
             </p>
@@ -210,7 +206,7 @@ export function Footer() {
       {isVisible && (
         <Button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 w-12 h-12 rounded-full shadow-2xl bg-supperagent hover:bg-supperagent/90 text-white animate-bounce-in "
+          className="fixed bottom-8 right-8 z-50 w-12 h-12 rounded-full shadow-2xl bg-supperagent hover:bg-supperagent/90 text-white animate-bounce-in"
           size="icon"
         >
           <ArrowUp className="w-5 h-5" />

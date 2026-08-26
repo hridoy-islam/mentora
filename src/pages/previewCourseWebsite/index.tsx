@@ -147,7 +147,7 @@ export default function PreviewCourseDetails() {
 
   if (loading)
     return (
-      <div className="flex justify-center py-24">
+      <div className="flex justify-center py-16">
         <BlinkingDots size="large" color="bg-supperagent" />
       </div>
     );
