@@ -117,7 +117,7 @@ const HeroSection = () => {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-        className="hidden lg:flex absolute bottom-0 right-0 justify-end w-full lg:w-[60%] px-4"
+        className="hidden lg:flex absolute bottom-0 right-10 justify-end w-full lg:w-[60%] px-4"
       >
         <div className="relative w-full max-w-[640px] flex justify-end">
           {/* Backlight Ambient Glow */}
@@ -135,7 +135,7 @@ const HeroSection = () => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="absolute -top-5 -right-2 sm:right-2 z-20"
+            className="absolute -top-5 -right-5 sm:right-10 z-20"
           >
             <motion.div
               animate={{ y: [0, -10, 0] }}

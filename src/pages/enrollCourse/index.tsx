@@ -1719,50 +1719,76 @@ Please complete the required video content before proceeding. Skipping ahead is 
       {/* Congratulation dialog — custom overlay, full-width gradient background,
           shown once when the course reaches 100% */}
       {showCompletionDialog && (
-        <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-          onClick={() => setShowCompletionDialog(false)}
-        >
-          <div
-            className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-gradient-to-br from-theme via-theme/70 to-theme shadow-2xl ring-1 ring-theme"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-theme blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-theme blur-3xl" />
-            <div className="relative px-8 py-10 text-center text-white">
-              <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white/10 ring-4 ring-white">
-                <Trophy className="h-10 w-10 text-white" />
-              </div>
-              <h2 className="mb-2 text-3xl font-bold tracking-tight">Congratulations!</h2>
-              <p className="mb-1 text-lg text-white">
-                You have completed the entire course successfully.
-              </p>
-              <p className="mx-auto max-w-md text-sm text-white">
-                Your certificate is now available. You can view or download it anytime from your certificates page.
-              </p>
-              <div className="mt-8 flex flex-col items-center gap-3">
-                <Button
-                  onClick={() => {
-                    setShowCompletionDialog(false);
-                    navigate('/student/certificates');
-                  }}
-                  className="w-full gap-2 text-black bg-white hover:bg-white/90"
-                >
-                  <Trophy className="h-4 w-4" />
-                  View Certificate
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCompletionDialog(false)}
-                  className="w-full "
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </div>
+  <div
+    className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+    onClick={() => setShowCompletionDialog(false)}
+  >
+    <div
+      className="relative w-full max-w-2xl overflow-hidden rounded-2xl bg-gradient-to-br from-theme via-theme/70 to-theme shadow-2xl ring-1 ring-theme"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Decorative Background Elements */}
+      <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-theme blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-theme blur-3xl" />
+
+      <div className="relative px-8 py-10 text-center text-white">
+        {/* Trophy Icon */}
+        <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white/10 ring-4 ring-white">
+          <Trophy className="h-10 w-10 text-white" />
         </div>
-      )}
+
+        {/* Heading */}
+        <h2 className="mb-3 text-3xl font-bold tracking-tight">
+          🎉 Congratulations!
+        </h2>
+
+        {/* Completion Message */}
+        <p className="mb-3 text-lg font-semibold text-white">
+          You have successfully completed and passed your course.
+        </p>
+
+        {/* Certificate Message */}
+        <p className="mx-auto max-w-md text-sm leading-relaxed text-white">
+          Your certificate is now ready. Please log in to your student portal
+          and download your certificate.
+        </p>
+
+        {/* Thank You Message */}
+        <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-white">
+          Thank you for completing your course with us, and we wish you every
+          success in the future.
+        </p>
+
+        {/* Achievement Message */}
+        <p className="mt-5 text-base font-semibold text-white">
+          Well done on your achievement! 🎓
+        </p>
+
+        {/* Actions */}
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <Button
+            onClick={() => {
+              setShowCompletionDialog(false);
+              navigate("/student/certificates");
+            }}
+            className="w-full h-10 gap-2 bg-white text-black hover:bg-white/90"
+          >
+            <Trophy className="h-4 w-4" />
+            View Certificate
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => setShowCompletionDialog(false)}
+            className="w-full h-10"
+          >
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
