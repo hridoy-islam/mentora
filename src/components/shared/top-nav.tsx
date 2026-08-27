@@ -54,7 +54,6 @@ function NavLink({ to, children }) {
 }
 
 // --- Mobile NavLink ---
-// FIX: Modified to not force border-b and allow custom styling
 const MobileNavLink = React.forwardRef(({ to, children, onClick, className = '' }, ref) => {
   return (
     <RouterNavLink
@@ -324,7 +323,7 @@ export function TopNav() {
             >
               
               {/* Links - Staggered Animation */}
-              <motion.nav className="mb-8">
+              <motion.nav className="mb-4">
                 <MotionMobileNavLink 
                   variants={itemVariants} 
                   to="/" 
@@ -359,8 +358,8 @@ export function TopNav() {
                 </MotionMobileNavLink>
               </motion.nav>
 
-              {/* Mobile Actions - Now with proper border styling */}
-              <motion.div variants={itemVariants} className="mt-auto space-y-4">
+              {/* Mobile Actions - Shifted higher with pb-12 padding */}
+              <motion.div variants={itemVariants} className="mt-auto pb-32 space-y-4">
                 {!user ? (
                   <div className="grid grid-cols-2 gap-4">
                     <MotionMobileNavLink
