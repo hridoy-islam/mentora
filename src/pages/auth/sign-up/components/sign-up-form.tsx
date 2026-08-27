@@ -102,10 +102,10 @@ export function SignUpForm({ className, user = {}, ...props }: SignUpFormProps) 
           render={({ field }) => (
             <FormItem>
               <FormLabel className="sr-only">Role</FormLabel>
-              <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 rounded-lg">
+              <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg">
                 {[
                   { value: 'student', label: 'Student', icon: GraduationCap },
-                  { value: 'instructor', label: 'Instructor', icon: UserCheck },
+                  // { value: 'instructor', label: 'Instructor', icon: UserCheck },
                   { value: 'company', label: 'Organization', icon: Building2 },
                 ].map((role) => (
                   <div
@@ -119,7 +119,7 @@ export function SignUpForm({ className, user = {}, ...props }: SignUpFormProps) 
                     )}
                   >
                     <role.icon className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{role.label}</span>
+                    <span className="inline">{role.label}</span>
                   </div>
                 ))}
               </div>

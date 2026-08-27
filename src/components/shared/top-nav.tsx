@@ -54,15 +54,15 @@ function NavLink({ to, children }) {
 }
 
 // --- Mobile NavLink ---
-// FIX: Pass the ref to RouterNavLink so Motion works correctly
-const MobileNavLink = React.forwardRef(({ to, children, onClick }, ref) => {
+// FIX: Modified to not force border-b and allow custom styling
+const MobileNavLink = React.forwardRef(({ to, children, onClick, className = '' }, ref) => {
   return (
     <RouterNavLink
       ref={ref}
       to={to}
       onClick={onClick}
       className={({ isActive }) => 
-        `block py-4 text-lg font-semibold border-b border-gray-100`
+        `${className}`
       }
     >
       {children}
@@ -80,8 +80,8 @@ const menuWrapperVariants = {
     x: 0,
     transition: { 
       duration: 0.4, 
-      ease: [0.22, 1, 0.36, 1], // Smooth cubic-bezier
-      when: "beforeChildren" // Ensure menu opens before staggering content
+      ease: [0.22, 1, 0.36, 1],
+      when: "beforeChildren"
     }
   },
   exit: { 
@@ -193,11 +193,6 @@ export function TopNav() {
           {/* 3. Right Side: Actions & Mobile Toggle */}
           <div className="flex flex-shrink-0 items-center space-x-2 sm:space-x-4">
             
-            {/* Wishlist */}
-            {/* <button className="hidden rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-supperagent sm:block">
-              <Heart className="h-5 w-5" />
-            </button> */}
-
             {/* Cart Section */}
             <div className="relative">
               <button
@@ -311,7 +306,7 @@ export function TopNav() {
             exit="exit"
             className="fixed inset-0 z-[10000] bg-white md:hidden flex flex-col h-[95vh]"
           >
-            {/* Mobile Header - No stagger */}
+            {/* Mobile Header */}
             <div className="flex h-16 items-center justify-between border-b border-gray-100 px-4">
               <Logo onClick={() => setIsMobileMenuOpen(false)} />
               <button
@@ -322,42 +317,70 @@ export function TopNav() {
               </button>
             </div>
 
-            {/* Mobile Content Scrollable Area - Stagger applied here */}
-            {/* FIX: This must be a motion.div for staggerChildren to work on internal items */}
+            {/* Mobile Content Scrollable Area */}
             <motion.div 
               variants={contentStaggerVariants}
               className="flex-1 overflow-y-auto p-6 flex flex-col"
             >
               
               {/* Links - Staggered Animation */}
-              {/* FIX: Use motion.nav to allow variant propagation */}
               <motion.nav className="mb-8">
-                <MotionMobileNavLink variants={itemVariants} to="/" onClick={() => setIsMobileMenuOpen(false)}>Home</MotionMobileNavLink>
-                <MotionMobileNavLink variants={itemVariants} to="/courses" onClick={() => setIsMobileMenuOpen(false)}>Courses</MotionMobileNavLink>
-                <MotionMobileNavLink variants={itemVariants} to="/about-us" onClick={() => setIsMobileMenuOpen(false)}>About Us</MotionMobileNavLink>
-                <MotionMobileNavLink variants={itemVariants} to="/contact" onClick={() => setIsMobileMenuOpen(false)}>Contact</MotionMobileNavLink>
+                <MotionMobileNavLink 
+                  variants={itemVariants} 
+                  to="/" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-4 text-lg font-semibold border-b border-gray-100"
+                >
+                  Home
+                </MotionMobileNavLink>
+                <MotionMobileNavLink 
+                  variants={itemVariants} 
+                  to="/courses" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-4 text-lg font-semibold border-b border-gray-100"
+                >
+                  Courses
+                </MotionMobileNavLink>
+                <MotionMobileNavLink 
+                  variants={itemVariants} 
+                  to="/about-us" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-4 text-lg font-semibold border-b border-gray-100"
+                >
+                  About Us
+                </MotionMobileNavLink>
+                <MotionMobileNavLink 
+                  variants={itemVariants} 
+                  to="/contact" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-4 text-lg font-semibold border-b border-gray-100"
+                >
+                  Contact
+                </MotionMobileNavLink>
               </motion.nav>
 
-              {/* Mobile Actions - Staggered Animation */}
+              {/* Mobile Actions - Now with proper border styling */}
               <motion.div variants={itemVariants} className="mt-auto space-y-4">
                 {!user ? (
                   <div className="grid grid-cols-2 gap-4">
-                     <RouterNavLink
+                    <MotionMobileNavLink
                       to="/login"
                       onClick={() => setIsMobileMenuOpen(false)}
+                      variants={itemVariants}
                       className="flex justify-center items-center space-x-2 rounded-xl border border-gray-300 py-3 text-base font-medium text-gray-700 hover:bg-gray-50"
                     >
                       <User className="h-5 w-5" />
                       <span>Log in</span>
-                    </RouterNavLink>
-                    <RouterNavLink
+                    </MotionMobileNavLink>
+                    <MotionMobileNavLink
                       to="/signup"
                       onClick={() => setIsMobileMenuOpen(false)}
+                      variants={itemVariants}
                       className="flex justify-center items-center space-x-2 rounded-xl bg-supperagent py-3 text-base font-medium text-white hover:bg-supperagent/90"
                     >
                       <span>Sign up</span>
                       <ArrowUpRight className="h-5 w-5" />
-                    </RouterNavLink>
+                    </MotionMobileNavLink>
                   </div>
                 ) : (
                   <div
