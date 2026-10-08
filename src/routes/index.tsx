@@ -24,6 +24,7 @@ import CoursesPage from '@/pages/adminCourse';
 
 import AdminCoursesPage from '@/pages/adminCourse';
 import CreateCoursePage from '@/pages/adminCourse/createCourse';
+import ArchivedCoursesPage from '@/pages/adminCourse/archivedCourse';
 import CourseModulesPage from '@/pages/courseModule';
 import LessonsPage from '@/pages/courseLesson';
 import CreateLessonPage from '@/pages/courseLesson/createLesson';
@@ -90,6 +91,10 @@ export default function AppRouter() {
         {
           path: 'courses/create',
           element: <CreateCoursePage />
+        },
+        {
+          path: 'courses/archived',
+          element: <ArchivedCoursesPage />
         },
          {
           path: 'courses/edit/:id',

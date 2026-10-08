@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pen, MoveLeft, FileText } from 'lucide-react';
+import { Plus, Pen, MoveLeft, FileText, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -73,6 +73,12 @@ export default function AdminCoursesPage() {
         setCourses((prev) =>
           prev.map((c) => (c._id === id ? { ...c, status: newStatus } : c))
         );
+        // Blocked courses move to the archive page after a short delay
+        if (newStatus === 'block') {
+          setTimeout(() => {
+            setCourses((prev) => prev.filter((c) => c._id !== id));
+          }, 1000);
+        }
       } else {
         toast({
           variant: 'destructive',
@@ -125,6 +131,14 @@ export default function AdminCoursesPage() {
             >
               <MoveLeft className="mr-2 h-4 w-4" />
               Back
+            </Button>
+            <Button
+              size="default"
+              onClick={() => navigate('archived')}
+              variant="outline"
+            >
+              <Archive className="mr-2 h-4 w-4" />
+              Archived
             </Button>
             <Button
               size="default"
