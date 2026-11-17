@@ -549,7 +549,7 @@ export default function CourseDetailPage() {
           </nav>
 
           {/* --- Hero text --- */}
-          <div className="max-w-4xl space-y-6">
+          <div className="max-w-[44rem] space-y-6">
             <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white lg:text-4xl">
               {course.title}
             </h1>
