@@ -167,14 +167,14 @@ const HeroSection = () => {
             </motion.div>
 
             {/* Icon accent */}
-            <motion.div
+            {/* <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               className="absolute left-[8%] top-[10%] flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-supperagent shadow-xl sm:h-16 sm:w-16"
               aria-hidden="true"
             >
               <HeartHandshake className="h-7 w-7 sm:h-8 sm:w-8" />
-            </motion.div>
+            </motion.div> */}
           </motion.div>
         </motion.div>
       </div>
