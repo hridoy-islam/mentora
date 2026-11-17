@@ -1,148 +1,172 @@
 import React from 'react';
 import {
-  Users,
-  Target,
-  Globe,
-  Heart,
   ArrowRight,
   CheckCircle2,
-  Sparkles,
-  Award,
   ShieldCheck,
   BookOpen,
   PlayCircle,
   FileText,
   HelpCircle,
   ClipboardCheck,
+  Award,
   Building2,
   UserCheck,
-  Mail,
-  Phone,
   UserPlus,
+  Scale,
+  Quote,
+  Heart,
+  Info
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // --- Data ---
 
+const credentials = [
+  'Skills for Care aligned',
+  'CQC key lines of enquiry',
+  'CPD accredited',
+  'UK legislation current'
+];
+
+const testimonials = [
+  {
+    quote:
+      'Our team completed the safeguarding and infection control modules during induction. The CQC inspector commented positively on the evidence of structured training during our last inspection.',
+    author: 'Registered Manager, domiciliary care provider, East London'
+  },
+  {
+    quote:
+      'I have worked in care for eleven years. This is the first online training I have done that felt like it was written for someone who actually does this job.',
+    author: 'Senior Care Worker, supported living service'
+  }
+];
+
 const missionPoints = [
-  'Develops essential knowledge',
-  'Supports safer working practices',
-  'Promotes dignity, choice and independence',
-  'Reflects relevant UK legislation and guidance',
-  'Encourages professional responsibility',
-  'Supports continuous learning and development',
+  'Develops essential knowledge for safe, competent care work',
+  'Supports safer working practices across all care settings',
+  'Promotes dignity, choice and independence for people in care',
+  'Reflects current UK legislation and regulatory guidance',
+  'Encourages professional responsibility and continuous learning'
 ];
 
 const learningFeatures = [
-  { icon: BookOpen, label: 'Structured learning chapters' },
+  { icon: BookOpen, label: 'Structured chapters' },
   { icon: PlayCircle, label: 'Short explanatory videos' },
-  { icon: Users, label: 'Practical care-based examples' },
   { icon: FileText, label: 'Downloadable training manuals' },
-  { icon: HelpCircle, label: 'Chapter knowledge questions' },
-  { icon: ClipboardCheck, label: 'Final course assessments' },
-  { icon: Award, label: 'Certificates of successful completion' },
+  { icon: HelpCircle, label: 'Chapter knowledge checks' },
+  { icon: ClipboardCheck, label: 'Final assessment' },
+  { icon: Award, label: 'Downloadable CPD certificate' }
 ];
 
-const principles = [
+const audiences = [
   {
-    icon: Target,
-    title: 'Relevant',
-    desc: 'Courses focus on situations and responsibilities care workers may encounter in practice.',
-  },
-  {
-    icon: Globe,
-    title: 'Accessible',
-    desc: 'Content is presented through manageable chapters, clear explanations and supporting learning resources.',
+    icon: UserCheck,
+    title: 'Individual Care Workers',
+    desc: 'Building or refreshing knowledge at your own pace, around your own hours.'
   },
   {
     icon: Heart,
-    title: 'Person-Centred',
-    desc: 'Training reinforces dignity, privacy, consent, choice and independence.',
+    title: 'New Workers Entering Care',
+    desc: 'Structured foundational learning that prepares you for a safe first day and beyond.'
   },
   {
-    icon: ShieldCheck,
-    title: 'Responsible',
-    desc: 'Learners are reminded to work within their role, training, competence and authorisation.',
-  },
-  {
-    icon: CheckCircle2,
-    title: 'Current',
-    desc: 'Course content is reviewed against relevant UK legislation, national guidance and recognised care practice.',
-  },
+    icon: Building2,
+    title: 'Care Organisations',
+    desc: 'Team enrolment, completion tracking, and certification across your workforce. Enquire about organisational access.',
+    link: { href: '/contact', label: 'Enquire about organisational access' }
+  }
 ];
+
+const Eyebrow = ({
+  children,
+  light = false
+}: {
+  children: React.ReactNode;
+  light?: boolean;
+}) => (
+  <p
+    className={`mb-3 text-xs font-bold uppercase tracking-wider ${
+      light ? 'text-white/70' : 'text-supperagent'
+    }`}
+  >
+    {children}
+  </p>
+);
 
 export default function AboutPage() {
   return (
-    <div className="relative min-h-screen bg-slate-50 selection:bg-indigo-100 selection:text-indigo-900 overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden bg-slate-50 selection:bg-indigo-100 selection:text-indigo-900">
       {/* Background grid */}
       <div
-        className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage: 'radial-gradient(#4F46E5 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
+          backgroundSize: '24px 24px'
         }}
       />
 
       {/* Ambient blobs */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="pointer-events-none absolute left-1/4 top-0 h-96 w-96 rounded-full bg-blue-200/20 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 right-1/4 h-96 w-96 rounded-full bg-purple-200/20 blur-3xl" />
 
       {/* --- Hero Section --- */}
-      <div className="relative pt-20 pb-16 lg:pt-32 lg:pb-24">
+      <div className="relative pb-16 pt-20 lg:pb-24 lg:pt-32">
         <div className="container mx-auto px-6">
-          <div className="max-w-4xl mx-auto text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-supperagent/10 text-supperagent text-xs font-bold uppercase tracking-wider mb-6">
-              <Sparkles size={14} />
-              <span>About Us</span>
-            </div>
-            <h1 className="text-4xl lg:text-6xl font-extrabold text-mentora tracking-tight mb-6 leading-tight">
-              About <span className="text-gradient">Medicare Training</span>
+          <div className="mx-auto mb-16 max-w-4xl text-center">
+            <Eyebrow>About Medicare Training</Eyebrow>
+            <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-mentora lg:text-6xl">
+              Practical Training for{' '}
+              <span className="text-gradient">Safer Care</span>
             </h1>
-            <p className="text-lg text-gray-800 leading-relaxed max-w-2xl mx-auto">
-              Practical online training that strengthens care-worker knowledge and supports safer, more person-centred care.
+            <p className="mx-auto max-w-3xl text-lg leading-relaxed text-gray-800">
+              Medicare Training was founded by people working directly in UK
+              health and social care — not by e-learning developers looking for
+              a market. We built this platform because we knew what good
+              training needed to look like for the people delivering care on the
+              ground: clear, practical, legally grounded, and accessible around
+              a real working shift.
             </p>
           </div>
 
           {/* Hero Image Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3 lg:gap-8">
             <div className="space-y-6 md:mt-12">
               <img
                 src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=800"
                 alt="Carer providing support to senior"
-                className="w-full h-64 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-500 mt-6"
+                className="mt-6 h-64 w-full rounded-2xl object-cover shadow-lg transition-shadow duration-500 hover:shadow-xl"
               />
               <img
                 src="https://images.unsplash.com/photo-1581056771107-24ca5f033842?auto=format&fit=crop&q=80&w=800"
                 alt="Carer interacting with resident"
-                className="w-full h-80 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-500"
+                className="h-80 w-full rounded-2xl object-cover shadow-lg transition-shadow duration-500 hover:shadow-xl"
               />
             </div>
             <div className="space-y-6">
               <img
                 src="/home2.jpeg"
                 alt="One-on-one support session"
-                className="w-full h-80 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-500"
+                className="h-80 w-full rounded-2xl object-cover shadow-lg transition-shadow duration-500 hover:shadow-xl"
               />
               <img
                 src="/home4.jpeg"
-                alt="Healthcare professional studying online"
-                className="w-full h-64 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-500"
+                alt="Care worker supporting a resident"
+                className="h-64 w-full rounded-2xl object-cover shadow-lg transition-shadow duration-500 hover:shadow-xl"
               />
             </div>
             <div className="space-y-6 md:mt-12">
               <img
                 src="/home1.jpeg"
-                alt="Health team workshop discussion"
-                className="w-full h-64 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-500"
+                alt="Care worker talking with an older man"
+                className="h-64 w-full rounded-2xl object-cover shadow-lg transition-shadow duration-500 hover:shadow-xl"
               />
               {/* Highlight card */}
-              <div className="h-80 bg-mentora rounded-2xl p-8 flex flex-col justify-center text-white shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
+              <div className="relative flex h-80 flex-col justify-center overflow-hidden rounded-2xl bg-mentora p-8 text-white shadow-lg">
+                <div className="absolute right-0 top-0 p-4 opacity-10">
                   <Heart size={100} />
                 </div>
-                <Sparkles className="text-indigo-400 mb-4" size={32} />
                 <p className="text-xl font-medium leading-relaxed">
-                  We combine clear course content with a straightforward online learning experience.
+                  Every course on this platform reflects that origin.
                 </p>
               </div>
             </div>
@@ -150,305 +174,338 @@ export default function AboutPage() {
         </div>
       </div>
 
-      {/* --- Our Purpose & Our Promise --- */}
-      <div className="relative bg-white py-16 border-y border-slate-100">
+      {/* --- Our Purpose --- */}
+      <div className="relative border-y border-slate-100 bg-white py-16">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
             <div>
-              <h2 className="text-4xl font-bold text-mentora mb-6">Our Purpose</h2>
-              <div className="space-y-6 text-gray-800 leading-relaxed">
+              <Eyebrow>Our Purpose</Eyebrow>
+              <h2 className="mb-6 text-4xl font-bold text-mentora">
+                Why Medicare Training Exists
+              </h2>
+              <div className="space-y-6 leading-relaxed text-gray-800">
                 <p>
-                  Medicare Training provides accessible online learning for individuals and organisations across the UK health and social care sector.
+                  Care workers carry significant responsibility. They work in
+                  complex, often high-pressure environments where the quality of
+                  their knowledge directly affects the safety and dignity of the
+                  people they support. Too much training available in the sector
+                  is either too generic to be useful or too academic to be
+                  retained.
                 </p>
                 <p>
-                  We combine clear course content with a straightforward online learning experience. Care workers can develop essential knowledge through structured chapters, short videos, downloadable manuals and assessments based on realistic care situations.
-                </p>
-              </div>
-
-              <h2 className="text-4xl font-bold text-mentora mt-12 mb-6">Our Promise</h2>
-              <div className="space-y-6 text-gray-800 leading-relaxed">
-                <p>
-                  We are committed to making important care knowledge easier to understand, remember and apply.
-                </p>
-                <p>
-                  Our courses focus on the responsibilities care workers face in practice, including protecting people from harm, respecting individual rights, working within competence and reporting concerns appropriately.
+                  Medicare Training exists to close that gap — providing
+                  structured online learning that care workers can actually use,
+                  built around the situations they face every day, from
+                  safeguarding and infection control through to epilepsy care and
+                  autism awareness.
                 </p>
               </div>
             </div>
 
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-600/20 to-purple-600/20 rounded-2xl transform rotate-3 scale-105 blur-lg opacity-50" />
+              <div className="absolute inset-0 rotate-3 scale-105 transform rounded-2xl bg-gradient-to-tr from-indigo-600/20 to-purple-600/20 opacity-50 blur-lg" />
               <img
-                src="/home4.jpeg"
-                alt="Healthcare professionals meeting"
-                className="relative rounded-2xl shadow-2xl border border-white/20 w-full h-96 object-cover"
+                src="/home3.jpeg"
+                alt="Care workers practising moving and handling"
+                className="relative h-96 w-full rounded-2xl border border-white/20 object-cover shadow-2xl"
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* --- Our Vision (statement band) --- */}
-      <div className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-mentora">
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-supperagent/30 rounded-full blur-[100px]" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-600/20 rounded-full blur-[100px]" />
-        </div>
-        <div className="container mx-auto px-6 relative z-10 text-center max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold uppercase tracking-wider mb-6">
-            <Sparkles size={14} />
-            <span>Our Vision</span>
+      {/* --- Our Credentials --- */}
+      <div className="relative bg-slate-50 py-16">
+        <div className="container mx-auto px-6">
+          <div className="mx-auto max-w-3xl text-center">
+            <Eyebrow>Our Credentials</Eyebrow>
+            <h2 className="mb-6 text-4xl font-bold text-mentora">
+              Built to a Standard You Can Defend
+            </h2>
+            <p className="leading-relaxed text-gray-800">
+              Every course is developed with reference to the Health and Social
+              Care Act 2008, the Care Act 2014, the Mental Capacity Act 2005, and
+              guidance from Skills for Care, the CQC, and the Department of
+              Health and Social Care. Content is reviewed regularly against
+              updated legislation and CQC key lines of enquiry to ensure it
+              remains current and inspection-ready.
+            </p>
           </div>
-          <p className="text-2xl lg:text-4xl font-medium text-white leading-relaxed">
-            To contribute to safer, more compassionate and person-centred care through accessible, high-quality learning.
+
+          <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {credentials.map((item) => (
+              <div
+                key={item}
+                className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
+              >
+                <ShieldCheck className="shrink-0 text-supperagent" size={20} />
+                <span className="text-sm font-semibold text-mentora">
+                  {item}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* --- Our Promise (statement band) --- */}
+      <div className="relative overflow-hidden py-20">
+        <div className="absolute inset-0 bg-mentora">
+          <div className="absolute right-0 top-0 h-[400px] w-[400px] rounded-full bg-supperagent/30 blur-[100px]" />
+          <div className="absolute bottom-0 left-0 h-[400px] w-[400px] rounded-full bg-purple-600/20 blur-[100px]" />
+        </div>
+        <div className="container relative z-10 mx-auto max-w-3xl px-6 text-center">
+          <Eyebrow light>Our Promise</Eyebrow>
+          <h2 className="mb-6 text-3xl font-bold text-white lg:text-4xl">
+            Committed to Better Knowledge
+          </h2>
+          <p className="mb-6 text-lg leading-relaxed text-white/90">
+            Training that is easy to access but difficult to retain serves
+            nobody. Our courses are built around clarity first — plain UK
+            English, manageable chapters, real workplace scenarios, and
+            assessments that confirm understanding rather than reward guessing.
           </p>
+          <p className="text-xl font-medium leading-relaxed text-white lg:text-2xl">
+            Learners who complete a Medicare Training course leave with
+            knowledge they can apply the same day.
+          </p>
+        </div>
+      </div>
+
+      {/* --- What Learners and Managers Say --- */}
+      <div className="relative bg-white py-16">
+        <div className="container mx-auto px-6">
+          <div className="mx-auto mb-12 max-w-2xl text-center">
+            <h2 className="text-4xl font-bold text-mentora">
+              What Learners and Managers Say
+            </h2>
+          </div>
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
+            {testimonials.map(({ quote, author }) => (
+              <figure
+                key={author}
+                className="flex flex-col rounded-2xl border border-slate-100 bg-slate-50 p-8"
+              >
+                <Quote className="mb-4 rotate-180 text-supperagent" size={28} />
+                <blockquote className="mb-6 flex-1 text-lg leading-relaxed text-slate-800">
+                  “{quote}”
+                </blockquote>
+                <figcaption className="text-sm font-semibold text-mentora">
+                  — {author}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* --- Our Mission --- */}
-      <div className="py-16 relative bg-white">
-        <div className="container mx-auto ">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-4xl font-bold text-mentora mb-4">Our Mission</h2>
-            <p className="text-gray-800">
-              To provide care workers and organisations with practical online training that:
+      <div className="relative border-y border-slate-100 bg-slate-50 py-16">
+        <div className="container mx-auto px-6">
+          <div className="mx-auto mb-12 max-w-3xl text-center">
+            <Eyebrow>Our Mission</Eyebrow>
+            <h2 className="mb-4 text-4xl font-bold text-mentora">
+              What We Are Here to Do
+            </h2>
+            <p className="leading-relaxed text-gray-800">
+              To provide care workers and organisations with practical online
+              training that makes a genuine difference to the quality and safety
+              of care delivered — and that holds up when it matters most.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {missionPoints.map((point, idx) => (
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {missionPoints.map((point) => (
               <div
-                key={idx}
-                className="flex items-start gap-3 bg-slate-50 p-5 rounded-xl border border-slate-100"
+                key={point}
+                className="flex items-start gap-3 rounded-xl border border-slate-100 bg-white p-5"
               >
-                <CheckCircle2 className="text-supperagent shrink-0 mt-0.5" size={20} />
-                <span className="text-slate-700 font-medium text-sm leading-relaxed">{point}</span>
+                <CheckCircle2
+                  className="mt-0.5 shrink-0 text-supperagent"
+                  size={20}
+                />
+                <span className="text-sm font-medium leading-relaxed text-slate-700">
+                  {point}
+                </span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* --- Learning Built for Care Workers --- */}
-      <div className="py-16 relative bg-slate-50">
+      {/* --- Learning Format --- */}
+      <div className="relative bg-white py-16">
         <div className="container mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-6">
-            <h2 className="text-4xl font-bold text-mentora mb-4">Learning Built for Care Workers</h2>
-            <p className="text-gray-800">
-              Our courses are designed around the working realities of adult social care. Information is presented in clear UK English without unnecessary complexity.
+          <div className="mx-auto mb-12 max-w-3xl text-center">
+            <Eyebrow>Learning Format</Eyebrow>
+            <h2 className="mb-4 text-4xl font-bold text-mentora">
+              Built for the Reality of Care Work
+            </h2>
+            <p className="leading-relaxed text-gray-800">
+              Our courses are designed around how care workers actually learn —
+              in short windows, often between shifts, sometimes on a phone. Every
+              course is divided into structured chapters, supported by short
+              explanatory videos, downloadable training manuals, chapter
+              knowledge checks and a final assessment. Completion generates a
+              downloadable CPD certificate suitable for staff records and CQC
+              evidence files.
             </p>
           </div>
-          <p className="text-center text-gray-800 font-semibold text-sm uppercase tracking-wider mb-12">
-            Depending on the course, learners may access:
-          </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {learningFeatures.map(({ icon: Icon, label }, idx) => (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {learningFeatures.map(({ icon: Icon, label }) => (
               <div
-                key={idx}
-                className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+                key={label}
+                className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
               >
-                <div className="w-11 h-11 rounded-lg bg-supperagent/10 flex items-center justify-center mb-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-supperagent/10">
                   <Icon className="text-supperagent" size={20} />
                 </div>
-                <p className="text-sm font-semibold text-mentora leading-relaxed">{label}</p>
+                <p className="text-sm font-semibold leading-relaxed text-mentora">
+                  {label}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* --- Training for Individuals / Organisations --- */}
-      <div className="py-16 relative bg-white border-y border-slate-100">
+      {/* --- Who We Support --- */}
+      <div className="relative border-y border-slate-100 bg-slate-50 py-16">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Individuals */}
-            <div className="bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 flex flex-col">
-              <img
-                src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&q=80&w=900"
-                alt="Care worker studying online"
-                className="w-full h-56 object-cover"
-              />
-              <div className="p-8 flex flex-col flex-1">
-                <div className="w-11 h-11 rounded-lg bg-supperagent/10 flex items-center justify-center mb-5">
-                  <UserCheck className="text-supperagent" size={22} />
-                </div>
-                <h3 className="text-2xl font-bold text-mentora mb-3">Training for Individuals</h3>
-                <p className="text-gray-800 leading-relaxed mb-8 flex-1">
-                  Whether you are starting a career in care or refreshing your existing knowledge, Medicare Training allows you to study online at a suitable time and pace. Explore subjects including medicines, first aid, food hygiene, safeguarding, infection prevention, dementia care, health and safety and person-centred practice.
-                </p>
-                <a
-                  href="/courses"
-                  className="group inline-flex items-center justify-center gap-2 px-6 py-3 bg-mentora text-white font-bold rounded-full hover:opacity-90 transition-opacity w-fit"
-                >
-                  Explore Courses
-                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                </a>
-              </div>
-            </div>
-
-            {/* Organisations */}
-            <div className="bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 flex flex-col">
-              <img
-                src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=900"
-                alt="Care organisation team workshop"
-                className="w-full h-56 object-cover"
-              />
-              <div className="p-8 flex flex-col flex-1">
-                <div className="w-11 h-11 rounded-lg bg-supperagent/10 flex items-center justify-center mb-5">
-                  <Building2 className="text-supperagent" size={22} />
-                </div>
-                <h3 className="text-2xl font-bold text-mentora mb-3">Training for Organisations</h3>
-                <p className="text-gray-800 leading-relaxed mb-8 flex-1">
-                  We help care providers deliver essential online learning across their workforce. Organisations can contact us to discuss their number of learners, required subjects and suitable training arrangements.
-                </p>
-                <a
-                  href="/contact"
-                  className="group inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border-2 border-mentora text-mentora font-bold rounded-full hover:bg-mentora hover:text-white transition-colors w-fit"
-                >
-                  Enquire About Organisational Training
-                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* --- Our Training Principles --- */}
-      <div className="py-16 relative bg-slate-50">
-        <div className="container mx-auto ">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-4xl font-bold text-mentora mb-4">Our Training Principles</h2>
+          <div className="mx-auto mb-12 max-w-2xl text-center">
+            <h2 className="text-4xl font-bold text-mentora">Who We Support</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {principles.map(({ icon: Icon, title, desc }, idx) => (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {audiences.map(({ icon: Icon, title, desc, link }) => (
               <div
-                key={idx}
-                className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+                key={title}
+                className="flex flex-col rounded-2xl border border-slate-100 bg-white p-8 shadow-sm"
               >
-                <div className="w-12 h-12 rounded-lg bg-supperagent/10 flex items-center justify-center mb-5">
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-supperagent/10">
                   <Icon className="text-supperagent" size={22} />
                 </div>
-                <h3 className="text-base font-bold text-mentora mb-2">{title}</h3>
-                <p className="text-gray-800 text-sm leading-relaxed">{desc}</p>
+                <h3 className="mb-3 text-xl font-bold text-mentora">{title}</h3>
+                <p className="flex-1 leading-relaxed text-gray-800">{desc}</p>
+                {link && (
+                  <a
+                    href={link.href}
+                    className="group mt-6 inline-flex w-fit items-center gap-2 font-semibold text-supperagent"
+                  >
+                    {link.label}
+                    <ArrowRight
+                      size={16}
+                      className="transition-transform group-hover:translate-x-1"
+                    />
+                  </a>
+                )}
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* --- Supporting Knowledge and Competence --- */}
-      <div className="relative bg-white py-16 border-y border-slate-100">
+      {/* --- A Note on Competency --- */}
+      <div className="relative bg-white py-16">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
             <div className="relative order-2 lg:order-1">
-              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-600/20 to-purple-600/20 rounded-2xl transform -rotate-3 scale-105 blur-lg opacity-50" />
+              <div className="absolute inset-0 -rotate-3 scale-105 transform rounded-2xl bg-gradient-to-tr from-indigo-600/20 to-purple-600/20 opacity-50 blur-lg" />
               <img
                 src="/support2.jpeg"
                 alt="Supervised practical training in a care setting"
-                className="relative rounded-2xl shadow-2xl border border-white/20 w-full h-96 object-cover"
+                className="relative h-96 w-full rounded-2xl border border-white/20 object-cover shadow-2xl"
               />
             </div>
             <div className="order-1 lg:order-2">
-              <h2 className="text-4xl font-bold text-mentora mb-6">Supporting Knowledge and Competence</h2>
-              <div className="space-y-6 text-gray-800 leading-relaxed">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-supperagent/10">
+                <Scale className="text-supperagent" size={22} />
+              </div>
+              <h2 className="mb-6 text-4xl font-bold text-mentora">
+                A Note on Competency
+              </h2>
+              <div className="space-y-6 leading-relaxed text-gray-800">
                 <p>
-                  Online learning provides essential knowledge, but some care activities also require workplace instruction, supervised practice and practical competency assessment.
+                  Online learning develops knowledge and understanding. Some care
+                  activities also require supervised practical experience and
+                  workplace assessment before a worker should be considered
+                  competent to act.
                 </p>
                 <p>
-                  Care providers remain responsible for deciding whether workers are competent and authorised to undertake specific duties independently.
+                  Care providers remain responsible for assessing practical
+                  competency in line with their regulatory obligations, relevant
+                  legislation, and organisational policy.
+                </p>
+                <p className="flex items-start gap-2 font-semibold text-mentora">
+                  <Info className="mt-1 shrink-0 text-supperagent" size={18} />
+                  Medicare Training supports that process — it does not replace
+                  it.
                 </p>
               </div>
             </div>
           </div>
         </div>
       </div>
-<section className="py-16 relative overflow-hidden bg-white">
-      {/* Background Micro Dots & Ambient Glows */}
-      <div
-        className="absolute inset-0 opacity-[0.03] pointer-events-none"
-        style={{
-          backgroundImage: 'radial-gradient(#4F46E5 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-        }}
-      />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="container mx-auto px-6 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="relative rounded-3xl overflow-hidden border border-gray-200/80 shadow-xl bg-gradient-to-br from-supperagent/10 via-white to-teal-50/80 p-8 md:p-14 lg:p-16"
-        >
-          {/* Animated Background Fluid Light Blobs */}
+      {/* --- CTA --- */}
+      <section className="relative overflow-hidden bg-white py-16">
+        <div className="container relative z-10 mx-auto px-6">
           <motion.div
-            className="absolute -top-24 -right-24 w-96 h-96 bg-supperagent/20 rounded-full blur-3xl pointer-events-none"
-            animate={{
-              scale: [1, 1.25, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          />
-          <motion.div
-            className="absolute -bottom-24 -left-24 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl pointer-events-none"
-            animate={{
-              scale: [1.2, 1, 1.2],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 1,
-            }}
-          />
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="relative overflow-hidden rounded-3xl border border-gray-200/80 bg-gradient-to-br from-supperagent/10 via-white to-teal-50/80 p-8 shadow-xl md:p-14 lg:p-16"
+          >
+            <motion.div
+              className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-supperagent/20 blur-3xl"
+              animate={{ scale: [1, 1.25, 1], opacity: [0.3, 0.5, 0.3] }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-teal-500/20 blur-3xl"
+              animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: 1
+              }}
+            />
 
-          {/* Full Width Centered Content */}
-          <div className="max-w-4xl mx-auto flex flex-col items-center text-center relative z-10">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-supperagent/10 text-supperagent text-xs font-bold uppercase tracking-wider mb-6">
-              <Sparkles className="w-3.5 h-3.5 text-supperagent" />
-              <span>Get Started Today</span>
+            <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center">
+              <h2 className="mb-6 text-4xl font-extrabold leading-[1.1] tracking-tight text-mentora sm:text-5xl lg:text-6xl">
+                Learn with{' '}
+                <span className="text-supperagent">Medicare Training</span>
+              </h2>
+
+              <p className="mb-10 max-w-2xl text-lg leading-relaxed text-slate-600 sm:text-xl">
+                Develop the knowledge that supports safer practice, better care
+                and professional growth.
+              </p>
+
+              <div className="flex w-full flex-col items-center justify-center gap-4 sm:w-auto sm:flex-row">
+                <a
+                  href="/courses"
+                  className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-supperagent px-8 text-base font-semibold text-white shadow-lg shadow-supperagent/30 transition-all duration-300 hover:scale-[1.02] hover:bg-supperagent/90 sm:w-auto"
+                >
+                  Browse All Courses
+                  <ArrowRight className="h-5 w-5" />
+                </a>
+
+                <a
+                  href="/contact"
+                  className="flex h-14 w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-8 text-base font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:border-gray-300 hover:bg-gray-50 hover:text-supperagent sm:w-auto"
+                >
+                  <UserPlus className="h-5 w-5" />
+                  Enquire for Organisations
+                </a>
+              </div>
             </div>
-
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-mentora tracking-tight leading-[1.1] mb-6">
-              Learn with <span className="text-supperagent">Medicare Training</span>
-            </h2>
-
-            <p className="text-slate-600 text-lg sm:text-xl leading-relaxed mb-10 max-w-2xl">
-              Develop the knowledge that supports safer practice, better care, and professional growth across all adult care settings.
-            </p>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
-              <a
-                href="/courses"
-                className="w-full sm:w-auto bg-supperagent text-white font-semibold h-14 px-8 text-base shadow-lg shadow-supperagent/30 hover:bg-supperagent/90 hover:scale-[1.02] transition-all duration-300 rounded-full flex items-center justify-center gap-2"
-              >
-                Browse All Courses
-                <ArrowRight className="w-5 h-5" />
-              </a>
-
-              <a
-                href="/contact"
-                className="w-full sm:w-auto bg-white text-slate-700 font-semibold h-14 px-8 text-base border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:text-supperagent transition-all duration-300 rounded-full shadow-sm flex items-center justify-center gap-2"
-              >
-                <UserPlus className="w-5 h-5" />
-                Contact Us
-              </a>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </section>
+          </motion.div>
+        </div>
+      </section>
     </div>
   );
 }

@@ -90,7 +90,7 @@ const SaferCareSection = () => {
             {/* Overlapping Secondary Image: Direct Person-Centred Care */}
             <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white w-3/4 -mt-20 z-20">
               <img
-                src="/home4.jpeg"
+                src="/home2.jpeg"
                 alt="Hands-on care worker assisting elder"
                 className="w-full h-44 sm:h-72 object-cover"
               />

@@ -7,7 +7,6 @@ import {
   UserCog, 
   Award, 
   FileCheck,
-  Building2,
   ArrowRight,
   ShieldCheck
 } from "lucide-react";
@@ -73,10 +72,6 @@ const TrainingForOrganisationsSection = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-supperagent/10 text-supperagent text-xs font-bold uppercase tracking-wider mb-4">
-              <Building2 className="w-3.5 h-3.5" />
-              For Organisations
-            </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-mentora mb-4 tracking-tight">
               Training for <span className="text-supperagent">Care Organisations</span>
             </h2>
@@ -139,8 +134,8 @@ const TrainingForOrganisationsSection = () => {
               {/* Primary Image Frame */}
               <div className="relative overflow-hidden shadow-2xl border-4 border-white">
                 <img
-                  src="/certificate.png"
-                  alt="Certificate"
+                  src="/support3.jpeg"
+                  alt="Care team taking part in a group training session"
                   className="w-full h-[260px] sm:h-[340px] md:h-[380px] object-cover"
                 />
                 {/* <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" /> */}

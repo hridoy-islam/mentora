@@ -200,7 +200,7 @@ export default function AdminCoursesPage() {
                     <TableCell className='cursor-pointer'
                       onClick={() => navigate(`${course._id}/course-modules`)}
                     >
-                      ${course.price}
+                      £{course.price}
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex flex-row items-center justify-center gap-2">

@@ -45,10 +45,6 @@ interface FilterSidebarProps {
   categories: any[];
   tempCategory: string;
   setTempCategory: (id: string) => void;
-  tempMinPrice: number | '';
-  setTempMinPrice: (val: number | '') => void;
-  tempMaxPrice: number | '';
-  setTempMaxPrice: (val: number | '') => void;
   handleApplyFilters: () => void;
   resetFilters: () => void;
 }
@@ -57,28 +53,9 @@ const FilterSidebar = ({
   categories,
   tempCategory,
   setTempCategory,
-  tempMinPrice,
-  setTempMinPrice,
-  tempMaxPrice,
-  setTempMaxPrice,
   handleApplyFilters,
   resetFilters
 }: FilterSidebarProps) => {
-  // Safe handler for inputs to allow clearing the field
-  const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setTempMinPrice(val === '' ? '' : Number(val));
-  };
-
-  const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setTempMaxPrice(val === '' ? '' : Number(val));
-  };
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTempMaxPrice(Number(e.target.value));
-  };
-
   return (
     <div className="space-y-1">
       <FilterSectionTitle title="Category">
@@ -121,52 +98,6 @@ const FilterSidebar = ({
         </div>
       </FilterSectionTitle>
 
-      <div className="my-6 border-t border-gray-100" />
-
-      <FilterSectionTitle title="Price Range ($)">
-        <div className="space-y-4 px-1">
-          {/* Manual Input Fields */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Input
-                type="number"
-                value={tempMinPrice}
-                onChange={handleMinChange}
-                className="h-9 px-2 text-center text-sm"
-                placeholder="Min"
-              />
-            </div>
-            <span className="text-gray-400">-</span>
-            <div className="relative flex-1">
-              <Input
-                type="number"
-                value={tempMaxPrice}
-                onChange={handleMaxChange}
-                className="h-9 px-2 text-center text-sm"
-                placeholder="Max"
-              />
-            </div>
-          </div>
-
-          {/* Range Slider for Max Price */}
-          <div className="pt-2">
-            <input
-              type="range"
-              min={0}
-              max={2000}
-              step={10}
-              value={Number(tempMaxPrice) || 0}
-              onChange={handleSliderChange}
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-supperagent transition-colors hover:bg-gray-300"
-            />
-            <div className="mt-2 flex justify-between text-[10px] font-medium text-gray-400">
-              <span>$0</span>
-              <span>$2000+</span>
-            </div>
-          </div>
-        </div>
-      </FilterSectionTitle>
-
       <div className="mt-8 space-y-3 pt-4">
         <button
           onClick={handleApplyFilters}
@@ -199,14 +130,10 @@ export default function CoursePage() {
 
   // UI States (Allow empty string for inputs while typing)
   const [tempCategory, setTempCategory] = useState<string>('All');
-  const [tempMinPrice, setTempMinPrice] = useState<number | ''>(0);
-  const [tempMaxPrice, setTempMaxPrice] = useState<number | ''>(1000);
   const [tempSearchTerm, setTempSearchTerm] = useState('');
 
   // Active States (Used for API calls - strictly numbers)
   const [activeCategory, setActiveCategory] = useState<string>('All');
-  const [activeMinPrice, setActiveMinPrice] = useState<number>(0);
-  const [activeMaxPrice, setActiveMaxPrice] = useState<number>(1000);
   const [activeSearchTerm, setActiveSearchTerm] = useState('');
 
   // Sort and Page
@@ -237,9 +164,7 @@ export default function CoursePage() {
       const apiParams: any = {
         page: currentPage,
         limit: entriesPerPage,
-        sort: sortBy,
-        minPrice: activeMinPrice,
-        maxPrice: activeMaxPrice
+        sort: sortBy
       };
 
       if (activeCategory !== 'All') {
@@ -269,8 +194,6 @@ export default function CoursePage() {
     fetchCourses();
   }, [
     activeCategory,
-    activeMinPrice,
-    activeMaxPrice,
     activeSearchTerm,
     sortBy,
     currentPage
@@ -279,9 +202,6 @@ export default function CoursePage() {
   // --- 4. Handlers ---
   const handleApplyFilters = () => {
     setActiveCategory(tempCategory);
-    // Ensure we don't send empty string to API
-    setActiveMinPrice(tempMinPrice === '' ? 0 : tempMinPrice);
-    setActiveMaxPrice(tempMaxPrice === '' ? 0 : tempMaxPrice);
     setCurrentPage(1);
     setShowMobileFilters(false);
   };
@@ -293,14 +213,10 @@ export default function CoursePage() {
 
   const resetFilters = () => {
     setTempCategory('All');
-    setTempMinPrice(0);
-    setTempMaxPrice(1000);
     setTempSearchTerm('');
     setSortBy('default');
 
     setActiveCategory('All');
-    setActiveMinPrice(0);
-    setActiveMaxPrice(1000);
     setActiveSearchTerm('');
     setCurrentPage(1);
   };
@@ -395,10 +311,6 @@ export default function CoursePage() {
                 categories={allCategories}
                 tempCategory={tempCategory}
                 setTempCategory={setTempCategory}
-                tempMinPrice={tempMinPrice}
-                setTempMinPrice={setTempMinPrice}
-                tempMaxPrice={tempMaxPrice}
-                setTempMaxPrice={setTempMaxPrice}
                 handleApplyFilters={handleApplyFilters}
                 resetFilters={resetFilters}
               />
@@ -570,10 +482,6 @@ export default function CoursePage() {
               categories={allCategories}
               tempCategory={tempCategory}
               setTempCategory={setTempCategory}
-              tempMinPrice={tempMinPrice}
-              setTempMinPrice={setTempMinPrice}
-              tempMaxPrice={tempMaxPrice}
-              setTempMaxPrice={setTempMaxPrice}
               handleApplyFilters={handleApplyFilters}
               resetFilters={resetFilters}
             />

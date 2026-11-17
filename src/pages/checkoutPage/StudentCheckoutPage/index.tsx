@@ -95,7 +95,7 @@ function CartItemCompact({ item }) {
 
       {/* Amount */}
       <div className="text-sm font-bold text-gray-900">
-        ${(item.price * item.quantity).toFixed(2)}
+        £{(item.price * item.quantity).toFixed(2)}
       </div>
     </div>
   );
@@ -656,14 +656,14 @@ export function StudentCheckoutPage() {
                     <div className="mt-4 flex justify-between text-sm text-gray-600">
                       <span>Subtotal</span>
                       <span className="font-medium text-gray-900">
-                        ${cartSubtotal.toFixed(2)}
+                        £{cartSubtotal.toFixed(2)}
                       </span>
                     </div>
 
                     {isApplied && (
                       <div className="flex justify-between text-sm font-medium text-green-600">
                         <span>Discount (10%)</span>
-                        <span>-${(cartSubtotal * 0.1).toFixed(2)}</span>
+                        <span>-£{(cartSubtotal * 0.1).toFixed(2)}</span>
                       </div>
                     )}
 
@@ -673,7 +673,7 @@ export function StudentCheckoutPage() {
                       </span>
                       <div className="text-right">
                         <span className="block text-2xl font-extrabold tracking-tight text-gray-900">
-                          ${totalAmount.toFixed(2)}
+                          £{totalAmount.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -776,7 +776,7 @@ export function StudentCheckoutPage() {
                             </span>
                           ) : (
                             <>
-                              <span>Pay ${totalAmount.toFixed(2)}</span>
+                              <span>Pay £{totalAmount.toFixed(2)}</span>
                               <ArrowRight
                                 size={18}
                                 className="transition-transform group-hover:translate-x-1"

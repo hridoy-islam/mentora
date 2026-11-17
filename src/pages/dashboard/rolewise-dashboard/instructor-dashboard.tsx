@@ -31,10 +31,10 @@ const instructorProfile = {
 };
 
 const instructorStats = [
-  { title: 'Purchase Amount', value: '$513.40' },
-  { title: 'Platform Fee', value: '$10.00' },
-  { title: 'Total Profit', value: '$503.4' },
-  { title: 'Available Balance', value: '$0.00' },
+  { title: 'Purchase Amount', value: '£513.40' },
+  { title: 'Platform Fee', value: '£10.00' },
+  { title: 'Total Profit', value: '£503.4' },
+  { title: 'Available Balance', value: '£0.00' },
   { title: 'Total Course', value: '11' },
   { title: 'Total Bundles', value: '01' },
 ];
@@ -53,7 +53,7 @@ const instructorCourses = [
     name: 'UI/UX Design Fundamentals',
     publishDate: '27 Nov 2024',
     enrolled: 8,
-    price: '$50.00',
+    price: '£50.00',
     status: 'Published',
   },
   {
@@ -69,7 +69,7 @@ const instructorCourses = [
     name: 'Intro to Photography',
     publishDate: '27 Nov 2024',
     enrolled: 5,
-    price: '$10.00',
+    price: '£10.00',
     status: 'Published',
   },
 ];

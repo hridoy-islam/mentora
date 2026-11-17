@@ -67,11 +67,11 @@ function CartItem({ item }) {
 
           <div className="text-right">
             <span className="block text-lg font-bold text-gray-900">
-              ${(item.price * item.quantity).toFixed(2)}
+              £{(item.price * item.quantity).toFixed(2)}
             </span>
             {item.quantity > 1 && (
               <span className="block text-xs font-medium text-gray-400">
-                ${item.price.toFixed(2)} each
+                £{item.price.toFixed(2)} each
               </span>
             )}
           </div>
@@ -196,7 +196,7 @@ export function CartPage() {
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Subtotal</span>
                     <span className="font-medium text-gray-900">
-                      ${cartSubtotal.toFixed(2)}
+                      £{cartSubtotal.toFixed(2)}
                     </span>
                   </div>
 
@@ -206,7 +206,7 @@ export function CartPage() {
                       Total
                     </span>
                     <span className="text-2xl font-extrabold tracking-tight text-gray-900">
-                      ${totalAmount.toFixed(2)}
+                      £{totalAmount.toFixed(2)}
                     </span>
                   </div>
                 </div>

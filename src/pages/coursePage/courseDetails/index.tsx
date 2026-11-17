@@ -827,11 +827,11 @@ export default function CourseDetailPage() {
                   <div className="mb-6">
                     <div className="mb-2 flex items-end gap-3">
                       <span className="text-4xl font-extrabold text-slate-900">
-                        ${course.price}
+                        £{course.price}
                       </span>
                       {hasDiscount && (
                         <span className="mb-1.5 text-lg text-slate-400 line-through">
-                          ${course.originalPrice}
+                          £{course.originalPrice}
                         </span>
                       )}
                     </div>

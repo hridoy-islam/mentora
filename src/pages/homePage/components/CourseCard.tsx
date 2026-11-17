@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Star, Clock, ShoppingCart } from 'lucide-react';
+import { Clock, ShoppingCart } from 'lucide-react';
 
 export default function CourseCard({ course, index = 0, onClick }) {
   return (
@@ -43,21 +43,6 @@ export default function CourseCard({ course, index = 0, onClick }) {
 
         {/* Content Section */}
         <div className="flex flex-grow flex-col p-5">
-          {/* Meta Info */}
-          <div className="mb-3 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1 font-bold text-yellow-500">
-              <Star className="h-3.5 w-3.5 fill-yellow-500" />
-              <span>{course.rating}</span>
-              <span className="font-normal text-gray-400">
-                ({(course.students / 1000).toFixed(1)}k)
-              </span>
-            </div>
-            {/* <div className="flex items-center gap-1 font-medium text-gray-400">
-              <Clock className="h-3.5 w-3.5" />
-              {course.duration}
-            </div> */}
-          </div>
-
           {/* Title */}
           <h3 className="mb-2 line-clamp-2 text-lg font-bold text-gray-900 transition-colors group-hover:text-supperagent">
             {course.title}
@@ -77,12 +62,12 @@ export default function CourseCard({ course, index = 0, onClick }) {
           <div className="mt-auto flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
             <div className="flex flex-col">
               <span className="text-lg font-bold leading-none text-gray-900">
-                ${course.price}
+                £{course.price}
               </span>
               {
                 course.originalPrice && 
               <span className="mt-0.5 text-xs text-gray-400 line-through">
-                ${course.originalPrice}
+                £{course.originalPrice}
               </span>
               }
             </div>

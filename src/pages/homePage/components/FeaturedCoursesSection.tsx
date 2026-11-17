@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
-  BookOpen,
-  HeartPulse
+  BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import axiosInstance from '@/lib/axios';
@@ -55,10 +54,6 @@ const FeaturedCoursesSection = () => {
           transition={{ duration: 0.6 }}
           className="mx-auto mb-16 max-w-3xl text-center"
         >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-supperagent/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-supperagent">
-            <HeartPulse className="h-3.5 w-3.5" />
-            Popular Courses
-          </div>
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-mentora md:text-5xl">
             Explore Our <span className="bg-gradient-to-r from-supperagent to-teal-600 bg-clip-text text-transparent">
               Popular Courses

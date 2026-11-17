@@ -102,7 +102,7 @@ const LearningExperienceSection = () => {
               {/* Main Image Frame */}
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-100">
                 <img
-                  src="/home5.jpeg"
+                  src="/carerstudy.jpg"
                   alt="A learning experience built around care work"
                   className="w-full h-[420px] md:h-[500px] object-cover"
                 />

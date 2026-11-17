@@ -188,25 +188,8 @@ export default function PreviewCourseDetails() {
               />
             </div>
 
-            {/* Rating & Instructor — static */}
+            {/* Instructor */}
             <div className="border-b border-gray-200 pb-8">
-              <div className="mb-6 flex items-center gap-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={20}
-                    className={
-                      i < Math.floor(4)
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
-                    }
-                  />
-                ))}
-                <span className="font-bold text-gray-900">4.2 Rating</span>
-                <span className="text-gray-600">(112 reviews)</span>
-                <span className="text-gray-600">1002 students</span>
-              </div>
-
               <div className="flex items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-xl font-bold text-white">
                   {course.instructorId?.name?.split(' ')?.map((n) => n[0]).join('')}
@@ -214,9 +197,6 @@ export default function PreviewCourseDetails() {
                 <div>
                   <div className="text-lg font-bold text-gray-900">
                     {course.instructorId?.name}
-                  </div>
-                  <div className="mt-2 flex gap-4 text-sm text-gray-600">
-                    <span>⭐ 4.2 Rating</span>
                   </div>
                 </div>
               </div>
@@ -285,7 +265,7 @@ export default function PreviewCourseDetails() {
                   <span className="text-gray-500 line-through">${course.originalPrice}</span>
                 </div>
                 <span className="inline-block rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-supperagent">
-                  Save ${(course.originalPrice - course.price).toFixed(2)}
+                  Save £{(course.originalPrice - course.price).toFixed(2)}
                 </span>
               </div>
 
