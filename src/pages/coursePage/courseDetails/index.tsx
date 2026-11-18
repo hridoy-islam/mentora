@@ -313,9 +313,6 @@ export default function CourseDetailPage() {
 
   // UI States
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'content' | 'requirements'>(
-    'content'
-  );
   const [downloadingGuide, setDownloadingGuide] = useState(false);
 
   const handleShare = async () => {
@@ -656,79 +653,22 @@ export default function CourseDetailPage() {
               </div>
             )}
 
-            {/* Tabbed Container (Course Content & Requirements) */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="flex overflow-x-auto border-b border-slate-200 bg-slate-50/60 p-2">
-                <button
-                  onClick={() => setActiveTab('content')}
-                  className={cn(
-                    'flex-1 whitespace-nowrap rounded-xl px-5 py-3 text-sm font-bold transition-all',
-                    activeTab === 'content'
-                      ? 'bg-theme text-white shadow-sm'
-                      : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
-                  )}
-                >
-                  Course Content
-                </button>
-                <button
-                  onClick={() => setActiveTab('requirements')}
-                  className={cn(
-                    'flex-1 whitespace-nowrap rounded-xl px-5 py-3 text-sm font-bold transition-all',
-                    activeTab === 'requirements'
-                      ? 'bg-theme text-white shadow-sm'
-                      : 'text-slate-600 hover:bg-white/50 hover:text-slate-900'
-                  )}
-                >
-                  Requirements
-                </button>
-              </div>
-
-              <div className="p-6">
-                {activeTab === 'content' && (
-                  <div>
-                    <h3 className="mb-4 text-xl font-bold text-slate-900">
-                      Course Curriculum
-                    </h3>
-                    {sections && sections.length > 0 ? (
-                      <CourseContentAccordion sections={sections} />
-                    ) : (
-                      <p className="text-sm text-slate-500">
-                        No modules available yet.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'requirements' && (
-                  <div>
-                    <h3 className="mb-4 text-xl font-bold text-slate-900">
-                      Prerequisites
-                    </h3>
-                    {course.requirements && course.requirements.length > 0 ? (
-                      <ul className="space-y-3">
-                        {course.requirements.map((req, i) => (
-                          <li
-                            key={i}
-                            className="flex gap-3 text-sm leading-relaxed text-slate-700"
-                          >
-                            <div className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400"></div>
-                            <span>{req}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-slate-500">
-                        There are no specialized prerequisites for taking this
-                        course.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+            {/* Course Curriculum */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 text-xl font-bold text-slate-900">
+                Course Curriculum
+              </h3>
+              {sections && sections.length > 0 ? (
+                <CourseContentAccordion sections={sections} />
+              ) : (
+                <p className="text-sm text-slate-500">
+                  No modules available yet.
+                </p>
+              )}
             </div>
 
             {/* Certificate Section */}
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               <div>
                 <h2 className="text-2xl font-bold">Course Certificate</h2>
                 <p className="mt-1 text-sm">
@@ -767,10 +707,10 @@ export default function CourseDetailPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Instructor Section */}
-            {course.instructorId && (
+            {/* {course.instructorId && (
               <div>
                 <h2 className="mb-4 text-2xl font-bold text-slate-900">
                   Instructor
@@ -809,7 +749,7 @@ export default function CourseDetailPage() {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
 
           {/* RIGHT SIDEBAR (Moved negative margin to outer container so sticky floats properly) */}
@@ -866,7 +806,7 @@ export default function CourseDetailPage() {
                     <ul className="space-y-3 text-sm text-slate-600">
                       <li className="flex items-center gap-3">
                         <MonitorPlay size={16} className="text-slate-400" />
-                        <span>Access on mobile and TV</span>
+                        <span>Access on mobile</span>
                       </li>
                       <li className="flex items-center gap-3">
                         <Award size={16} className="text-slate-400" />
@@ -874,7 +814,7 @@ export default function CourseDetailPage() {
                       </li>
                       <li className="flex items-center gap-3">
                         <Calendar size={16} className="text-slate-400" />
-                        <span>Course validity: 1 year</span>
+                        <span>Course validity: 1 Year</span>
                       </li>
                     </ul>
                   </div>
