@@ -43,6 +43,8 @@ import MyStaffPage from '@/pages/my-staff';
 import OrganizationCoursesPage from '@/pages/organizationCourse';
 import AboutPage from '@/pages/aboutPage';
 import ReportPage from '@/pages/reportPage';
+import OrderPage from '@/pages/orderPage';
+import CreateOrderPage from '@/pages/orderPage/createOrder';
 import MyOrganizationPage from '@/pages/myOrganization';
 import OrganizationAvailableCoursesPage from '@/pages/myOrganization/availableCourses';
 import TransactionHistoryPage from '@/pages/transactionHistoryPage';
@@ -161,6 +163,18 @@ export default function AppRouter() {
         {
           path: 'report',
           element: <ReportPage />
+        },
+        {
+          path: 'orders',
+          element: <OrderPage />
+        },
+        {
+          path: 'orders/create',
+          element: <CreateOrderPage />
+        },
+        {
+          path: 'orders/edit/:id',
+          element: <CreateOrderPage />
         },
          {
           path: 'transactions/:cid',

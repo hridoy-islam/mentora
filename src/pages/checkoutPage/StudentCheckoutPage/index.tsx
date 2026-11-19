@@ -284,11 +284,9 @@ export function StudentCheckoutPage() {
     setPaymentError('');
     setIsProcessingOrder(true);
 
-    // DEV MODE BYPASS: Simulate Worldpay Tokenization
-    setTimeout(async () => {
-      console.log("DEV MODE: Simulating payment success...");
-      await processBackendOrder('dummy-dev-session-id-12345');
-    }, 1000);
+    // Stripe Checkout: the backend creates a pending order and returns a
+    // hosted payment URL. The order is fulfilled only once Stripe confirms.
+    await processBackendOrder();
 
     /* --- ORIGINAL WORLDPAY LOGIC (COMMENTED OUT) ---
     // 1. Validate Worldpay is loaded
@@ -313,15 +311,15 @@ export function StudentCheckoutPage() {
     */
   };
 
-  const processBackendOrder = async (sessionId) => {
+  const processBackendOrder = async () => {
     try {
       const orderData = {
-        paymentSessionId: sessionId, // <--- Token sent to backend
         items: cartItems.map((item) => ({
           courseId: item?.id,
           quantity: item.quantity,
           unitPrice: item.price,
-          subTotal: item.price * item.quantity
+          subTotal: item.price * item.quantity,
+          title: item.title
         })),
         totalAmount: totalAmount,
         buyerId: user?._id,
@@ -329,7 +327,7 @@ export function StudentCheckoutPage() {
         role: user?.role,
         couponCode: isApplied ? couponCode : null,
         shippingDetails: {
-          name: formData.fullName,
+          fullName: formData.fullName,
           email: formData.email,
           phone: formData.phone,
           address: formData.address,
@@ -340,26 +338,25 @@ export function StudentCheckoutPage() {
         }
       };
 
-      const response = await axiosInstance.post('/order', orderData);
+      const response = await axiosInstance.post('/order/initiate-payment', orderData);
+      const redirectUrl = response.data?.data?.redirectUrl;
 
-      if (response.status === 200 || response.status === 201) {
-        dispatch(clearCart());
-        setOrderComplete(true);
-        toast({
-          title: 'Success!',
-          description: 'Your order has been placed successfully.'
-        });
+      if (!redirectUrl) {
+        throw new Error('No redirect URL returned from server.');
       }
-    } catch (error) {
+
+      // Cart is cleared on /payment/success once payment is confirmed.
+      window.location.href = redirectUrl;
+    } catch (error: any) {
       console.error(error);
-      const msg = error.response?.data?.message || 'Transaction failed. Please try again.';
+      const msg =
+        error?.response?.data?.message || error?.message || 'Could not initiate payment. Please try again.';
       setPaymentError(msg);
       toast({
-        title: 'Order Failed',
+        title: 'Checkout Failed',
         description: msg,
         variant: 'destructive'
       });
-    } finally {
       setIsProcessingOrder(false);
     }
   };

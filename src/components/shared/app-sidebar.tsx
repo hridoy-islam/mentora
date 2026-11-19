@@ -81,6 +81,11 @@ const adminNav = [
     icon: Calculator
   },
   {
+    title: 'Orders',
+    url: '/dashboard/orders',
+    icon: CreditCard
+  },
+  {
     title: 'Report',
     url: '/dashboard/report',
     icon: Calculator

@@ -130,11 +130,19 @@ export function PaymentSuccessPage() {
       }
     };
 
+    const sessionId = searchParams.get('session_id');
+    let inFlight = false;
+
     const poll = async () => {
-      if (stopped) return;
+      if (stopped || inFlight) return;
+      inFlight = true;
 
       try {
-        const res = await axiosInstance.get(`/order/${orderId}`);
+        // Asks Stripe directly (and fulfils the order if paid), instead of
+        // waiting only for the webhook to update our DB.
+        const res = await axiosInstance.get(`/order/verify-payment/${orderId}`, {
+          params: sessionId ? { session_id: sessionId } : {}
+        });
         const order = res.data?.data;
 
         if (order?.paymentStatus === 'paid') {
@@ -151,11 +159,19 @@ export function PaymentSuccessPage() {
           }
           return;
         }
-      } catch {
-        if (!stopped) {
-          setState('failed');
-          stopPolling();
+      } catch (error: any) {
+        // A network blip or 5xx must NOT be reported as "payment failed" —
+        // the customer may well have been charged. Keep polling; the timeout
+        // state covers the case where we never get an answer.
+        const status = error?.response?.status;
+        if (status === 404 || status === 403 || status === 400) {
+          if (!stopped) {
+            setState('timeout');
+            stopPolling();
+          }
         }
+      } finally {
+        inFlight = false;
       }
     };
 
@@ -165,7 +181,7 @@ export function PaymentSuccessPage() {
         setState('timeout');
         stopPolling();
       }
-    }, 30000);
+    }, 45000);
 
     poll();
 
@@ -173,7 +189,7 @@ export function PaymentSuccessPage() {
       stopped = true;
       stopPolling();
     };
-  }, [orderId]);
+  }, [orderId, searchParams]);
 
   // ── Background Pattern Component ─────────────────────────────────────────────
   const BackgroundPattern = () => (

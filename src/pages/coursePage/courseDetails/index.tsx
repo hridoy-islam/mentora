@@ -750,6 +750,8 @@ export default function CourseDetailPage() {
                 </div>
               </div>
             )} */}
+
+            
           </div>
 
           {/* RIGHT SIDEBAR (Moved negative margin to outer container so sticky floats properly) */}
